@@ -31,8 +31,7 @@ func (r *Request) LoadInfoAndConfig(projectId, id int) error {
 }
 
 func (r *Request) IsValid(projectId, id int) (bool, string, error) {
-	err := r.LoadInfoAndConfig(projectId, id)
-	if err != nil {
+	if err := r.LoadInfoAndConfig(projectId, id); err != nil {
 		return false, "", err
 	}
 
@@ -69,8 +68,7 @@ func (r *Request) ParseConfig(content string) (*Config, error) {
 		AutoMasterMerge:       false,
 	}
 
-	err := yaml.Unmarshal([]byte(content), mrConfig)
-	if err != nil {
+	if err := yaml.Unmarshal([]byte(content), mrConfig); err != nil {
 		return nil, err
 	}
 	return mrConfig, nil
@@ -81,8 +79,7 @@ func (r *Request) LeaveComment(projectId, id int, message string) error {
 }
 
 func (r *Request) Greetings(projectId, id int) error {
-	err := r.LoadInfoAndConfig(projectId, id)
-	if err != nil {
+	if err := r.LoadInfoAndConfig(projectId, id); err != nil {
 		return err
 	}
 
@@ -92,8 +89,7 @@ func (r *Request) Greetings(projectId, id int) error {
 	}
 
 	buf := &bytes.Buffer{}
-	err = tmpl.Execute(buf, r.config)
-	if err != nil {
+	if err = tmpl.Execute(buf, r.config); err != nil {
 		return err
 	}
 
@@ -101,8 +97,7 @@ func (r *Request) Greetings(projectId, id int) error {
 }
 
 func (r *Request) Merge(projectId, id int) (bool, string, error) {
-	err := r.LoadInfoAndConfig(projectId, id)
-	if err != nil {
+	if err := r.LoadInfoAndConfig(projectId, id); err != nil {
 		return false, "", err
 	}
 
@@ -112,12 +107,22 @@ func (r *Request) Merge(projectId, id int) (bool, string, error) {
 	}
 
 	if ok, text, err := r.IsValid(projectId, id); ok {
-		err := r.provider.Merge(projectId, id, fmt.Sprintf("%s\nMerged by MergeApproveBot", r.info.Title))
-		if err != nil {
+		if err := r.provider.Merge(projectId, id, fmt.Sprintf("%s\nMerged by MergeApproveBot", r.info.Title)); err != nil {
 			return false, "", err
 		}
 		return true, "", nil
 	} else {
 		return false, text, err
 	}
+}
+
+func (r *Request) UpdateFromMaster(projectId, id int) error {
+	if err := r.LoadInfoAndConfig(projectId, id); err != nil {
+		return err
+	}
+
+	if err := r.provider.UpdateFromMaster(projectId, id); err != nil {
+		return err
+	}
+	return nil
 }

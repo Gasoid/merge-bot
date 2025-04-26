@@ -66,8 +66,7 @@ func (w *Webhook) ParseRequest(request *http.Request) error {
 		return &Error{text: "Request is not provided"}
 	}
 
-	err := w.provider.ParseRequest(request)
-	if err != nil {
+	if err := w.provider.ParseRequest(request); err != nil {
 		return err
 	}
 

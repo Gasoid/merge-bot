@@ -40,8 +40,7 @@ func (g *GitlabProvider) loadMR(projectId, mergeId int) error {
 }
 
 func (g *GitlabProvider) UpdateFromMaster(projectId, mergeId int) error {
-	err := g.loadMR(projectId, mergeId)
-	if err != nil {
+	if err := g.loadMR(projectId, mergeId); err != nil {
 		return err
 	}
 
@@ -54,8 +53,13 @@ func (g *GitlabProvider) UpdateFromMaster(projectId, mergeId int) error {
 		return handlers.RepoSizeError
 	}
 
-	err = handlers.MergeMaster(tokenUsername, os.Getenv(gitlabToken), project.HTTPURLToRepo, g.mr.SourceBranch, g.mr.TargetBranch)
-	if err != nil {
+	if err = handlers.MergeMaster(
+		tokenUsername,
+		os.Getenv(gitlabToken),
+		project.HTTPURLToRepo,
+		g.mr.SourceBranch,
+		g.mr.TargetBranch,
+	); err != nil {
 		return err
 	}
 
@@ -122,8 +126,7 @@ func (g *GitlabProvider) GetFailedPipelines() (int, error) {
 }
 
 func (g *GitlabProvider) IsValid(projectId, mergeId int) (bool, error) {
-	err := g.loadMR(projectId, mergeId)
-	if err != nil {
+	if err := g.loadMR(projectId, mergeId); err != nil {
 		return false, err
 	}
 

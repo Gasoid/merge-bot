@@ -45,8 +45,7 @@ func Handler(c echo.Context) error {
 		return err
 	}
 
-	err = hook.ParseRequest(c.Request())
-	if err != nil {
+	if err = hook.ParseRequest(c.Request()); err != nil {
 		slog.Error("ParseRequest", "err", err)
 		return err
 	}
@@ -55,8 +54,7 @@ func Handler(c echo.Context) error {
 
 	if f, ok := handlerFuncs[hook.Event]; ok {
 		go func() {
-			err := f(providerName, hook)
-			if err != nil {
+			if err := f(providerName, hook); err != nil {
 				slog.Error("handlerFunc", "err", err)
 			}
 		}()
@@ -71,8 +69,7 @@ var (
 
 func handle(onEvent string, funcHandler func(string, *webhook.Webhook) error) {
 	handlerFuncs[onEvent] = func(provider string, hook *webhook.Webhook) error {
-		err := funcHandler(provider, hook)
-		if err != nil {
+		if err := funcHandler(provider, hook); err != nil {
 			// metrics.CommandFailedInc(hook.GetCmd(), provider)
 			return err
 		}
