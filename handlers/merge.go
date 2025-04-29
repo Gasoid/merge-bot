@@ -10,6 +10,7 @@ import (
 
 	"github.com/ldez/go-git-cmd-wrapper/v2/checkout"
 	"github.com/ldez/go-git-cmd-wrapper/v2/clone"
+	"github.com/ldez/go-git-cmd-wrapper/v2/config"
 	"github.com/ldez/go-git-cmd-wrapper/v2/git"
 	"github.com/ldez/go-git-cmd-wrapper/v2/merge"
 	"github.com/ldez/go-git-cmd-wrapper/v2/push"
@@ -44,6 +45,10 @@ func MergeMaster(username, password, repoUrl, branchName, master string) error {
 	}
 
 	if _, err := git.Checkout(checkout.Branch(branchName)); err != nil {
+		return err
+	}
+
+	if _, err := git.Config(config.Entry("user.email", "bot@example.com"), config.Entry("user.name", "merge-bot")); err != nil {
 		return err
 	}
 
