@@ -4,7 +4,6 @@ go 1.22.3
 
 require (
 	github.com/labstack/echo/v4 v4.12.0
-	github.com/ldez/go-git-cmd-wrapper v1.3.0
 	github.com/ldez/go-git-cmd-wrapper/v2 v2.7.0
 	github.com/stretchr/testify v1.9.0
 	github.com/xanzy/go-gitlab v0.93.2
