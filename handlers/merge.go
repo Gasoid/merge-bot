@@ -1,14 +1,9 @@
 package handlers
 
 import (
-	"crypto/md5"
-	"encoding/hex"
-	"errors"
 	"log/slog"
 	"net/url"
 	"os"
-	"path"
-	"strings"
 
 	"github.com/ldez/go-git-cmd-wrapper/v2/checkout"
 	"github.com/ldez/go-git-cmd-wrapper/v2/clone"
@@ -31,21 +26,13 @@ func MergeMaster(username, password, repoUrl, branchName, master string) error {
 		repoUrl = parsedUrl.String()
 	}
 
-	hasher := md5.New()
-	hasher.Write([]byte(repoUrl))
-	dir := hex.EncodeToString(hasher.Sum([]byte(strings.Join([]string{repoUrl, branchName}, ","))))
-
-	cur, err := os.Getwd()
+	dir, err := os.MkdirTemp("", "merge-bot")
 	if err != nil {
-		slog.Debug("Getwd error")
+		slog.Debug("temp dir error")
 		return err
 	}
 
-	defer os.RemoveAll(path.Join(cur, dir))
-
-	if _, err := os.Stat(dir); !os.IsNotExist(err) {
-		return errors.New("directory exists")
-	}
+	defer os.RemoveAll(dir)
 
 	if _, err := git.Clone(clone.Repository(repoUrl), clone.Directory(dir)); err != nil {
 		slog.Debug("git clone error")
