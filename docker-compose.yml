@@ -13,3 +13,6 @@ services:
       - bot.env
     logging:
       driver: syslog
+
+volumes:
+  tls-cache:
