@@ -4,6 +4,8 @@ services:
   bot:
     image: ghcr.io/gasoid/merge-bot:latest
     restart: always
+    volumes:
+      - tls-cache:/tmp/tls/.cache
     ports:
       - "443:443"
       - "8080:8080"
