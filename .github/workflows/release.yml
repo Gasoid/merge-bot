@@ -2,7 +2,11 @@ name: Create and publish a Docker image
 
 on:
   push:
-   tags:
+    branches:
+      - "*"
+    branches-ignore:
+      - "main"
+    tags:
       - "v*.*.*"
 
 env:

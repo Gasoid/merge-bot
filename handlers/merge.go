@@ -35,7 +35,7 @@ func MergeMaster(username, password, repoUrl, branchName, master string) error {
 	defer os.RemoveAll(dir)
 
 	if _, err := git.Clone(clone.Repository(repoUrl), clone.Directory(dir)); err != nil {
-		slog.Debug("git clone error")
+		slog.Debug("git clone error", "dir", dir)
 		return err
 	}
 
