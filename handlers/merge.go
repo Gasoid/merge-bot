@@ -1,12 +1,14 @@
 package handlers
 
 import (
+	"fmt"
 	"log/slog"
 	"net/url"
 	"os"
 
 	"github.com/ldez/go-git-cmd-wrapper/v2/checkout"
 	"github.com/ldez/go-git-cmd-wrapper/v2/clone"
+	"github.com/ldez/go-git-cmd-wrapper/v2/config"
 	"github.com/ldez/go-git-cmd-wrapper/v2/git"
 	"github.com/ldez/go-git-cmd-wrapper/v2/merge"
 	"github.com/ldez/go-git-cmd-wrapper/v2/push"
@@ -44,6 +46,10 @@ func MergeMaster(username, password, repoUrl, branchName, master string) error {
 
 	if err := os.Chdir(dir); err != nil {
 		slog.Debug("chdir error")
+		return err
+	}
+
+	if _, err := git.Config(config.Entry("user.email", fmt.Sprintf("%s@localhost", username)), config.Entry("user.name", username)); err != nil {
 		return err
 	}
 
