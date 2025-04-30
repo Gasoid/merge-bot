@@ -52,9 +52,10 @@ func MergeMaster(username, password, repoUrl, branchName, master string) error {
 		return err
 	}
 
-	if _, err := git.Merge(merge.NoFf, merge.Commits(master)); err != nil {
+	if _, err := git.Merge(merge.Commits(master)); err != nil {
 		slog.Debug("git merge error")
-		if err.Error() != exit128 {
+		if _, err := git.Merge(merge.NoFf, merge.Commits(master)); err != nil {
+			slog.Debug("git merge --noff error")
 			return err
 		}
 	}
