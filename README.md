@@ -12,6 +12,7 @@
 ### Commands
 - !merge
 - !check
+- !update
 
 ### Setup 
 1. Invite bot ([@mergeapprovebot](https://gitlab.com/mergeapprovebot)) in your repository as **maintainer** (you can revoke permissions from usual developers in order to prevent merging)
