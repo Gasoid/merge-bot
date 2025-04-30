@@ -55,6 +55,7 @@ type Config struct {
 	AllowFailingTests     bool     `yaml:"allow_failing_tests"`
 	TitleRegex            string   `yaml:"title_regex"`
 	AllowEmptyDescription bool     `yaml:"allow_empty_description"`
+	EnableGreetings       bool     `yaml:"greetings_enabled"`
 	GreetingsTemplate     string   `yaml:"greetings_template"`
 	AutoMasterMerge       bool     `yaml:"auto_master_merge"`
 }

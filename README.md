@@ -7,6 +7,7 @@
 - rule for approvals
 - rule for approvers
 - merge on command
+- update branch
 
 
 ### Commands
@@ -55,6 +56,8 @@ Config file must be named `.mrbot.yaml` and placed in root directory
 
 - `title_regex`: pattern of title, default is `.*`
 
+- `greetings_enabled`: enable message for new MR, default is `false`
+
 - `greetings_template`: template of message for new MR, default is `Requirements:\n - Min approvals: {{ .MinApprovals }}\n - Title regex: {{ .TitleRegex }}\n\nOnce you've done, send **!merge** command and i will merge it!`
 
 - `auto_master_merge`: the bot tries to merge target branch, default is `false`
@@ -70,6 +73,7 @@ allow_empty_description: true
 allow_failing_pipelines: true
 allow_failing_tests: true
 title_regex: "^[A-Z]+-[0-9]+" # title begins with jira key prefix, e.g. SCO-123 My cool Title
+greetings_enabled: true
 greetings_template: "Requirements:\n - Min approvals: {{ .MinApprovals }}\n - Title regex: {{ .TitleRegex }}\n\nOnce you've done, send **!merge** command and i will merge it!"
 auto_master_merge: true
 ```

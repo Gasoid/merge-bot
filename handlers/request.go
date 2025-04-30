@@ -64,6 +64,7 @@ func (r *Request) ParseConfig(content string) (*Config, error) {
 		AllowFailingTests:     true,
 		TitleRegex:            ".*",
 		AllowEmptyDescription: true,
+		EnableGreetings:       false,
 		GreetingsTemplate:     "Requirements:\n - Min approvals: {{ .MinApprovals }}\n - Title regex: {{ .TitleRegex }}\n\nOnce you've done, send **!merge** command and i will merge it!",
 		AutoMasterMerge:       false,
 	}
@@ -81,6 +82,10 @@ func (r *Request) LeaveComment(projectId, id int, message string) error {
 func (r *Request) Greetings(projectId, id int) error {
 	if err := r.LoadInfoAndConfig(projectId, id); err != nil {
 		return err
+	}
+
+	if !r.config.EnableGreetings {
+		return nil
 	}
 
 	tmpl, err := template.New("greetings").Parse(r.config.GreetingsTemplate)
