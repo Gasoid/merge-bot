@@ -47,6 +47,7 @@ func MergeMaster(username, password, repoUrl, branchName, master string) error {
 	}
 
 	if _, err := git.Config(config.Entry("user.email", fmt.Sprintf("%s@localhost", username)), config.Entry("user.name", username)); err != nil {
+		slog.Debug("git config error")
 		return err
 	}
 
