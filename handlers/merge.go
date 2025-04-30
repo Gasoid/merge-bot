@@ -16,7 +16,6 @@ import (
 
 const (
 	defaultRemote = "origin"
-	exit128       = "exit status 128"
 )
 
 func MergeMaster(username, password, repoUrl, branchName, master string) error {
@@ -39,9 +38,7 @@ func MergeMaster(username, password, repoUrl, branchName, master string) error {
 
 	if _, err := git.Clone(clone.Repository(repoUrl), clone.Directory(dir)); err != nil {
 		slog.Debug("git clone error", "dir", dir)
-		if err.Error() != exit128 {
-			return err
-		}
+		return err
 	}
 
 	if err := os.Chdir(dir); err != nil {
