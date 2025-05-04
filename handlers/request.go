@@ -5,19 +5,8 @@ import (
 	"fmt"
 	"html/template"
 	"strings"
-	"sync"
-	"time"
 
 	"gopkg.in/yaml.v3"
-)
-
-var (
-	rateCache     = map[int]time.Time{}
-	rateCacheLock sync.RWMutex
-)
-
-const (
-	interval = 5 * time.Minute // 10 min
 )
 
 type Request struct {
