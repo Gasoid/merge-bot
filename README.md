@@ -8,6 +8,7 @@
 - rule for approvers
 - merge on command
 - update branch
+- delete stale branches
 
 
 ### Commands
