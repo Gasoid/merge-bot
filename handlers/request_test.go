@@ -32,6 +32,14 @@ func (p *testProvider) Merge(projectId, id int, message string) error {
 	return p.err
 }
 
+func (p *testProvider) ListBranches(projectId int) ([]Branch, error) {
+	return nil, nil
+}
+
+func (p *testProvider) DeleteBranch(projectId int, name string) error {
+	return nil
+}
+
 func (p *testProvider) GetMRInfo(projectId, id int, path string) (*MrInfo, error) {
 	return &MrInfo{
 		Title:           p.title,

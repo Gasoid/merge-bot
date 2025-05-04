@@ -5,8 +5,19 @@ import (
 	"fmt"
 	"html/template"
 	"strings"
+	"sync"
+	"time"
 
 	"gopkg.in/yaml.v3"
+)
+
+var (
+	rateCache     = map[int]time.Time{}
+	rateCacheLock sync.RWMutex
+)
+
+const (
+	interval = 5 * time.Minute // 10 min
 )
 
 type Request struct {
@@ -64,9 +75,21 @@ func (r *Request) ParseConfig(content string) (*Config, error) {
 		AllowFailingTests:     true,
 		TitleRegex:            ".*",
 		AllowEmptyDescription: true,
-		EnableGreetings:       false,
-		GreetingsTemplate:     "Requirements:\n - Min approvals: {{ .MinApprovals }}\n - Title regex: {{ .TitleRegex }}\n\nOnce you've done, send **!merge** command and i will merge it!",
-		AutoMasterMerge:       false,
+		Greetings: struct {
+			Enabled  bool   `yaml:"enabled"`
+			Template string `yaml:"template"`
+		}{
+			Enabled:  false,
+			Template: "Requirements:\n - Min approvals: {{ .MinApprovals }}\n - Title regex: {{ .TitleRegex }}\n\nOnce you've done, send **!merge** command and i will merge it!",
+		},
+		AutoMasterMerge: false,
+		StaleBranchesDeletion: struct {
+			Enabled bool `yaml:"enabled"`
+			Days    int  `yaml:"days"`
+		}{
+			Enabled: false,
+			Days:    90,
+		},
 	}
 
 	if err := yaml.Unmarshal([]byte(content), mrConfig); err != nil {
@@ -84,11 +107,11 @@ func (r *Request) Greetings(projectId, id int) error {
 		return err
 	}
 
-	if !r.config.EnableGreetings {
+	if !r.config.Greetings.Enabled {
 		return nil
 	}
 
-	tmpl, err := template.New("greetings").Parse(r.config.GreetingsTemplate)
+	tmpl, err := template.New("greetings").Parse(r.config.Greetings.Template)
 	if err != nil {
 		return err
 	}
@@ -109,6 +132,10 @@ func (r *Request) Merge(projectId, id int) (bool, string, error) {
 	if r.config.AutoMasterMerge {
 		// ignore error
 		_ = r.provider.UpdateFromMaster(projectId, id)
+	}
+
+	if r.config.StaleBranchesDeletion.Enabled {
+		defer r.cleanStaleBranches(projectId)
 	}
 
 	if ok, text, err := r.IsValid(projectId, id); ok {

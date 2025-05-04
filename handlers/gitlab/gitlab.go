@@ -188,6 +188,28 @@ func (g *GitlabProvider) GetMRInfo(projectId, mergeId int, configPath string) (*
 	return &info, nil
 }
 
+func (g *GitlabProvider) ListBranches(projectId int) ([]handlers.Branch, error) {
+	branches, _, err := g.client.Branches.ListBranches(projectId, &gitlab.ListBranchesOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	staleBranches := []handlers.Branch{}
+	for _, b := range branches {
+		if b.Default || b.Protected {
+			continue
+		}
+
+		staleBranches = append(staleBranches, handlers.Branch{Name: b.Name, LastUpdated: *b.Commit.CreatedAt})
+	}
+	return staleBranches, nil
+}
+
+func (g *GitlabProvider) DeleteBranch(projectId int, name string) error {
+	_, err := g.client.Branches.DeleteBranch(projectId, name)
+	return err
+}
+
 func New() handlers.RequestProvider {
 	var err error
 	var p GitlabProvider

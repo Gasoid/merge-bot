@@ -46,6 +46,8 @@ type RequestProvider interface {
 	LeaveComment(projectId, mergeId int, message string) error
 	GetMRInfo(projectId, mergeId int, path string) (*MrInfo, error)
 	UpdateFromMaster(projectId, mergeId int) error
+	ListBranches(projectId int) ([]Branch, error)
+	DeleteBranch(projectId int, name string) error
 }
 
 type Config struct {
@@ -55,14 +57,20 @@ type Config struct {
 	AllowFailingTests     bool     `yaml:"allow_failing_tests"`
 	TitleRegex            string   `yaml:"title_regex"`
 	AllowEmptyDescription bool     `yaml:"allow_empty_description"`
-	EnableGreetings       bool     `yaml:"greetings_enabled"`
-	GreetingsTemplate     string   `yaml:"greetings_template"`
-	AutoMasterMerge       bool     `yaml:"auto_master_merge"`
+	Greetings             struct {
+		Enabled  bool   `yaml:"enabled"`
+		Template string `yaml:"template"`
+	} `yaml:"greetings"`
+	AutoMasterMerge       bool `yaml:"auto_master_merge"`
+	StaleBranchesDeletion struct {
+		Enabled bool `yaml:"enabled"`
+		Days    int  `yaml:"days"`
+	} `yaml:"stale_branches_deletion"`
 }
 
 func New(providerName string) (*Request, error) {
-	providersMu.Lock()
-	defer providersMu.Unlock()
+	providersMu.RLock()
+	defer providersMu.RUnlock()
 
 	if _, ok := providers[providerName]; !ok {
 		return nil, &Error{text: "Provider can't be nil"}
