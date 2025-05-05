@@ -5,6 +5,7 @@ import (
 	"mergebot/webhook"
 	"os"
 	"path"
+	"sync"
 
 	"net/http"
 
@@ -35,6 +36,11 @@ func start() {
 	e.Logger.Fatal(e.Start(":8080"))
 }
 
+var (
+	handlerFuncs = map[string]func(string, *webhook.Webhook) error{}
+	handlerMu    sync.RWMutex
+)
+
 //nolint:errcheck
 func Handler(c echo.Context) error {
 	c.String(http.StatusCreated, "")
@@ -53,6 +59,9 @@ func Handler(c echo.Context) error {
 
 	slog.Debug("handler", "event", hook.Event)
 
+	handlerMu.RLock()
+	defer handlerMu.RUnlock()
+
 	if f, ok := handlerFuncs[hook.Event]; ok {
 		go func() {
 			if err := f(providerName, hook); err != nil {
@@ -64,11 +73,10 @@ func Handler(c echo.Context) error {
 	return nil
 }
 
-var (
-	handlerFuncs = map[string]func(string, *webhook.Webhook) error{}
-)
-
 func handle(onEvent string, funcHandler func(string, *webhook.Webhook) error) {
+	handlerMu.Lock()
+	defer handlerMu.Unlock()
+
 	handlerFuncs[onEvent] = func(provider string, hook *webhook.Webhook) error {
 		return funcHandler(provider, hook)
 	}
