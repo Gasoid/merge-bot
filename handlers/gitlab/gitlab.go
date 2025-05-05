@@ -67,11 +67,13 @@ func (g *GitlabProvider) UpdateFromMaster(projectId, mergeId int) error {
 
 func (g *GitlabProvider) LeaveComment(projectId, mergeId int, message string) error {
 	slog.Debug("leaveComment in gitlab", "message", message, "projectId", projectId)
+
 	_, _, err := g.client.Notes.CreateMergeRequestNote(
 		projectId,
 		mergeId,
 		&gitlab.CreateMergeRequestNoteOptions{Body: &message},
 	)
+
 	return err
 }
 
@@ -81,6 +83,7 @@ func (g *GitlabProvider) Merge(projectId, mergeId int, message string) error {
 		mergeId,
 		&gitlab.AcceptMergeRequestOptions{Squash: &t, ShouldRemoveSourceBranch: &t, SquashCommitMessage: &message},
 	)
+
 	return err
 }
 
