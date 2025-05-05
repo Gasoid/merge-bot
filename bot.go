@@ -4,6 +4,7 @@ import (
 	"log/slog"
 	"mergebot/webhook"
 	"os"
+	"path"
 
 	"net/http"
 
@@ -17,15 +18,15 @@ func start() {
 
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
-	// e.Use(echoprometheus.NewMiddleware("mergebot"))
 
-	// e.GET("/metrics", echoprometheus.NewHandler())
 	e.GET("/healthy", healthcheck)
 	e.POST("/mergebot/webhook/:provider/:owner/:repo/", Handler)
 
 	if os.Getenv("TLS_ENABLED") == "true" {
+		tmpDir := path.Join(os.TempDir(), "tls", ".cache")
+
 		e.AutoTLSManager.HostPolicy = autocert.HostWhitelist(os.Getenv("TLS_DOMAIN"))
-		e.AutoTLSManager.Cache = autocert.DirCache("/tmp/tls/.cache")
+		e.AutoTLSManager.Cache = autocert.DirCache(tmpDir)
 		e.AutoTLSManager.Prompt = autocert.AcceptTOS
 		e.Logger.Fatal(e.StartAutoTLS(":443"))
 		return
@@ -69,11 +70,6 @@ var (
 
 func handle(onEvent string, funcHandler func(string, *webhook.Webhook) error) {
 	handlerFuncs[onEvent] = func(provider string, hook *webhook.Webhook) error {
-		if err := funcHandler(provider, hook); err != nil {
-			// metrics.CommandFailedInc(hook.GetCmd(), provider)
-			return err
-		}
-		// metrics.CommandSucceededInc(hook.GetCmd(), provider)
-		return nil
+		return funcHandler(provider, hook)
 	}
 }

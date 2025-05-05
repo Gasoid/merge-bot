@@ -119,8 +119,10 @@ func (r *Request) Merge(projectId, id int) (bool, string, error) {
 	}
 
 	if r.config.AutoMasterMerge {
-		// ignore error
-		_ = r.provider.UpdateFromMaster(projectId, id)
+		err := r.provider.UpdateFromMaster(projectId, id)
+		if err != nil {
+			return false, "", err
+		}
 	}
 
 	if r.config.StaleBranchesDeletion.Enabled {
