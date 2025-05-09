@@ -1,4 +1,4 @@
-# MergeBot: PR/MR bot
+# MergeBot: MR bot for Gitlab
 
 ![screen](screen.webp)
 
@@ -7,7 +7,7 @@
 - rule for approvals
 - rule for approvers
 - merge on command
-- update branch
+- update branch (pull changes from master)
 - delete stale branches
 
 
@@ -16,7 +16,23 @@
 - !check
 - !update
 
-### Setup 
+## Self-hosted or Cloud
+The Bot could be run within your infrastructure as container.
+In case you want to test the bot you can use gitlab cloud bot.
+
+### Self-hosted
+
+1. bot.env:
+```
+GITLAB_TOKEN="your_token"
+```
+
+2. run docker-compose
+```
+docker-compose up -d
+```
+
+### Setup for Gitlab Cloud
 1. Invite bot ([@mergeapprovebot](https://gitlab.com/mergeapprovebot)) in your repository as **maintainer** (you can revoke permissions from usual developers in order to prevent merging)
 2. Add webhook `https://mergebot.tools/mergebot/webhook/gitlab/your_username_or_company_name/repo-name/` (Comments and merge request events)
 3. PROFIT: now you can create MR, leave commands: !check and then !merge (comment in MR)
