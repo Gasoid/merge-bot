@@ -44,6 +44,12 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha
           images: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
             gasoid/merge-bot

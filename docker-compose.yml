@@ -2,7 +2,10 @@ version: '2.3'
 
 services:
   bot:
-    image: ghcr.io/gasoid/merge-bot:latest
+    # github registry
+    # image: ghcr.io/gasoid/merge-bot:latest
+    # dockerhub registry
+    image: gasoid/merge-bot:latest
     restart: always
     volumes:
       - tls-cache:/tmp/tls/.cache
