@@ -2,6 +2,7 @@ package main
 
 import (
 	"log/slog"
+	"mergebot/handlers"
 	"mergebot/webhook"
 	"os"
 	"path"
@@ -37,7 +38,7 @@ func start() {
 }
 
 var (
-	handlerFuncs = map[string]func(string, *webhook.Webhook) error{}
+	handlerFuncs = map[string]func(*handlers.Request, *webhook.Webhook) error{}
 	handlerMu    sync.RWMutex
 )
 
@@ -64,8 +65,14 @@ func Handler(c echo.Context) error {
 
 	if f, ok := handlerFuncs[hook.Event]; ok {
 		go func() {
-			if err := f(providerName, hook); err != nil {
-				slog.Error("handlerFunc", "err", err)
+			command, err := handlers.New(providerName)
+			if err != nil {
+				slog.Error("can't initialize provider", "provider", providerName, "command", command, "err", err)
+				return
+			}
+
+			if err := f(command, hook); err != nil {
+				slog.Error("handlerFunc returns err", "provider", providerName, "command", command, "err", err)
 			}
 		}()
 	}
@@ -73,11 +80,11 @@ func Handler(c echo.Context) error {
 	return nil
 }
 
-func handle(onEvent string, funcHandler func(string, *webhook.Webhook) error) {
+func handle(onEvent string, funcHandler func(*handlers.Request, *webhook.Webhook) error) {
 	handlerMu.Lock()
 	defer handlerMu.Unlock()
 
-	handlerFuncs[onEvent] = func(provider string, hook *webhook.Webhook) error {
-		return funcHandler(provider, hook)
+	handlerFuncs[onEvent] = func(command *handlers.Request, hook *webhook.Webhook) error {
+		return funcHandler(command, hook)
 	}
 }
