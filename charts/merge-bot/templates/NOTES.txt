@@ -1,8 +1,0 @@
-
-How to use after deployment:
-
-1. Invite bot in your repository as maintainer
-
-2. Add webhook https://host.name/mergebot/webhook/gitlab/your_username_or_company_name/repo-name/ (Comments and merge request events)
-
-3. You can create MR, leave commands: !check and then !merge (comment in MR)
