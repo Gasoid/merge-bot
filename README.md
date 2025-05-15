@@ -25,11 +25,28 @@ In case you want to test the bot you can use gitlab cloud bot.
 1. bot.env:
 ```
 GITLAB_TOKEN="your_token"
+#TLS_ENABLED="false"
+#TLS_DOMAIN="domain.your-example.com"
 ```
 
 2. run docker-compose
 ```
 docker-compose up -d
+```
+
+you can configure bot using cli args as well:
+```bash
+Usage of merge-bot:
+  -debug
+    	whether debug logging is enabled, default is false (also via DEBUG)
+  -gitlab-token string
+    	in order to communicate with gitlab api, bot needs token (also via GITLAB_TOKEN)
+  -gitlab-url string
+    	in case of self-hosted gitlab, you need to set this var up (also via GITLAB_URL)
+  -tls-domain string
+    	which domain is used for ssl certificate (also via TLS_DOMAIN)
+  -tls-enabled
+    	whether tls enabled or not, bot will use Letsencrypt, default is false (also via TLS_ENABLED)
 ```
 
 ### Setup for Gitlab Cloud
