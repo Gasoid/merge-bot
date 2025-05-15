@@ -18,6 +18,7 @@ const (
 	defaultRemote = "origin"
 )
 
+//nolint:errcheck
 func MergeMaster(username, password, repoUrl, branchName, master string) error {
 	if username != "" && password != "" {
 		parsedUrl, err := url.Parse(repoUrl)

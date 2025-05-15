@@ -2,6 +2,7 @@ package main
 
 import (
 	"log/slog"
+	"mergebot/config"
 	"mergebot/handlers"
 	"mergebot/webhook"
 	"os"
@@ -15,6 +16,16 @@ import (
 	"golang.org/x/crypto/acme/autocert"
 )
 
+var (
+	tlsEnabled bool
+	tlsDomain  string
+)
+
+func init() {
+	config.BoolVar(&tlsEnabled, "tls-enabled", false, "whether tls enabled or not, bot will use Letsencrypt (also via TLS_ENABLED)")
+	config.StringVar(&tlsDomain, "tls-domain", "", "which domain is used for ssl certificate (also via TLS_DOMAIN)")
+}
+
 func start() {
 	e := echo.New()
 
@@ -24,10 +35,13 @@ func start() {
 	e.GET("/healthy", healthcheck)
 	e.POST("/mergebot/webhook/:provider/:owner/:repo/", Handler)
 
-	if os.Getenv("TLS_ENABLED") == "true" {
+	if tlsEnabled {
 		tmpDir := path.Join(os.TempDir(), "tls", ".cache")
 
-		e.AutoTLSManager.HostPolicy = autocert.HostWhitelist(os.Getenv("TLS_DOMAIN"))
+		if tlsDomain != "" {
+			e.AutoTLSManager.HostPolicy = autocert.HostWhitelist(tlsDomain)
+		}
+
 		e.AutoTLSManager.Cache = autocert.DirCache(tmpDir)
 		e.AutoTLSManager.Prompt = autocert.AcceptTOS
 		e.Logger.Fatal(e.StartAutoTLS(":443"))
