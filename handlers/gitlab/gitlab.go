@@ -3,19 +3,27 @@ package gitlab
 import (
 	b64 "encoding/base64"
 	"log/slog"
+	"mergebot/config"
 	"mergebot/handlers"
-	"os"
 
 	"github.com/xanzy/go-gitlab"
 )
 
 func init() {
 	handlers.Register("gitlab", New)
+
+	config.StringVar(&gitlabToken, "gitlab-token", "", "in order to communicate with gitlab api, bot needs token (also via GITLAB_TOKEN)")
+	config.StringVar(&gitlabURL, "gitlab-url", "", "in case of self-hosted gitlab, you need to set this var up (also via GITLAB_URL)")
 }
 
+var (
+	gitlabToken string
+	gitlabURL   string
+)
+
 const (
-	gitlabToken   = "GITLAB_TOKEN"
-	gitlabUrl     = "GITLAB_URL"
+	// gitlabToken   = "GITLAB_TOKEN"
+	// gitlabUrl     = "GITLAB_URL"
 	tokenUsername = "oauth2"
 	maxRepoSize   = 1000 * 1000 * 500 // 500Mb
 )
@@ -58,7 +66,7 @@ func (g *GitlabProvider) UpdateFromMaster(projectId, mergeId int) error {
 
 	return handlers.MergeMaster(
 		tokenUsername,
-		os.Getenv(gitlabToken),
+		gitlabToken,
 		project.HTTPURLToRepo,
 		g.mr.SourceBranch,
 		g.mr.TargetBranch,
@@ -219,13 +227,13 @@ func New() handlers.RequestProvider {
 	var err error
 	var p GitlabProvider
 
-	token := os.Getenv(gitlabToken)
+	token := gitlabToken
 	if token == "" {
 		slog.Error("gitlab init", "err", "gitlab requires token, please set env variable GITLAB_TOKEN")
 		return nil
 	}
 
-	urlInstance := os.Getenv(gitlabUrl)
+	urlInstance := gitlabURL
 
 	if urlInstance != "" {
 		p.client, err = gitlab.NewClient(token, gitlab.WithBaseURL(urlInstance))
