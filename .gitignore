@@ -1,6 +1,5 @@
 .env
 .vscode
-*.yaml
 _config
 .DS_Store
 _metrics
