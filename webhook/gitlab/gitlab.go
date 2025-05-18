@@ -67,15 +67,21 @@ func (g *GitlabProvider) ParseRequest(request *http.Request) error {
 }
 
 func (g *GitlabProvider) GetCmd() string {
+	slog.Debug("getCmd", "action", g.action)
+
+	if g.action == "merge" {
+		return webhook.OnMerge
+	}
+
+	if g.action == "open" {
+		return webhook.OnNewMR
+	}
+
 	slog.Debug("getCmd", "note", g.note)
 	if strings.HasPrefix(g.note, "!") {
 		return g.note
 	}
 	return ""
-}
-
-func (g *GitlabProvider) IsNew() bool {
-	return g.action == "open"
 }
 
 func (g *GitlabProvider) GetID() int {

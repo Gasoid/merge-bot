@@ -7,6 +7,7 @@ import (
 
 const (
 	OnNewMR = "\anew_mr"
+	OnMerge = "\amerge"
 )
 
 var (
@@ -36,7 +37,6 @@ type Provider interface {
 	GetCmd() string
 	GetID() int
 	GetProjectID() int
-	IsNew() bool
 	ParseRequest(request *http.Request) error
 }
 
@@ -47,10 +47,6 @@ type Webhook struct {
 
 func (w *Webhook) GetCmd() string {
 	return w.provider.GetCmd()
-}
-
-func (w *Webhook) IsNew() bool {
-	return w.provider.IsNew()
 }
 
 func (w *Webhook) GetID() int {
@@ -68,11 +64,6 @@ func (w *Webhook) ParseRequest(request *http.Request) error {
 
 	if err := w.provider.ParseRequest(request); err != nil {
 		return err
-	}
-
-	if w.provider.IsNew() {
-		w.Event = OnNewMR
-		return nil
 	}
 
 	w.Event = w.provider.GetCmd()
