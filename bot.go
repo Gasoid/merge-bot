@@ -85,6 +85,11 @@ func Handler(c echo.Context) error {
 				return
 			}
 
+			// if err := command.LoadInfoAndConfig(hook.GetProjectID(), hook.GetID()); err != nil {
+			// 	slog.Error("can't load repo config", "provider", providerName, "command", command, "err", err)
+			// 	return
+			// }
+
 			if err := f(command, hook); err != nil {
 				slog.Error("handlerFunc returns err", "provider", providerName, "command", command, "err", err)
 			}

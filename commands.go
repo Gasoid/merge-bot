@@ -12,7 +12,7 @@ func init() {
 	handle("!check", CheckCmd)
 	handle("!update", UpdateBranchCmd)
 	handle(webhook.OnNewMR, NewMR)
-	handle(webhook.OnMerge, Merge)
+	handle(webhook.OnMerge, MergeEvent)
 }
 
 func UpdateBranchCmd(command *handlers.Request, hook *webhook.Webhook) error {
@@ -57,8 +57,8 @@ func NewMR(command *handlers.Request, hook *webhook.Webhook) error {
 	return nil
 }
 
-func Merge(command *handlers.Request, hook *webhook.Webhook) error {
-	if err := command.DeleteStaleBranches(hook.GetProjectID()); err != nil {
+func MergeEvent(command *handlers.Request, hook *webhook.Webhook) error {
+	if err := command.DeleteStaleBranches(hook.GetProjectID(), hook.GetID()); err != nil {
 		return fmt.Errorf("command.Merge returns err: %w", err)
 	}
 

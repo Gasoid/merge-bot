@@ -113,7 +113,11 @@ func (r *Request) Greetings(projectId, id int) error {
 	return r.LeaveComment(projectId, id, buf.String())
 }
 
-func (r *Request) DeleteStaleBranches(projectId int) error {
+func (r *Request) DeleteStaleBranches(projectId, id int) error {
+	if err := r.LoadInfoAndConfig(projectId, id); err != nil {
+		return err
+	}
+
 	if r.config.StaleBranchesDeletion.Enabled {
 		return r.cleanStaleBranches(projectId)
 	}
