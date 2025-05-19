@@ -2,7 +2,7 @@
 
 ![screen](screen.webp)
 
-### Features
+## Features
 - rule for title
 - rule for approvals
 - rule for approvers
@@ -11,22 +11,45 @@
 - delete stale branches
 
 
+## Table of Contents
+
+- [Installation](#installation)
+  - [Gitlab Cloud](#gitlab-cloud)
+  - [Docker-compose](#Docker-compose)
+  - [Helm](#helm)
+  - [CLI](#cli)
+- [Config file](#config-file)
+- [Required bot permissions](#required-bot-permissions)
+
+### Demo repo
+
+https://gitlab.com/Gasoid/sugar-test
+
 ### Commands
 - !merge
 - !check
 - !update
 
-## Self-hosted or Cloud
+## Installation
 The Bot could be run within your infrastructure as container.
 In case you want to test the bot you can use gitlab cloud bot.
 
-### Self-hosted
+
+### Gitlab Cloud
+1. Invite bot ([@mergeapprovebot](https://gitlab.com/mergeapprovebot)) in your repository as **maintainer** (you can revoke permissions from usual developers in order to prevent merging)
+2. Add webhook `https://mergebot.tools/mergebot/webhook/gitlab/your_username_or_company_name/repo-name/` (Comments and merge request events)
+3. PROFIT: now you can create MR, leave commands: !check and then !merge (comment in MR)
+
+You can test bot on gitlab public repo: https://gitlab.com/Gasoid/sugar-test
+
+### Docker-compose
 
 1. bot.env:
 ```
 GITLAB_TOKEN="your_token"
 #TLS_ENABLED="false"
 #TLS_DOMAIN="domain.your-example.com"
+#GITLAB_URL=""
 ```
 
 2. run docker-compose
@@ -34,20 +57,6 @@ GITLAB_TOKEN="your_token"
 docker-compose up -d
 ```
 
-you can configure bot using cli args as well:
-```bash
-Usage of merge-bot:
-  -debug
-    	whether debug logging is enabled, default is false (also via DEBUG)
-  -gitlab-token string
-    	in order to communicate with gitlab api, bot needs token (also via GITLAB_TOKEN)
-  -gitlab-url string
-    	in case of self-hosted gitlab, you need to set this var up (also via GITLAB_URL)
-  -tls-domain string
-    	which domain is used for ssl certificate (also via TLS_DOMAIN)
-  -tls-enabled
-    	whether tls enabled or not, bot will use Letsencrypt, default is false (also via TLS_ENABLED)
-```
 
 ### Helm
 
@@ -69,12 +78,7 @@ To uninstall the chart:
 
     helm uninstall my-merge-bot
 
-### Setup for Gitlab Cloud
-1. Invite bot ([@mergeapprovebot](https://gitlab.com/mergeapprovebot)) in your repository as **maintainer** (you can revoke permissions from usual developers in order to prevent merging)
-2. Add webhook `https://mergebot.tools/mergebot/webhook/gitlab/your_username_or_company_name/repo-name/` (Comments and merge request events)
-3. PROFIT: now you can create MR, leave commands: !check and then !merge (comment in MR)
-
-### Quickstart on your env
+### CLI
 
 Create personal/repo/org token in gitlab, copy it and set as env variable
 ```bash
@@ -84,16 +88,25 @@ export TLS_ENABLED="true"
 export TLS_DOMAIN="bot.domain.com"
 ```
 
+you can configure bot using cli args as well:
+```bash
+Usage of merge-bot:
+  -debug
+    	whether debug logging is enabled, default is false (also via DEBUG)
+  -gitlab-token string
+    	in order to communicate with gitlab api, bot needs token (also via GITLAB_TOKEN)
+  -gitlab-url string
+    	in case of self-hosted gitlab, you need to set this var up (also via GITLAB_URL)
+  -tls-domain string
+    	which domain is used for ssl certificate (also via TLS_DOMAIN)
+  -tls-enabled
+    	whether tls enabled or not, bot will use Letsencrypt, default is false (also via TLS_ENABLED)
+```
+
 Run bot
 ```
 go run ./
 ```
-
-### Build
-```
-go build ./
-```
-
 
 
 ## Config file
@@ -143,3 +156,7 @@ stale_branches_deletion:
 ```
 
 place it in root of your repo and name it `.mrbot.yaml`
+
+### Required bot permissions
+- Bot must have __Maintainer__ role in order to comment, merge and delete branches
+- Access Token must have following permissions: api, read_repository, write_repository
