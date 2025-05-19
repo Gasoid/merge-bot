@@ -51,11 +51,11 @@ var (
 			checkFunc: checkDescription,
 		},
 		{
-			text:      "Number of approvals",
+			text:      "Number of approvals (mr author is ignored)",
 			checkFunc: checkApprovals,
 		},
 		{
-			text:      "Required approvers",
+			text:      "Required approvers (mr author is ignored)",
 			checkFunc: checkApprovers,
 		},
 		{
