@@ -81,7 +81,7 @@ func Handler(c echo.Context) error {
 		go func() {
 			command, err := handlers.New(providerName)
 			if err != nil {
-				slog.Error("can't initialize provider", "provider", providerName, "command", command, "err", err)
+				slog.Error("can't initialize provider", "provider", providerName, "event", hook.Event, "err", err)
 				return
 			}
 
@@ -91,7 +91,7 @@ func Handler(c echo.Context) error {
 			// }
 
 			if err := f(command, hook); err != nil {
-				slog.Error("handlerFunc returns err", "provider", providerName, "command", command, "err", err)
+				slog.Error("handlerFunc returns err", "provider", providerName, "event", hook.Event, "err", err)
 			}
 		}()
 	}
