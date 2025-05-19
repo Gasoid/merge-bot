@@ -12,6 +12,8 @@ type Branch struct {
 }
 
 func (r *Request) cleanStaleBranches(projectId int) error {
+	slog.Debug("deletion of stale branches has been run")
+
 	candidates, err := r.provider.ListBranches(projectId)
 	if err != nil {
 		return fmt.Errorf("ListBranches returns error: %w", err)
