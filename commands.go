@@ -59,7 +59,7 @@ func NewMR(command *handlers.Request, hook *webhook.Webhook) error {
 
 func MergeEvent(command *handlers.Request, hook *webhook.Webhook) error {
 	if err := command.DeleteStaleBranches(hook.GetProjectID(), hook.GetID()); err != nil {
-		return fmt.Errorf("command.Merge returns err: %w", err)
+		return fmt.Errorf("command.MergeEvent returns err: %w", err)
 	}
 
 	return nil
