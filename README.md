@@ -19,6 +19,8 @@
   - [Helm](#helm)
   - [CLI](#cli)
 - [Config file](#config-file)
+  - [Example](#example)
+  - [Demo project on gitlab](https://gitlab.com/Gasoid/sugar-test)
 - [Required bot permissions](#required-bot-permissions)
 
 ### Demo repo
@@ -135,7 +137,7 @@ stale_branches_deletion:
   days: 90 # branch is staled after int days, default is 90
 ```
 
-Example:
+#### Example:
 
 ```yaml
 approvers:
