@@ -11,16 +11,11 @@ import (
 )
 
 type testWebhookProvider struct {
-	isNew     bool
 	isValid   bool
 	id        int
 	projectID int
 	cmd       string
 	err       error
-}
-
-func (p *testWebhookProvider) IsNew() bool {
-	return p.isNew
 }
 
 func (p *testWebhookProvider) IsValid() bool {

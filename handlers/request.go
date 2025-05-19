@@ -113,6 +113,18 @@ func (r *Request) Greetings(projectId, id int) error {
 	return r.LeaveComment(projectId, id, buf.String())
 }
 
+func (r *Request) DeleteStaleBranches(projectId, id int) error {
+	if err := r.LoadInfoAndConfig(projectId, id); err != nil {
+		return err
+	}
+
+	if r.config.StaleBranchesDeletion.Enabled {
+		return r.cleanStaleBranches(projectId)
+	}
+
+	return nil
+}
+
 func (r *Request) Merge(projectId, id int) (bool, string, error) {
 	if err := r.LoadInfoAndConfig(projectId, id); err != nil {
 		return false, "", err
@@ -123,10 +135,6 @@ func (r *Request) Merge(projectId, id int) (bool, string, error) {
 		if err != nil {
 			return false, "", err
 		}
-	}
-
-	if r.config.StaleBranchesDeletion.Enabled {
-		defer r.cleanStaleBranches(projectId)
 	}
 
 	if ok, text, err := r.IsValid(projectId, id); ok {

@@ -144,7 +144,7 @@ func (g *GitlabProvider) IsValid(projectId, mergeId int) (bool, error) {
 	}
 
 	if g.mr.State != "opened" {
-		return false, handlers.StatusError
+		return false, nil
 	}
 
 	return !g.mr.HasConflicts, nil

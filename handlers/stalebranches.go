@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"log/slog"
 	"time"
 )
@@ -10,11 +11,12 @@ type Branch struct {
 	LastUpdated time.Time
 }
 
-func (r *Request) cleanStaleBranches(projectId int) {
+func (r *Request) cleanStaleBranches(projectId int) error {
+	slog.Debug("deletion of stale branches has been run")
+
 	candidates, err := r.provider.ListBranches(projectId)
 	if err != nil {
-		slog.Error("ListBranches returns error", "err", err)
-		return
+		return fmt.Errorf("ListBranches returns error: %w", err)
 	}
 
 	days := r.config.StaleBranchesDeletion.Days
@@ -26,8 +28,9 @@ func (r *Request) cleanStaleBranches(projectId int) {
 			// delete branch
 			slog.Debug("branch info", "name", b.Name, "createdAt", b.LastUpdated.String())
 			if err := r.provider.DeleteBranch(projectId, b.Name); err != nil {
-				slog.Error("DeleteBranch returns error", "branch", b.Name, "err", err)
+				return fmt.Errorf("DeleteBranch returns error: %w", err)
 			}
 		}
 	}
+	return nil
 }

@@ -2,7 +2,7 @@
 
 ![screen](screen.webp)
 
-### Features
+## Features
 - rule for title
 - rule for approvals
 - rule for approvers
@@ -11,27 +11,83 @@
 - delete stale branches
 
 
+## Table of Contents
+
+- [Installation](#installation)
+  - [Gitlab Cloud](#gitlab-cloud)
+  - [Docker-compose](#Docker-compose)
+  - [Helm](#helm)
+  - [CLI](#cli)
+- [Config file](#config-file)
+  - [Example](#example)
+  - [Demo project on gitlab](https://gitlab.com/Gasoid/sugar-test)
+- [Required bot permissions](#required-bot-permissions)
+
+### Demo repo
+
+https://gitlab.com/Gasoid/sugar-test
+
 ### Commands
 - !merge
 - !check
 - !update
 
-## Self-hosted or Cloud
+## Installation
 The Bot could be run within your infrastructure as container.
 In case you want to test the bot you can use gitlab cloud bot.
 
-### Self-hosted
+
+### Gitlab Cloud
+1. Invite bot ([@mergeapprovebot](https://gitlab.com/mergeapprovebot)) in your repository as **maintainer** (you can revoke permissions from usual developers in order to prevent merging)
+2. Add webhook `https://mergebot.tools/mergebot/webhook/gitlab/your_username_or_company_name/repo-name/` (Comments and merge request events)
+3. PROFIT: now you can create MR, leave commands: !check and then !merge (comment in MR)
+
+You can test bot on gitlab public repo: https://gitlab.com/Gasoid/sugar-test
+
+### Docker-compose
 
 1. bot.env:
 ```
 GITLAB_TOKEN="your_token"
 #TLS_ENABLED="false"
 #TLS_DOMAIN="domain.your-example.com"
+#GITLAB_URL=""
 ```
 
 2. run docker-compose
 ```
 docker-compose up -d
+```
+
+
+### Helm
+
+[Helm](https://helm.sh) must be installed to use the charts.  Please refer to
+Helm's [documentation](https://helm.sh/docs) to get started.
+
+Once Helm has been set up correctly, add the repo as follows:
+
+    helm repo add merge-bot https://gasoid.github.io/helm-charts
+
+If you had already added this repo earlier, run `helm repo update` to retrieve
+the latest versions of the packages.  You can then run `helm search repo merge-bot` to see the charts.
+
+To install the merge-bot chart:
+
+    helm install my-merge-bot merge-bot/merge-bot
+
+To uninstall the chart:
+
+    helm uninstall my-merge-bot
+
+### CLI
+
+Create personal/repo/org token in gitlab, copy it and set as env variable
+```bash
+export GITLAB_TOKEN="your_token"
+export GITLAB_URL="" # if it is not public gitlab cloud
+export TLS_ENABLED="true"
+export TLS_DOMAIN="bot.domain.com"
 ```
 
 you can configure bot using cli args as well:
@@ -49,31 +105,10 @@ Usage of merge-bot:
     	whether tls enabled or not, bot will use Letsencrypt, default is false (also via TLS_ENABLED)
 ```
 
-### Setup for Gitlab Cloud
-1. Invite bot ([@mergeapprovebot](https://gitlab.com/mergeapprovebot)) in your repository as **maintainer** (you can revoke permissions from usual developers in order to prevent merging)
-2. Add webhook `https://mergebot.tools/mergebot/webhook/gitlab/your_username_or_company_name/repo-name/` (Comments and merge request events)
-3. PROFIT: now you can create MR, leave commands: !check and then !merge (comment in MR)
-
-### Quickstart on your env
-
-Create personal/repo/org token in gitlab, copy it and set as env variable
-```bash
-export GITLAB_TOKEN="your_token"
-export GITLAB_URL="" # if it is not public gitlab cloud
-export TLS_ENABLED="true"
-export TLS_DOMAIN="bot.domain.com"
-```
-
 Run bot
 ```
 go run ./
 ```
-
-### Build
-```
-go build ./
-```
-
 
 
 ## Config file
@@ -102,7 +137,7 @@ stale_branches_deletion:
   days: 90 # branch is staled after int days, default is 90
 ```
 
-Example:
+#### Example:
 
 ```yaml
 approvers:
@@ -123,3 +158,7 @@ stale_branches_deletion:
 ```
 
 place it in root of your repo and name it `.mrbot.yaml`
+
+### Required bot permissions
+- Bot must have __Maintainer__ role in order to comment, merge and delete branches
+- Access Token must have following permissions: api, read_repository, write_repository
