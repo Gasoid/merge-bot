@@ -6,8 +6,8 @@ import (
 )
 
 const (
-	OnNewMR = "\anew_mr"
-	OnMerge = "\amerge"
+	OnNewMR = "\anewMREvent"
+	OnMerge = "\amergeEvent"
 )
 
 var (
