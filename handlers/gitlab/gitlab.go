@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"mergebot/config"
 	"mergebot/handlers"
+	"net/http"
 
 	"github.com/xanzy/go-gitlab"
 )
@@ -201,8 +202,13 @@ func (g *GitlabProvider) GetMRInfo(projectId, mergeId int, configPath string) (*
 }
 
 func (g *GitlabProvider) GetVar(projectId int, varName string) (string, error) {
-	secretVar, _, err := g.client.ProjectVariables.GetVariable(projectId, varName, &gitlab.GetProjectVariableOptions{})
+	secretVar, resp, err := g.client.ProjectVariables.GetVariable(projectId, varName, &gitlab.GetProjectVariableOptions{})
 	if err != nil {
+		if resp.StatusCode == http.StatusNotFound {
+			slog.Debug("variable not found", "varName", varName, "projectId", projectId)
+			return "", nil
+		}
+
 		return "", fmt.Errorf("couldn't get variable %s because gitlab instance returns err: %w", varName, err)
 	}
 

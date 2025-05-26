@@ -168,7 +168,7 @@ func (r Request) ValidateSecret(projectId int, secret string) bool {
 	if err != nil {
 		slog.Error("cound't validate secret", "err", err)
 
-		return secret == ""
+		return false
 	}
 
 	return secretVar == secret
