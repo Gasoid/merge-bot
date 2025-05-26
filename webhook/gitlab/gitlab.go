@@ -21,10 +21,15 @@ type GitlabProvider struct {
 	action    string
 	projectId int
 	id        int
+	secret    string
 }
 
 func New() webhook.Provider {
 	return &GitlabProvider{}
+}
+
+func (g GitlabProvider) GetSecret() string {
+	return g.secret
 }
 
 func (g *GitlabProvider) ParseRequest(request *http.Request) error {
@@ -49,6 +54,8 @@ func (g *GitlabProvider) ParseRequest(request *http.Request) error {
 	if err != nil {
 		return webhook.PayloadError
 	}
+
+	g.secret = request.Header.Get("X-Gitlab-Token")
 
 	if comment, ok = event.(*gitlab.MergeCommentEvent); ok {
 		g.projectId = comment.ProjectID

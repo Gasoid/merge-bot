@@ -38,11 +38,16 @@ type Provider interface {
 	GetID() int
 	GetProjectID() int
 	ParseRequest(request *http.Request) error
+	GetSecret() string
 }
 
 type Webhook struct {
 	provider Provider
 	Event    string
+}
+
+func (w Webhook) GetSecret() string {
+	return w.provider.GetSecret()
 }
 
 func (w *Webhook) GetCmd() string {
