@@ -33,7 +33,7 @@ https://gitlab.com/Gasoid/sugar-test
 - `!update`: updates the branch from master/main (default branch) changes
 
 ### Use-cases
-Given a lot of repos,  therefore we various rules for each of them. It is complicated and tedious to run as many bot instances as teams.
+Given a lot of repos,  therefore we require to set up various rules for each of them. It is complicated and tedious to run as many bot instances as teams.
 The Merge-bot checks whether MRs meet rules of the repository (.mrbot.yaml file). Owner of repo can create his own set of rules.
 
 ## Installation
