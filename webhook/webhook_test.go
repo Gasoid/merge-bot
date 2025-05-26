@@ -16,6 +16,7 @@ type testProvider struct {
 	id        int
 	projectID int
 	cmd       string
+	secret    string
 	err       error
 }
 
@@ -37,6 +38,10 @@ func (p *testProvider) GetID() int {
 
 func (p *testProvider) GetProjectID() int {
 	return p.projectID
+}
+
+func (p *testProvider) GetSecret() string {
+	return p.secret
 }
 
 func newTestProvider() Provider {

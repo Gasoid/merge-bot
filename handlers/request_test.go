@@ -40,6 +40,10 @@ func (p *testProvider) DeleteBranch(projectId int, name string) error {
 	return nil
 }
 
+func (p *testProvider) GetVar(projectId int, varName string) (string, error) {
+	return "test", nil
+}
+
 func (p *testProvider) GetMRInfo(projectId, id int, path string) (*MrInfo, error) {
 	return &MrInfo{
 		Title:           p.title,

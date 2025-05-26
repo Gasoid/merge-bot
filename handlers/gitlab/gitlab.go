@@ -2,9 +2,11 @@ package gitlab
 
 import (
 	b64 "encoding/base64"
+	"fmt"
 	"log/slog"
 	"mergebot/config"
 	"mergebot/handlers"
+	"net/http"
 
 	"github.com/xanzy/go-gitlab"
 )
@@ -22,8 +24,6 @@ var (
 )
 
 const (
-	// gitlabToken   = "GITLAB_TOKEN"
-	// gitlabUrl     = "GITLAB_URL"
 	tokenUsername = "oauth2"
 	maxRepoSize   = 1000 * 1000 * 500 // 500Mb
 )
@@ -199,6 +199,20 @@ func (g *GitlabProvider) GetMRInfo(projectId, mergeId int, configPath string) (*
 	}
 
 	return &info, nil
+}
+
+func (g *GitlabProvider) GetVar(projectId int, varName string) (string, error) {
+	secretVar, resp, err := g.client.ProjectVariables.GetVariable(projectId, varName, &gitlab.GetProjectVariableOptions{})
+	if err != nil {
+		if resp.StatusCode == http.StatusNotFound {
+			slog.Debug("variable not found", "varName", varName, "projectId", projectId)
+			return "", nil
+		}
+
+		return "", fmt.Errorf("couldn't get variable %s because gitlab instance returns err: %w", varName, err)
+	}
+
+	return secretVar.Value, nil
 }
 
 func (g *GitlabProvider) ListBranches(projectId int) ([]handlers.Branch, error) {

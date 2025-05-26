@@ -90,8 +90,14 @@ func Handler(c echo.Context) error {
 			// 	return
 			// }
 
+			if !command.ValidateSecret(hook.GetProjectID(), hook.GetSecret()) {
+				slog.Error("webhook secret is not valid", "projectId", hook.GetProjectID(), "provider", providerName)
+				return
+			}
+
 			if err := f(command, hook); err != nil {
 				slog.Error("handlerFunc returns err", "provider", providerName, "event", hook.Event, "err", err)
+				return
 			}
 		}()
 	}

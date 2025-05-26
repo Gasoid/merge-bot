@@ -48,6 +48,7 @@ type RequestProvider interface {
 	UpdateFromMaster(projectId, mergeId int) error
 	ListBranches(projectId int) ([]Branch, error)
 	DeleteBranch(projectId int, name string) error
+	GetVar(projectId int, varName string) (string, error)
 }
 
 type Config struct {

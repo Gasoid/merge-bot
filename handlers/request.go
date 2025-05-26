@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"html/template"
+	"log/slog"
 	"strings"
 
 	"gopkg.in/yaml.v3"
@@ -156,4 +157,17 @@ func (r *Request) UpdateFromMaster(projectId, id int) error {
 		return err
 	}
 	return nil
+}
+
+func (r Request) ValidateSecret(projectId int, secret string) bool {
+	const mergeBotSecret = "MERGE_BOT_SECRET"
+
+	secretVar, err := r.provider.GetVar(projectId, mergeBotSecret)
+	if err != nil {
+		slog.Error("cound't validate secret", "err", err)
+
+		return false
+	}
+
+	return secretVar == secret
 }
