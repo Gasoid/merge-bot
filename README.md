@@ -28,9 +28,13 @@
 https://gitlab.com/Gasoid/sugar-test
 
 ### Commands
-- !merge
-- !check
-- !update
+- `!merge`: merges MR if the MR meets rules of the repo
+- `!check`: checks whether the MR meets rules of the repo
+- `!update`: updates the branch from master/main (default branch) changes
+
+### Use-cases
+Given a lot of repos,  therefore we various rules for each of them. It is complicated and tedious to run as many bot instances as teams.
+The Merge-bot checks whether MRs meet rules of the repository (.mrbot.yaml file). Owner of repo can create his own set of rules.
 
 ## Installation
 The Bot could be run within your infrastructure as container.
