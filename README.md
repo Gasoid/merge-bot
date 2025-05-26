@@ -3,12 +3,12 @@
 ![screen](screen.webp)
 
 ## Features
-- rule for title
-- rule for approvals
-- rule for approvers
-- merge on command
-- update branch (pull changes from master)
-- delete stale branches
+- [x] rule for title
+- [x] rule for approvals
+- [x] rule for approvers
+- [x] merge on command
+- [x] update branch (pull changes from master)
+- [x] delete stale branches
 
 
 ## Table of Contents
