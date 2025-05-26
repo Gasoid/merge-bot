@@ -159,11 +159,9 @@ func (r *Request) UpdateFromMaster(projectId, id int) error {
 	return nil
 }
 
-const (
-	mergeBotSecret = "MERGE_BOT_SECRET"
-)
-
 func (r Request) ValidateSecret(projectId int, secret string) bool {
+	const mergeBotSecret = "MERGE_BOT_SECRET"
+
 	secretVar, err := r.provider.GetVar(projectId, mergeBotSecret)
 	if err != nil {
 		slog.Error("cound't validate secret", "err", err)

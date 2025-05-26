@@ -18,10 +18,13 @@
   - [Docker-compose](#Docker-compose)
   - [Helm](#helm)
   - [CLI](#cli)
+- [Required bot permissions](#required-bot-permissions)
+- [Webhook secret](#webhook-secret)
+- [Stale branches](#stale-branches)
 - [Config file](#config-file)
   - [Example](#example)
   - [Demo project on gitlab](https://gitlab.com/Gasoid/sugar-test)
-- [Required bot permissions](#required-bot-permissions)
+
 
 ### Demo repo
 
@@ -63,6 +66,7 @@ GITLAB_TOKEN="your_token"
 docker-compose up -d
 ```
 
+3. set up webhook please follow these instruction [Gitlab Cloud](#gitlab-cloud)
 
 ### Helm
 
@@ -83,6 +87,8 @@ To install the merge-bot chart:
 To uninstall the chart:
 
     helm uninstall my-merge-bot
+
+In order to set up webhook, please read [Gitlab Cloud](#gitlab-cloud)
 
 ### CLI
 
@@ -166,3 +172,15 @@ place it in root of your repo and name it `.mrbot.yaml`
 ### Required bot permissions
 - Bot must have __Maintainer__ role in order to comment, merge and delete branches
 - Access Token must have following permissions: api, read_repository, write_repository
+
+### Webhook secret
+You can enforce security by using `secret`.
+
+1. You need to create CI/CD var `MERGE_BOT_SECRET` in your project with your secure/random value. This var will be compared with webhook secret.
+2. Set up the same webhook secret as `MERGE_BOT_SECRET` value.
+
+The bot will read `MERGE_BOT_SECRET` value, if it doesn't exist, it will be considered as empty string ("").
+
+### Stale branches
+If `stale branches deletion` feature is enabled, deletion of stale branches will work.
+The bot deletes stale branches once a MR is merged.
