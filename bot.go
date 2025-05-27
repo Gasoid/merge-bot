@@ -69,12 +69,12 @@ func Handler(c echo.Context) error {
 	hook, err := webhook.New(providerName)
 	if err != nil {
 		logger.Error("webhook", "err", err)
-		return nil
+		return err
 	}
 
 	if err = hook.ParseRequest(c.Request()); err != nil {
 		logger.Error("ParseRequest", "err", err)
-		return nil
+		return err
 	}
 
 	logger.Debug("handler", "event", hook.Event)
