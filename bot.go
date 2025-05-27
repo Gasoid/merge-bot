@@ -1,9 +1,9 @@
 package main
 
 import (
-	"log/slog"
 	"mergebot/config"
 	"mergebot/handlers"
+	"mergebot/logger"
 	"mergebot/webhook"
 	"os"
 	"path"
@@ -11,7 +11,6 @@ import (
 
 	"net/http"
 
-	"github.com/getsentry/sentry-go"
 	sentryecho "github.com/getsentry/sentry-go/echo"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -19,17 +18,11 @@ import (
 )
 
 var (
-	tlsEnabled    bool
-	tlsDomain     string
-	sentryEnabled bool
-)
-
-const (
-	sentryDsn = "https://11a97d0fb2804c34db705b2c2088f298@o4509393813897216.ingest.de.sentry.io/4509393818288208"
+	tlsEnabled bool
+	tlsDomain  string
 )
 
 func init() {
-	config.BoolVar(&sentryEnabled, "sentry-enabled", true, "whether sentry is enabled or not (also via SENTRY_ENABLED)")
 	config.BoolVar(&tlsEnabled, "tls-enabled", false, "whether tls enabled or not, bot will use Letsencrypt (also via TLS_ENABLED)")
 	config.StringVar(&tlsDomain, "tls-domain", "", "which domain is used for ssl certificate (also via TLS_DOMAIN)")
 }
@@ -40,18 +33,8 @@ func start() {
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
-	if sentryEnabled {
-		if err := sentry.Init(sentry.ClientOptions{
-			Dsn:           sentryDsn,
-			EnableTracing: false,
-		}); err != nil {
-			slog.Error("Sentry initialization failed", "err", err)
-			return
-		}
-
+	if logger.IsSentryEnabled() {
 		e.Use(sentryecho.New(sentryecho.Options{Repanic: true, WaitForDelivery: false}))
-
-		sentry.CaptureMessage("merge-bot started")
 	}
 
 	e.GET("/healthy", healthcheck)
@@ -85,16 +68,16 @@ func Handler(c echo.Context) error {
 	providerName := c.Param("provider")
 	hook, err := webhook.New(providerName)
 	if err != nil {
-		slog.Error("webhook", "err", err)
+		logger.Error("webhook", "err", err)
 		return err
 	}
 
 	if err = hook.ParseRequest(c.Request()); err != nil {
-		slog.Error("ParseRequest", "err", err)
+		logger.Error("ParseRequest", "err", err)
 		return err
 	}
 
-	slog.Debug("handler", "event", hook.Event)
+	logger.Debug("handler", "event", hook.Event)
 
 	handlerMu.RLock()
 	defer handlerMu.RUnlock()
@@ -103,22 +86,22 @@ func Handler(c echo.Context) error {
 		go func() {
 			command, err := handlers.New(providerName)
 			if err != nil {
-				slog.Error("can't initialize provider", "provider", providerName, "event", hook.Event, "err", err)
+				logger.Error("can't initialize provider", "provider", providerName, "event", hook.Event, "err", err)
 				return
 			}
 
 			// if err := command.LoadInfoAndConfig(hook.GetProjectID(), hook.GetID()); err != nil {
-			// 	slog.Error("can't load repo config", "provider", providerName, "command", command, "err", err)
+			// 	logger.Error("can't load repo config", "provider", providerName, "command", command, "err", err)
 			// 	return
 			// }
 
 			if !command.ValidateSecret(hook.GetProjectID(), hook.GetSecret()) {
-				slog.Error("webhook secret is not valid", "projectId", hook.GetProjectID(), "provider", providerName)
+				logger.Error("webhook secret is not valid", "projectId", hook.GetProjectID(), "provider", providerName)
 				return
 			}
 
 			if err := f(command, hook); err != nil {
-				slog.Error("handlerFunc returns err", "provider", providerName, "event", hook.Event, "err", err)
+				logger.Error("handlerFunc returns err", "provider", providerName, "event", hook.Event, "err", err)
 				return
 			}
 		}()

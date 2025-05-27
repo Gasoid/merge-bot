@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"mergebot/config"
 	"mergebot/handlers"
+	"mergebot/logger"
 	"net/http"
 
 	"github.com/xanzy/go-gitlab"
@@ -74,7 +75,7 @@ func (g *GitlabProvider) UpdateFromMaster(projectId, mergeId int) error {
 }
 
 func (g *GitlabProvider) LeaveComment(projectId, mergeId int, message string) error {
-	slog.Debug("leaveComment in gitlab", "message", message, "projectId", projectId)
+	logger.Debug("leaveComment in gitlab", "message", message, "projectId", projectId)
 
 	_, _, err := g.client.Notes.CreateMergeRequestNote(
 		projectId,
@@ -205,7 +206,7 @@ func (g *GitlabProvider) GetVar(projectId int, varName string) (string, error) {
 	secretVar, resp, err := g.client.ProjectVariables.GetVariable(projectId, varName, &gitlab.GetProjectVariableOptions{})
 	if err != nil {
 		if resp.StatusCode == http.StatusNotFound {
-			slog.Debug("variable not found", "varName", varName, "projectId", projectId)
+			logger.Debug("variable not found", "varName", varName, "projectId", projectId)
 			return "", nil
 		}
 
@@ -243,7 +244,7 @@ func New() handlers.RequestProvider {
 
 	token := gitlabToken
 	if token == "" {
-		slog.Error("gitlab init", "err", "gitlab requires token, please set env variable GITLAB_TOKEN")
+		logger.Error("gitlab init", "err", "gitlab requires token, please set env variable GITLAB_TOKEN")
 		return nil
 	}
 
@@ -255,7 +256,7 @@ func New() handlers.RequestProvider {
 		p.client, err = gitlab.NewClient(token)
 	}
 	if err != nil {
-		slog.Error("gitlabProvider new", "err", err)
+		logger.Error("gitlabProvider new", "err", err)
 		return nil
 	}
 

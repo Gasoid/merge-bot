@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"log/slog"
 	"mergebot/handlers"
+	"mergebot/logger"
 	"mergebot/webhook"
 )
 
@@ -17,7 +17,7 @@ func init() {
 
 func UpdateBranchCmd(command *handlers.Request, hook *webhook.Webhook) error {
 	if err := command.UpdateFromMaster(hook.GetProjectID(), hook.GetID()); err != nil {
-		slog.Error("command.UpdateFromMaster failed", "error", err)
+		logger.Error("command.UpdateFromMaster failed", "error", err)
 		return command.LeaveComment(hook.GetProjectID(), hook.GetID(), "❌ i couldn't update branch from master")
 	}
 

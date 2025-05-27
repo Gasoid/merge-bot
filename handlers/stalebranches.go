@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"fmt"
-	"log/slog"
+	"mergebot/logger"
 	"time"
 )
 
@@ -12,7 +12,7 @@ type Branch struct {
 }
 
 func (r *Request) cleanStaleBranches(projectId int) error {
-	slog.Debug("deletion of stale branches has been run")
+	logger.Debug("deletion of stale branches has been run")
 
 	candidates, err := r.provider.ListBranches(projectId)
 	if err != nil {
@@ -26,7 +26,7 @@ func (r *Request) cleanStaleBranches(projectId int) error {
 		if span > time.Duration(time.Duration(days)*24*time.Hour) {
 			// branch is stale
 			// delete branch
-			slog.Debug("branch info", "name", b.Name, "createdAt", b.LastUpdated.String())
+			logger.Debug("branch info", "name", b.Name, "createdAt", b.LastUpdated.String())
 			if err := r.provider.DeleteBranch(projectId, b.Name); err != nil {
 				return fmt.Errorf("DeleteBranch returns error: %w", err)
 			}
