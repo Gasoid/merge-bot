@@ -49,6 +49,8 @@ func start() {
 		}
 
 		e.Use(sentryecho.New(sentryecho.Options{Repanic: true, WaitForDelivery: false}))
+
+		sentry.CaptureMessage("merge-bot started")
 	}
 
 	e.GET("/healthy", healthcheck)
