@@ -42,7 +42,8 @@ func start() {
 
 	if sentryEnabled {
 		if err := sentry.Init(sentry.ClientOptions{
-			Dsn: sentryDsn,
+			Dsn:           sentryDsn,
+			EnableTracing: false,
 		}); err != nil {
 			slog.Error("Sentry initialization failed", "err", err)
 			return
