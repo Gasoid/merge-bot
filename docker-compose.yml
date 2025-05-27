@@ -5,7 +5,7 @@ services:
     # github registry
     # image: ghcr.io/gasoid/merge-bot:latest
     # dockerhub registry
-    image: gasoid/merge-bot:latest
+    image: gasoid/merge-bot:2.2.0
     restart: always
     volumes:
       - tls-cache:/tmp/tls/.cache

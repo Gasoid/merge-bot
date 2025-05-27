@@ -2,7 +2,7 @@ package gitlab
 
 import (
 	"io"
-	"log/slog"
+	"mergebot/logger"
 	"mergebot/webhook"
 	"net/http"
 	"strings"
@@ -74,7 +74,7 @@ func (g *GitlabProvider) ParseRequest(request *http.Request) error {
 }
 
 func (g *GitlabProvider) GetCmd() string {
-	slog.Debug("getCmd", "action", g.action)
+	logger.Debug("getCmd", "action", g.action)
 
 	if g.action == "merge" {
 		return webhook.OnMerge
@@ -84,7 +84,7 @@ func (g *GitlabProvider) GetCmd() string {
 		return webhook.OnNewMR
 	}
 
-	slog.Debug("getCmd", "note", g.note)
+	logger.Debug("getCmd", "note", g.note)
 	if strings.HasPrefix(g.note, "!") {
 		return g.note
 	}

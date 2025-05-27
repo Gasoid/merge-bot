@@ -1,9 +1,9 @@
 package main
 
 import (
-	"log/slog"
 	"mergebot/config"
 	"mergebot/handlers"
+	"mergebot/logger"
 	"mergebot/webhook"
 	"os"
 	"path"
@@ -11,6 +11,7 @@ import (
 
 	"net/http"
 
+	sentryecho "github.com/getsentry/sentry-go/echo"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"golang.org/x/crypto/acme/autocert"
@@ -31,6 +32,10 @@ func start() {
 
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
+
+	if logger.IsSentryEnabled() {
+		e.Use(sentryecho.New(sentryecho.Options{Repanic: true, WaitForDelivery: false}))
+	}
 
 	e.GET("/healthy", healthcheck)
 	e.POST("/mergebot/webhook/:provider/:owner/:repo/", Handler)
@@ -63,16 +68,16 @@ func Handler(c echo.Context) error {
 	providerName := c.Param("provider")
 	hook, err := webhook.New(providerName)
 	if err != nil {
-		slog.Error("webhook", "err", err)
+		logger.Error("webhook", "err", err)
 		return err
 	}
 
 	if err = hook.ParseRequest(c.Request()); err != nil {
-		slog.Error("ParseRequest", "err", err)
+		logger.Error("ParseRequest", "err", err)
 		return err
 	}
 
-	slog.Debug("handler", "event", hook.Event)
+	logger.Debug("handler", "event", hook.Event)
 
 	handlerMu.RLock()
 	defer handlerMu.RUnlock()
@@ -81,22 +86,22 @@ func Handler(c echo.Context) error {
 		go func() {
 			command, err := handlers.New(providerName)
 			if err != nil {
-				slog.Error("can't initialize provider", "provider", providerName, "event", hook.Event, "err", err)
+				logger.Error("can't initialize provider", "provider", providerName, "event", hook.Event, "err", err)
 				return
 			}
 
 			// if err := command.LoadInfoAndConfig(hook.GetProjectID(), hook.GetID()); err != nil {
-			// 	slog.Error("can't load repo config", "provider", providerName, "command", command, "err", err)
+			// 	logger.Error("can't load repo config", "provider", providerName, "command", command, "err", err)
 			// 	return
 			// }
 
 			if !command.ValidateSecret(hook.GetProjectID(), hook.GetSecret()) {
-				slog.Error("webhook secret is not valid", "projectId", hook.GetProjectID(), "provider", providerName)
+				logger.Error("webhook secret is not valid", "projectId", hook.GetProjectID(), "provider", providerName)
 				return
 			}
 
 			if err := f(command, hook); err != nil {
-				slog.Error("handlerFunc returns err", "provider", providerName, "event", hook.Event, "err", err)
+				logger.Error("handlerFunc returns err", "provider", providerName, "event", hook.Event, "err", err)
 				return
 			}
 		}()
