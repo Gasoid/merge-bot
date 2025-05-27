@@ -113,6 +113,8 @@ Usage of merge-bot:
     	which domain is used for ssl certificate (also via TLS_DOMAIN)
   -tls-enabled
     	whether tls enabled or not, bot will use Letsencrypt, default is false (also via TLS_ENABLED)
+  -sentry-enabled
+      whether sentry enabled or not, default is true (also via SENTRY_ENABLED)
 ```
 
 Run bot

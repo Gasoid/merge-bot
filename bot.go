@@ -11,17 +11,25 @@ import (
 
 	"net/http"
 
+	"github.com/getsentry/sentry-go"
+	sentryecho "github.com/getsentry/sentry-go/echo"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"golang.org/x/crypto/acme/autocert"
 )
 
 var (
-	tlsEnabled bool
-	tlsDomain  string
+	tlsEnabled    bool
+	tlsDomain     string
+	sentryEnabled bool
+)
+
+const (
+	sentryDsn = "https://11a97d0fb2804c34db705b2c2088f298@o4509393813897216.ingest.de.sentry.io/4509393818288208"
 )
 
 func init() {
+	config.BoolVar(&sentryEnabled, "sentry-enabled", true, "whether sentry is enabled or not (also via SENTRY_ENABLED)")
 	config.BoolVar(&tlsEnabled, "tls-enabled", false, "whether tls enabled or not, bot will use Letsencrypt (also via TLS_ENABLED)")
 	config.StringVar(&tlsDomain, "tls-domain", "", "which domain is used for ssl certificate (also via TLS_DOMAIN)")
 }
@@ -31,6 +39,17 @@ func start() {
 
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
+
+	if sentryEnabled {
+		if err := sentry.Init(sentry.ClientOptions{
+			Dsn: sentryDsn,
+		}); err != nil {
+			slog.Error("Sentry initialization failed", "err", err)
+			return
+		}
+
+		e.Use(sentryecho.New(sentryecho.Options{Repanic: true, WaitForDelivery: false}))
+	}
 
 	e.GET("/healthy", healthcheck)
 	e.POST("/mergebot/webhook/:provider/:owner/:repo/", Handler)
