@@ -33,7 +33,7 @@ https://gitlab.com/Gasoid/sugar-test
 ### Commands
 - `!merge`: merges MR if the MR meets rules of the repo
 - `!check`: checks whether the MR meets rules of the repo
-- `!update`: updates the branch from master/main (default branch) changes
+- `!update`: updates the branch from destination branch (e.g. master) changes
 
 ### Use-cases
 Given a lot of repos,  therefore we require to set up various rules for each of them. It is complicated and tedious to run as many bot instances as teams.
@@ -46,7 +46,7 @@ In case you want to test the bot you can use gitlab cloud bot.
 
 ### Gitlab Cloud
 1. Invite bot ([@mergeapprovebot](https://gitlab.com/mergeapprovebot)) in your repository as **maintainer** (you can revoke permissions from usual developers in order to prevent merging)
-2. Add webhook `https://mergebot.tools/mergebot/webhook/gitlab/your_username_or_company_name/repo-name/` (Comments and merge request events)
+2. Add webhook `https://mergebot.tools/mergebot/webhook/gitlab/` (Comments and merge request events)
 3. PROFIT: now you can create MR, leave commands: !check and then !merge (comment in MR)
 
 You can test bot on gitlab public repo: https://gitlab.com/Gasoid/sugar-test
@@ -145,15 +145,12 @@ The bot deletes stale branches once a MR is merged.
 Config file must be named `.mrbot.yaml`, placed in root directory, default branch (main/master)
 
 ```yaml
-approvers: [] # list of users who must approve MR/PR, default is empty ([])
-
-min_approvals: 1 # minimum number of required approvals, default is 1
-
-allow_empty_description: true # whether MR description is allowed to be empty or not, default is true
-
-allow_failing_pipelines: true # whether pipelines are allowed to fail, default is true
-
-title_regex: ".*" # pattern of title, default is ".*"
+rules:
+  approvers: [] # list of users who must approve MR/PR, default is empty ([])
+  min_approvals: 1 # minimum number of required approvals, default is 1
+  allow_empty_description: true # whether MR description is allowed to be empty or not, default is true
+  allow_failing_pipelines: true # whether pipelines are allowed to fail, default is true
+  title_regex: ".*" # pattern of title, default is ".*"
 
 greetings:
   enabled: false # enable message for new MR, default is false
@@ -169,18 +166,22 @@ stale_branches_deletion:
 #### Example:
 
 ```yaml
-approvers:
-  - user1
-  - user2
-min_approvals: 1
-allow_empty_description: true
-allow_failing_pipelines: true
-allow_failing_tests: true
-title_regex: "^[A-Z]+-[0-9]+" # title begins with jira key prefix, e.g. SCO-123 My cool Title
+rules:
+  approvers:
+    - user1
+    - user2
+  min_approvals: 1
+  allow_empty_description: true
+  allow_failing_pipelines: true
+  allow_failing_tests: true
+  title_regex: "^[A-Z]+-[0-9]+" # title begins with jira key prefix, e.g. SCO-123 My cool Title
+
 greetings:
   enabled: true
   template: "Requirements:\n - Min approvals: {{ .MinApprovals }}\n - Title regex: {{ .TitleRegex }}\n\nOnce you've done, send **!merge** command and i will merge it!"
+
 auto_master_merge: true
+
 stale_branches_deletion:
   enabled: true
   days: 90

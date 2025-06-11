@@ -97,8 +97,13 @@ func TestRequest_ParseConfig(t *testing.T) {
 			fields: fields{
 				provider: &testProvider{title: "hi"},
 			},
-			args:    args{projectId: 1},
-			want:    &Config{MinApprovals: 1, AllowFailingPipelines: true, AllowFailingTests: true},
+			args: args{projectId: 1},
+			want: &Config{Rules: Rules{
+				MinApprovals:          1,
+				AllowFailingPipelines: true,
+				AllowFailingTests:     true,
+			},
+			},
 			wantErr: false,
 		},
 	}
@@ -113,7 +118,7 @@ func TestRequest_ParseConfig(t *testing.T) {
 			} else {
 				assert.NoError(t, err)
 			}
-			assert.Equal(t, tt.want.MinApprovals, got.MinApprovals)
+			assert.Equal(t, tt.want.Rules.MinApprovals, got.Rules.MinApprovals)
 		})
 	}
 }

@@ -51,18 +51,25 @@ type RequestProvider interface {
 	GetVar(projectId int, varName string) (string, error)
 }
 
-type Config struct {
+type Rules struct {
 	MinApprovals          int      `yaml:"min_approvals"`
 	Approvers             []string `yaml:"approvers"`
 	AllowFailingPipelines bool     `yaml:"allow_failing_pipelines"`
 	AllowFailingTests     bool     `yaml:"allow_failing_tests"`
 	TitleRegex            string   `yaml:"title_regex"`
 	AllowEmptyDescription bool     `yaml:"allow_empty_description"`
-	Greetings             struct {
+}
+
+type Config struct {
+	Rules Rules `yaml:"rules"`
+
+	Greetings struct {
 		Enabled  bool   `yaml:"enabled"`
 		Template string `yaml:"template"`
 	} `yaml:"greetings"`
-	AutoMasterMerge       bool `yaml:"auto_master_merge"`
+
+	AutoMasterMerge bool `yaml:"auto_master_merge"`
+
 	StaleBranchesDeletion struct {
 		Enabled bool `yaml:"enabled"`
 		Days    int  `yaml:"days"`
