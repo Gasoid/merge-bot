@@ -69,7 +69,6 @@ func (p *testProvider) UpdateFromMaster(projectId, mergeId int) error {
 }
 
 func Test_Merge(t *testing.T) {
-	// config.New(&testConfig{})
 	type args struct {
 		pr *Request
 	}
@@ -85,7 +84,7 @@ func Test_Merge(t *testing.T) {
 		},
 		{
 			name:    "should fail because of title",
-			args:    args{pr: &Request{provider: &testProvider{config: "title_regex: ^[A-Z]+-[0-9]+", approvals: map[string]struct{}{"user1": {}}, failedPipelines: 0, state: "opened", title: "asd-123"}}},
+			args:    args{pr: &Request{provider: &testProvider{config: "rules: {title_regex: '^[A-Z]+-[0-9]+'}", approvals: map[string]struct{}{"user1": {}}, failedPipelines: 0, state: "opened", title: "asd-123"}}},
 			wantErr: true,
 		},
 		{
@@ -100,7 +99,7 @@ func Test_Merge(t *testing.T) {
 		},
 		{
 			name:    "should fail because of failed pipelines",
-			args:    args{pr: &Request{provider: &testProvider{config: "allow_failing_pipelines: false", failedPipelines: 2, state: "opened", title: "DEVOPS-123", approvals: map[string]struct{}{"user1": {}}}}},
+			args:    args{pr: &Request{provider: &testProvider{config: "rules: {allow_failing_pipelines: false}", failedPipelines: 2, state: "opened", title: "DEVOPS-123", approvals: map[string]struct{}{"user1": {}}}}},
 			wantErr: true,
 		},
 	}

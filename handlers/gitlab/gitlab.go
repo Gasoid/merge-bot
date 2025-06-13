@@ -17,16 +17,17 @@ func init() {
 
 	config.StringVar(&gitlabToken, "gitlab-token", "", "in order to communicate with gitlab api, bot needs token (also via GITLAB_TOKEN)")
 	config.StringVar(&gitlabURL, "gitlab-url", "", "in case of self-hosted gitlab, you need to set this var up (also via GITLAB_URL)")
+	config.IntVar(&maxRepoSize, "gitlab-max-repo-size", 1000*1000*500, "max size of repo in bytes, default is 500Mb (also via GITLAB_MAX_REPO_SIZE)")
 }
 
 var (
 	gitlabToken string
 	gitlabURL   string
+	maxRepoSize int
 )
 
 const (
 	tokenUsername = "oauth2"
-	maxRepoSize   = 1000 * 1000 * 500 // 500Mb
 )
 
 type GitlabProvider struct {
@@ -61,7 +62,7 @@ func (g *GitlabProvider) UpdateFromMaster(projectId, mergeId int) error {
 		return err
 	}
 
-	if project.Statistics.RepositorySize > maxRepoSize {
+	if project.Statistics.RepositorySize > int64(maxRepoSize) {
 		return handlers.RepoSizeError
 	}
 

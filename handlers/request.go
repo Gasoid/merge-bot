@@ -60,11 +60,13 @@ func (r *Request) IsValid(projectId, id int) (bool, string, error) {
 
 func (r *Request) ParseConfig(content string) (*Config, error) {
 	mrConfig := &Config{
-		MinApprovals:          1,
-		AllowFailingPipelines: true,
-		AllowFailingTests:     true,
-		TitleRegex:            ".*",
-		AllowEmptyDescription: true,
+		Rules: Rules{
+			MinApprovals:          1,
+			AllowFailingPipelines: true,
+			AllowFailingTests:     true,
+			TitleRegex:            ".*",
+			AllowEmptyDescription: true,
+		},
 		Greetings: struct {
 			Enabled  bool   `yaml:"enabled"`
 			Template string `yaml:"template"`

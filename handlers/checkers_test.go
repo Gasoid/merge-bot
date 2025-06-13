@@ -16,7 +16,7 @@ func TestCheckTitle(t *testing.T) {
 		{
 			name: "valid title",
 			config: &Config{
-				TitleRegex: "^feat|fix|docs|style|refactor|test|chore:",
+				Rules: Rules{TitleRegex: "^feat|fix|docs|style|refactor|test|chore:"},
 			},
 			mrInfo: &MrInfo{
 				Title: "feat: add new feature",
@@ -26,7 +26,7 @@ func TestCheckTitle(t *testing.T) {
 		{
 			name: "invalid title",
 			config: &Config{
-				TitleRegex: "^feat|fix|docs|style|refactor|test|chore:",
+				Rules: Rules{TitleRegex: "^feat|fix|docs|style|refactor|test|chore:"},
 			},
 			mrInfo: &MrInfo{
 				Title: "invalid title",
@@ -55,7 +55,7 @@ func TestCheckDescription(t *testing.T) {
 		{
 			name: "non-empty description when required",
 			config: &Config{
-				AllowEmptyDescription: false,
+				Rules: Rules{AllowEmptyDescription: false},
 			},
 			mrInfo: &MrInfo{
 				Description: "This is a description",
@@ -66,7 +66,7 @@ func TestCheckDescription(t *testing.T) {
 		{
 			name: "empty description when not allowed",
 			config: &Config{
-				AllowEmptyDescription: false,
+				Rules: Rules{AllowEmptyDescription: false},
 			},
 			mrInfo: &MrInfo{
 				Description: "",
@@ -95,7 +95,7 @@ func TestCheckApprovals(t *testing.T) {
 		{
 			name: "sufficient approvals",
 			config: &Config{
-				MinApprovals: 2,
+				Rules: Rules{MinApprovals: 2},
 			},
 			mrInfo: &MrInfo{
 				Approvals: map[string]struct{}{"user1": {}, "user2": {}},
@@ -105,7 +105,7 @@ func TestCheckApprovals(t *testing.T) {
 		{
 			name: "insufficient approvals",
 			config: &Config{
-				MinApprovals: 2,
+				Rules: Rules{MinApprovals: 2},
 			},
 			mrInfo: &MrInfo{
 				Approvals: map[string]struct{}{"user1": {}},
@@ -134,7 +134,7 @@ func TestCheckApprovers(t *testing.T) {
 		{
 			name: "all required approvers present",
 			config: &Config{
-				Approvers: []string{"user1", "user2"},
+				Rules: Rules{Approvers: []string{"user1", "user2"}},
 			},
 			mrInfo: &MrInfo{
 				Approvals: map[string]struct{}{"user1": {}, "user2": {}, "user3": {}},
@@ -145,7 +145,7 @@ func TestCheckApprovers(t *testing.T) {
 		{
 			name: "missing required approver",
 			config: &Config{
-				Approvers: []string{"user1", "user2"},
+				Rules: Rules{Approvers: []string{"user1", "user2"}},
 			},
 			mrInfo: &MrInfo{
 				Approvals: map[string]struct{}{"user1": {}, "user3": {}},
@@ -156,7 +156,7 @@ func TestCheckApprovers(t *testing.T) {
 		{
 			name: "no required approvers configured",
 			config: &Config{
-				Approvers: []string{},
+				Rules: Rules{Approvers: []string{}},
 			},
 			mrInfo: &MrInfo{
 				Approvals: map[string]struct{}{"user1": {}},
@@ -186,7 +186,7 @@ func TestCheckPipelines(t *testing.T) {
 		{
 			name: "no failed pipelines",
 			config: &Config{
-				AllowFailingPipelines: false,
+				Rules: Rules{AllowFailingPipelines: false},
 			},
 			mrInfo: &MrInfo{
 				FailedPipelines: 0,
@@ -197,7 +197,7 @@ func TestCheckPipelines(t *testing.T) {
 		{
 			name: "failed pipelines when not allowed",
 			config: &Config{
-				AllowFailingPipelines: false,
+				Rules: Rules{AllowFailingPipelines: false},
 			},
 			mrInfo: &MrInfo{
 				FailedPipelines: 1,
@@ -227,7 +227,7 @@ func TestCheckTests(t *testing.T) {
 		{
 			name: "no failed tests",
 			config: &Config{
-				AllowFailingTests: false,
+				Rules: Rules{AllowFailingTests: false},
 			},
 			mrInfo: &MrInfo{
 				FailedTests: 0,
@@ -238,7 +238,7 @@ func TestCheckTests(t *testing.T) {
 		{
 			name: "failed tests when not allowed",
 			config: &Config{
-				AllowFailingTests: false,
+				Rules: Rules{AllowFailingTests: false},
 			},
 			mrInfo: &MrInfo{
 				FailedTests: 1,

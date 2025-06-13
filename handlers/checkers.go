@@ -8,21 +8,21 @@ type Checker struct {
 }
 
 func checkTitle(mrConfig *Config, info *MrInfo) (bool, bool) {
-	match, _ := regexp.MatchString(mrConfig.TitleRegex, info.Title)
+	match, _ := regexp.MatchString(mrConfig.Rules.TitleRegex, info.Title)
 	return match, true
 }
 
 func checkDescription(mrConfig *Config, info *MrInfo) (bool, bool) {
-	return len(info.Description) > 0, !mrConfig.AllowEmptyDescription
+	return len(info.Description) > 0, !mrConfig.Rules.AllowEmptyDescription
 }
 
 func checkApprovals(mrConfig *Config, info *MrInfo) (bool, bool) {
-	return len(info.Approvals) >= mrConfig.MinApprovals, true
+	return len(info.Approvals) >= mrConfig.Rules.MinApprovals, true
 }
 
 func checkApprovers(mrConfig *Config, info *MrInfo) (bool, bool) {
-	if len(mrConfig.Approvers) > 0 {
-		for _, a := range mrConfig.Approvers {
+	if len(mrConfig.Rules.Approvers) > 0 {
+		for _, a := range mrConfig.Rules.Approvers {
 			if _, ok := info.Approvals[a]; !ok {
 				return false, true
 			}
@@ -33,11 +33,11 @@ func checkApprovers(mrConfig *Config, info *MrInfo) (bool, bool) {
 }
 
 func checkPipelines(mrConfig *Config, info *MrInfo) (bool, bool) {
-	return info.FailedPipelines == 0, !mrConfig.AllowFailingPipelines
+	return info.FailedPipelines == 0, !mrConfig.Rules.AllowFailingPipelines
 }
 
 func checkTests(mrConfig *Config, info *MrInfo) (bool, bool) {
-	return info.FailedTests == 0, !mrConfig.AllowFailingTests
+	return info.FailedTests == 0, !mrConfig.Rules.AllowFailingTests
 }
 
 var (

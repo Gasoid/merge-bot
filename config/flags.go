@@ -16,6 +16,10 @@ func StringVar(p *string, name string, value string, usage string) {
 	fs.StringVar(p, name, value, usage)
 }
 
+func IntVar(p *int, name string, value int, usage string) {
+	fs.IntVar(p, name, value, usage)
+}
+
 func BoolVar(p *bool, name string, value bool, usage string) {
 	fs.BoolVar(p, name, value, usage)
 }
