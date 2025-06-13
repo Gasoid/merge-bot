@@ -109,6 +109,8 @@ Usage of merge-bot:
     	in order to communicate with gitlab api, bot needs token (also via GITLAB_TOKEN)
   -gitlab-url string
     	in case of self-hosted gitlab, you need to set this var up (also via GITLAB_URL)
+  -gitlab-max-repo-size string
+      max size of repo in bytes, default is 500Mb (also via GITLAB_MAX_REPO_SIZE)
   -tls-domain string
     	which domain is used for ssl certificate (also via TLS_DOMAIN)
   -tls-enabled
