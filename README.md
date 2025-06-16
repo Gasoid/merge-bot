@@ -36,8 +36,9 @@ https://gitlab.com/Gasoid/sugar-test
 - `!update`: updates the branch from destination branch (e.g. master) changes
 
 ### Use-cases
-Given a lot of repos,  therefore we require to set up various rules for each of them. It is complicated and tedious to run as many bot instances as teams.
-The Merge-bot checks whether MRs meet rules of the repository (.mrbot.yaml file). Owner of repo can create his own set of rules.
+- Given a lot of repos,  therefore we require to set up various rules for each of them. It is complicated and tedious to run as many bot instances as teams. The Merge-bot checks whether MRs meet rules of the repository (.mrbot.yaml file). Owner of repo can create his own set of rules.
+
+- Opensource solution to get premium features
 
 ## Installation
 The Bot could be run within your infrastructure as container.
@@ -110,7 +111,7 @@ Usage of merge-bot:
   -gitlab-url string
     	in case of self-hosted gitlab, you need to set this var up (also via GITLAB_URL)
   -gitlab-max-repo-size string
-      max size of repo in bytes, default is 500Mb (also via GITLAB_MAX_REPO_SIZE)
+      max size of repo in in Gb/Mb/Kb, default is 500Mb (also via GITLAB_MAX_REPO_SIZE)
   -tls-domain string
     	which domain is used for ssl certificate (also via TLS_DOMAIN)
   -tls-enabled
