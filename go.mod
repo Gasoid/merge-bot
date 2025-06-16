@@ -3,6 +3,7 @@ module mergebot
 go 1.24.1
 
 require (
+	github.com/dustin/go-humanize v1.0.1
 	github.com/getsentry/sentry-go v0.33.0
 	github.com/getsentry/sentry-go/echo v0.33.0
 	github.com/getsentry/sentry-go/slog v0.33.0

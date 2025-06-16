@@ -9,6 +9,7 @@ import (
 	"mergebot/logger"
 	"net/http"
 
+	"github.com/dustin/go-humanize"
 	"github.com/xanzy/go-gitlab"
 )
 
@@ -17,13 +18,13 @@ func init() {
 
 	config.StringVar(&gitlabToken, "gitlab-token", "", "in order to communicate with gitlab api, bot needs token (also via GITLAB_TOKEN)")
 	config.StringVar(&gitlabURL, "gitlab-url", "", "in case of self-hosted gitlab, you need to set this var up (also via GITLAB_URL)")
-	config.IntVar(&maxRepoSize, "gitlab-max-repo-size", 1000*1000*500, "max size of repo in bytes, default is 500Mb (also via GITLAB_MAX_REPO_SIZE)")
+	config.StringVar(&maxRepoSize, "gitlab-max-repo-size", "500Mb", "max size of repo in Gb/Mb/Kb, default is 500Mb (also via GITLAB_MAX_REPO_SIZE)")
 }
 
 var (
 	gitlabToken string
 	gitlabURL   string
-	maxRepoSize int
+	maxRepoSize string
 )
 
 const (
@@ -62,7 +63,12 @@ func (g *GitlabProvider) UpdateFromMaster(projectId, mergeId int) error {
 		return err
 	}
 
-	if project.Statistics.RepositorySize > int64(maxRepoSize) {
+	bytes, err := humanize.ParseBytes(maxRepoSize)
+	if err != nil {
+		return err
+	}
+
+	if uint64(project.Statistics.RepositorySize) > bytes {
 		return handlers.RepoSizeError
 	}
 
