@@ -201,9 +201,11 @@ func (g *GitlabProvider) GetMRInfo(projectId, mergeId int, configPath string) (*
 	if g.mr.HeadPipeline != nil {
 		report, _, err := g.client.Pipelines.GetPipelineTestReport(projectId, g.mr.HeadPipeline.IID)
 		if err != nil {
-			return nil, err
+			slog.Info("GetPipelineTestReport returns error, but i am tolerating this issue", "error", err)
+			info.FailedTests = 1
+		} else {
+			info.FailedTests = report.FailedCount
 		}
-		info.FailedTests = report.FailedCount
 	}
 
 	return &info, nil
