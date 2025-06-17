@@ -3,7 +3,6 @@ package gitlab
 import (
 	b64 "encoding/base64"
 	"fmt"
-	"log/slog"
 	"mergebot/config"
 	"mergebot/handlers"
 	"mergebot/logger"
@@ -183,7 +182,7 @@ func (g *GitlabProvider) GetMRInfo(projectId, mergeId int, configPath string) (*
 
 	info.ConfigContent, err = g.GetFile(projectId, configPath)
 	if err != nil {
-		slog.Info("i am using default config to validate a request")
+		logger.Debug("i am using default config to validate a request")
 	}
 
 	info.Title = g.mr.Title
@@ -195,13 +194,14 @@ func (g *GitlabProvider) GetMRInfo(projectId, mergeId int, configPath string) (*
 
 	info.FailedPipelines, err = g.GetFailedPipelines()
 	if err != nil {
-		return nil, err
+		logger.Debug("GetFailedPipelines returns error, but i am tolerating this issue", "error", err)
+		info.FailedPipelines = 1
 	}
 
 	if g.mr.HeadPipeline != nil {
 		report, _, err := g.client.Pipelines.GetPipelineTestReport(projectId, g.mr.HeadPipeline.IID)
 		if err != nil {
-			slog.Info("GetPipelineTestReport returns error, but i am tolerating this issue", "error", err)
+			logger.Debug("GetPipelineTestReport returns error, but i am tolerating this issue", "error", err)
 			info.FailedTests = 1
 		} else {
 			info.FailedTests = report.FailedCount
