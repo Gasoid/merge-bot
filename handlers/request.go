@@ -110,7 +110,7 @@ func (r *Request) Greetings(projectId, id int) error {
 	}
 
 	buf := &bytes.Buffer{}
-	if err = tmpl.Execute(buf, r.config); err != nil {
+	if err = tmpl.Execute(buf, r.config.Rules); err != nil {
 		return err
 	}
 
