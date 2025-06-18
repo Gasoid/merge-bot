@@ -31,11 +31,18 @@ func MergeMaster(username, password, repoUrl, branchName, master string) error {
 
 	dir, err := os.MkdirTemp("", "merge-bot")
 	if err != nil {
-		logger.Debug("temp dir error")
+		logger.Debug("temp dir error", "error", err)
 		return fmt.Errorf("temp dir error: %w", err)
 	}
 
+	currentDir, err := os.Getwd()
+	if err != nil {
+		logger.Debug("getwd error", "error", err)
+		currentDir = "/tmp/"
+	}
+
 	defer os.RemoveAll(dir)
+	defer os.Chdir(currentDir)
 
 	if output, err := git.Clone(clone.Repository(repoUrl), clone.Directory(dir)); err != nil {
 		logger.Debug("git clone error", "dir", dir, "output", output)
