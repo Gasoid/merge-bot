@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 	"mergebot/config"
+	"os"
 
 	"github.com/getsentry/sentry-go"
 	sentryslog "github.com/getsentry/sentry-go/slog"
@@ -41,6 +42,8 @@ func New() {
 	if debug {
 		slog.SetLogLoggerLevel(slog.LevelDebug)
 		fmt.Println("Debug mode is enabled")
+		os.Setenv("GIT_CURL_VERBOSE", "True")
+		os.Setenv("GIT_TRACE", "True")
 	}
 }
 
