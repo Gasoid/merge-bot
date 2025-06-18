@@ -2,9 +2,10 @@ package handlers
 
 import (
 	"fmt"
-	"mergebot/logger"
 	"net/url"
 	"os"
+
+	"github.com/Gasoid/mergebot/logger"
 
 	"github.com/ldez/go-git-cmd-wrapper/v2/checkout"
 	"github.com/ldez/go-git-cmd-wrapper/v2/clone"

@@ -2,8 +2,9 @@ package handlers
 
 import (
 	"fmt"
-	"mergebot/logger"
 	"time"
+
+	"github.com/Gasoid/mergebot/logger"
 )
 
 type Branch struct {

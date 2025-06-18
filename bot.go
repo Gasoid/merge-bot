@@ -1,13 +1,14 @@
 package main
 
 import (
-	"mergebot/config"
-	"mergebot/handlers"
-	"mergebot/logger"
-	"mergebot/webhook"
 	"os"
 	"path"
 	"sync"
+
+	"github.com/Gasoid/mergebot/config"
+	"github.com/Gasoid/mergebot/handlers"
+	"github.com/Gasoid/mergebot/logger"
+	"github.com/Gasoid/mergebot/webhook"
 
 	"net/http"
 

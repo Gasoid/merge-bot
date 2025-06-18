@@ -4,8 +4,9 @@ import (
 	"bytes"
 	"fmt"
 	"html/template"
-	"mergebot/logger"
 	"strings"
+
+	"github.com/Gasoid/mergebot/logger"
 
 	"gopkg.in/yaml.v3"
 )

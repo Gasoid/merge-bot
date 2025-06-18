@@ -2,12 +2,12 @@ package gitlab
 
 import (
 	"io"
-	"mergebot/logger"
-	"mergebot/webhook"
 	"net/http"
 	"strings"
 
-	"github.com/xanzy/go-gitlab"
+	"github.com/Gasoid/mergebot/logger"
+	"github.com/Gasoid/mergebot/webhook"
+	gitlab "gitlab.com/gitlab-org/api/client-go"
 )
 
 func init() {
