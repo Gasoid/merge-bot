@@ -1,4 +1,4 @@
-module mergebot
+module github.com/Gasoid/mergebot
 
 go 1.24.1
 

@@ -2,10 +2,11 @@ package gitlab
 
 import (
 	"io"
-	"mergebot/logger"
-	"mergebot/webhook"
 	"net/http"
 	"strings"
+
+	"github.com/Gasoid/mergebot/logger"
+	"github.com/Gasoid/mergebot/webhook"
 
 	"github.com/xanzy/go-gitlab"
 )

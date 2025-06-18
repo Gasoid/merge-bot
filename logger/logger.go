@@ -3,7 +3,8 @@ package logger
 import (
 	"fmt"
 	"log/slog"
-	"mergebot/config"
+
+	"github.com/Gasoid/mergebot/config"
 
 	"github.com/getsentry/sentry-go"
 	sentryslog "github.com/getsentry/sentry-go/slog"

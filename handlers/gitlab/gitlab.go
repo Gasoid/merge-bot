@@ -3,10 +3,11 @@ package gitlab
 import (
 	b64 "encoding/base64"
 	"fmt"
-	"mergebot/config"
-	"mergebot/handlers"
-	"mergebot/logger"
 	"net/http"
+
+	"github.com/Gasoid/mergebot/config"
+	"github.com/Gasoid/mergebot/handlers"
+	"github.com/Gasoid/mergebot/logger"
 
 	"github.com/dustin/go-humanize"
 	"github.com/xanzy/go-gitlab"

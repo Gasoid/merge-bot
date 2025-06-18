@@ -1,11 +1,12 @@
 package main
 
 import (
-	"mergebot/webhook"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/Gasoid/mergebot/webhook"
 
 	"github.com/labstack/echo/v4"
 )
