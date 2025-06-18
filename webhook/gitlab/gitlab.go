@@ -7,8 +7,7 @@ import (
 
 	"github.com/Gasoid/mergebot/logger"
 	"github.com/Gasoid/mergebot/webhook"
-
-	"github.com/xanzy/go-gitlab"
+	gitlab "gitlab.com/gitlab-org/api/client-go"
 )
 
 func init() {

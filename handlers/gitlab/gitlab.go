@@ -8,9 +8,9 @@ import (
 	"github.com/Gasoid/mergebot/config"
 	"github.com/Gasoid/mergebot/handlers"
 	"github.com/Gasoid/mergebot/logger"
+	gitlab "gitlab.com/gitlab-org/api/client-go"
 
 	"github.com/dustin/go-humanize"
-	"github.com/xanzy/go-gitlab"
 )
 
 func init() {
@@ -29,6 +29,7 @@ var (
 
 const (
 	tokenUsername = "oauth2"
+	gitlabTrue    = true
 )
 
 type GitlabProvider struct {
@@ -57,7 +58,7 @@ func (g *GitlabProvider) UpdateFromMaster(projectId, mergeId int) error {
 
 	project, _, err := g.client.Projects.GetProject(
 		projectId,
-		&gitlab.GetProjectOptions{Statistics: gitlab.Bool(true)},
+		&gitlab.GetProjectOptions{Statistics: gitlab.Ptr(true)},
 	)
 	if err != nil {
 		return err
