@@ -34,7 +34,7 @@ func start() {
 	// Custom request logger middleware that skips /healthy endpoint
 	e.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
 		Skipper: func(c echo.Context) bool {
-			return c.Request().URL.Path == "/healthy"
+			return c.Request().URL.Path == HealthyEndpoint
 		},
 		LogURI:    true,
 		LogStatus: true,
