@@ -40,14 +40,18 @@ func start() {
 		Skipper: func(c echo.Context) bool {
 			return c.Request().URL.Path == HealthyEndpoint
 		},
-		LogURI:    true,
-		LogStatus: true,
-		LogMethod: true,
+		LogURI:      true,
+		LogStatus:   true,
+		LogMethod:   true,
+		LogRemoteIP: true,
+		LogLatency:  true,
 		LogValuesFunc: func(c echo.Context, values middleware.RequestLoggerValues) error {
 			logger.Info("request",
 				"method", values.Method,
 				"uri", values.URI,
 				"status", values.Status,
+				"remote_ip", values.RemoteIP,
+				"latency", values.Latency,
 			)
 			return nil
 		},
