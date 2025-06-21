@@ -60,6 +60,10 @@ func Debug(msg string, args ...any) {
 	slog.Debug(msg, args...)
 }
 
+func Info(msg string, args ...any) {
+	slog.Info(msg, args...)
+}
+
 func IsSentryEnabled() bool {
 	return sentryEnabled
 }

@@ -31,7 +31,23 @@ func init() {
 func start() {
 	e := echo.New()
 
-	e.Use(middleware.Logger())
+	// Custom request logger middleware that skips /healthy endpoint
+	e.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
+		Skipper: func(c echo.Context) bool {
+			return c.Request().URL.Path == "/healthy"
+		},
+		LogURI:    true,
+		LogStatus: true,
+		LogMethod: true,
+		LogValuesFunc: func(c echo.Context, values middleware.RequestLoggerValues) error {
+			logger.Info("request",
+				"method", values.Method,
+				"uri", values.URI,
+				"status", values.Status,
+			)
+			return nil
+		},
+	}))
 	e.Use(middleware.Recover())
 
 	if logger.IsSentryEnabled() {
