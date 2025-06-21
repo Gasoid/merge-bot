@@ -58,7 +58,7 @@ func start() {
 		e.Use(sentryecho.New(sentryecho.Options{Repanic: true, WaitForDelivery: false}))
 	}
 
-	e.GET("/healthy", healthcheck)
+	e.GET(HealthyEndpoint, healthcheck)
 	e.POST("/mergebot/webhook/:provider/", Handler)
 
 	if tlsEnabled {
