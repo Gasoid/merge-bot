@@ -23,6 +23,10 @@ var (
 	tlsDomain  string
 )
 
+const (
+	HealthyEndpoint = "/healthy"
+)
+
 func init() {
 	config.BoolVar(&tlsEnabled, "tls-enabled", false, "whether tls enabled or not, bot will use Letsencrypt (also via TLS_ENABLED)")
 	config.StringVar(&tlsDomain, "tls-domain", "", "which domain is used for ssl certificate (also via TLS_DOMAIN)")
