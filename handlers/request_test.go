@@ -18,6 +18,10 @@ type testProvider struct {
 	state           string
 	title           string
 	config          string
+	// Fields for tracking comment behavior
+	commentCalled   bool
+	lastComment     string
+	leaveCommentErr error
 }
 
 func newTestProvider() RequestProvider {
@@ -25,6 +29,11 @@ func newTestProvider() RequestProvider {
 }
 
 func (p *testProvider) LeaveComment(projectId, id int, message string) error {
+	p.commentCalled = true
+	p.lastComment = message
+	if p.leaveCommentErr != nil {
+		return p.leaveCommentErr
+	}
 	return p.err
 }
 
@@ -112,6 +121,135 @@ func Test_Merge(t *testing.T) {
 				assert.Equal(t, false, ok)
 			} else {
 				assert.Equal(t, true, ok)
+			}
+		})
+	}
+}
+
+func TestRequest_Greetings(t *testing.T) {
+	type fields struct {
+		provider RequestProvider
+	}
+	type args struct {
+		projectId int
+		id        int
+	}
+	tests := []struct {
+		name              string
+		fields            fields
+		args              args
+		wantErr           bool
+		wantCommentCalled bool
+		expectedComment   string
+	}{
+		{
+			name: "greetings disabled - should not leave comment",
+			fields: fields{
+				provider: &testProvider{
+					title:  "Test MR",
+					config: `greetings: {enabled: false}`,
+					state:  "opened",
+				},
+			},
+			args:              args{projectId: 1, id: 1},
+			wantErr:           false,
+			wantCommentCalled: false,
+		},
+		{
+			name: "greetings enabled with default template - should leave comment",
+			fields: fields{
+				provider: &testProvider{
+					title:  "Test MR",
+					config: `greetings: {enabled: true}`,
+					state:  "opened",
+				},
+			},
+			args:              args{projectId: 1, id: 1},
+			wantErr:           false,
+			wantCommentCalled: true,
+			expectedComment:   "Requirements:\n - Min approvals: 1\n - Title regex: .*\n\nOnce you've done, send **!merge** command and i will merge it!",
+		},
+		{
+			name: "greetings enabled with custom template - should leave comment",
+			fields: fields{
+				provider: &testProvider{
+					title: "Test MR",
+					config: `greetings:
+  enabled: true
+  template: "Hello! You need {{ .MinApprovals }} approvals."`,
+					state: "opened",
+				},
+			},
+			args:              args{projectId: 1, id: 1},
+			wantErr:           false,
+			wantCommentCalled: true,
+			expectedComment:   "Hello! You need 1 approvals.",
+		},
+		{
+			name: "invalid template - should return error",
+			fields: fields{
+				provider: &testProvider{
+					title: "Test MR",
+					config: `greetings:
+  enabled: true
+  template: "Invalid template {{ .NonExistentField }"`,
+					state: "opened",
+				},
+			},
+			args:              args{projectId: 1, id: 1},
+			wantErr:           true,
+			wantCommentCalled: false,
+		},
+		{
+			name: "provider error on GetMRInfo - should return error",
+			fields: fields{
+				provider: &testProvider{
+					err: assert.AnError,
+				},
+			},
+			args:              args{projectId: 1, id: 1},
+			wantErr:           true,
+			wantCommentCalled: false,
+		},
+		{
+			name: "provider error on LeaveComment - should return error",
+			fields: fields{
+				provider: &testProvider{
+					title:           "Test MR",
+					config:          `greetings: {enabled: true}`,
+					state:           "opened",
+					leaveCommentErr: assert.AnError,
+				},
+			},
+			args:              args{projectId: 1, id: 1},
+			wantErr:           true,
+			wantCommentCalled: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Reset the provider's comment tracking
+			if tp, ok := tt.fields.provider.(*testProvider); ok {
+				tp.commentCalled = false
+				tp.lastComment = ""
+			}
+
+			r := &Request{
+				provider: tt.fields.provider,
+			}
+			err := r.Greetings(tt.args.projectId, tt.args.id)
+
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+
+			if tp, ok := tt.fields.provider.(*testProvider); ok {
+				assert.Equal(t, tt.wantCommentCalled, tp.commentCalled, "Expected comment called status mismatch")
+				if tt.wantCommentCalled && tt.expectedComment != "" {
+					assert.Equal(t, tt.expectedComment, tp.lastComment, "Expected comment content mismatch")
+				}
 			}
 		})
 	}

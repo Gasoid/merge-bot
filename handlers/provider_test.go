@@ -39,45 +39,6 @@ func TestNew(t *testing.T) {
 	}
 }
 
-func TestRequest_Greetings(t *testing.T) {
-	//Register("test", &testProvider{})
-	type fields struct {
-		provider RequestProvider
-	}
-	type args struct {
-		projectId int
-		id        int
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		wantErr bool
-	}{
-		{
-			name: "ok",
-			fields: fields{
-				provider: &testProvider{title: "hi"},
-			},
-			args:    args{},
-			wantErr: false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			r := &Request{
-				provider: tt.fields.provider,
-			}
-			err := r.Greetings(tt.args.projectId, tt.args.id)
-			if tt.wantErr {
-				assert.Error(t, err)
-			} else {
-				assert.NoError(t, err)
-			}
-		})
-	}
-}
-
 func TestRequest_ParseConfig(t *testing.T) {
 	type fields struct {
 		provider RequestProvider
