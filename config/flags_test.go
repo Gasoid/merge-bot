@@ -42,6 +42,7 @@ func TestBoolVar(t *testing.T) {
 	assert.Equal(t, "true", flag.DefValue)
 }
 
+//nolint:errcheck
 func TestParse(t *testing.T) {
 	// Save original args and restore after test
 	originalArgs := os.Args
@@ -71,6 +72,7 @@ func TestParse(t *testing.T) {
 	assert.Equal(t, true, testBool)
 }
 
+//nolint:errcheck
 func TestParseWithEnvVars(t *testing.T) {
 	// Save original env vars and restore after test
 	originalTestString := os.Getenv("TEST_STRING")
