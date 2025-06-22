@@ -153,3 +153,38 @@ func TestParseRequest(t *testing.T) {
 		})
 	}
 }
+
+func TestWebhookError(t *testing.T) {
+	err := &Error{text: "test error"}
+	assert.Equal(t, "test error", err.Error())
+}
+
+func TestWebhookConstants(t *testing.T) {
+	assert.Equal(t, "\anewMREvent", OnNewMR)
+	assert.Equal(t, "\amergeEvent", OnMerge)
+}
+
+func TestWebhookErrorInstances(t *testing.T) {
+	assert.Equal(t, "credentials or headers are wrong", AuthError.Error())
+	assert.Equal(t, "post body is wrong", PayloadError.Error())
+}
+
+func TestWebhookGetMethods(t *testing.T) {
+	// Create a test webhook with a mock provider
+	provider := &testProvider{
+		id:        123,
+		projectID: 456,
+		secret:    "test-secret",
+		cmd:       "test-cmd",
+	}
+
+	webhook := &Webhook{
+		provider: provider,
+		Event:    "test-event",
+	}
+
+	assert.Equal(t, "test-secret", webhook.GetSecret())
+	assert.Equal(t, "test-cmd", webhook.GetCmd())
+	assert.Equal(t, 123, webhook.GetID())
+	assert.Equal(t, 456, webhook.GetProjectID())
+}

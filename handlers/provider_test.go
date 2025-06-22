@@ -83,3 +83,28 @@ func TestRequest_ParseConfig(t *testing.T) {
 		})
 	}
 }
+
+func TestError(t *testing.T) {
+	err := &Error{text: "test error message"}
+	assert.Equal(t, "test error message", err.Error())
+}
+
+func TestRegister(t *testing.T) {
+	// Test registering a new provider
+	Register("newtest", newTestProvider)
+
+	// Test that it was registered by trying to create it
+	req, err := New("newtest")
+	assert.NoError(t, err)
+	assert.NotNil(t, req)
+}
+
+func TestRegisterDuplicate(t *testing.T) {
+	// Register the same provider twice should work (overwrite)
+	Register("duplicate", newTestProvider)
+	Register("duplicate", newTestProvider) // Should not panic
+
+	req, err := New("duplicate")
+	assert.NoError(t, err)
+	assert.NotNil(t, req)
+}
