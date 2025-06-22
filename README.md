@@ -1,5 +1,9 @@
 # MergeBot: MR bot for Gitlab
 
+[![Docker Image Version](https://img.shields.io/docker/v/gasoid/merge-bot?style=flat-square&label=docker&sort=semver)](https://hub.docker.com/r/gasoid/merge-bot)
+[![Helm Chart Version](https://img.shields.io/github/v/release/gasoid/helm-charts?style=flat-square&label=helm&filter=merge-bot-*)](https://github.com/gasoid/helm-charts/releases)
+[![Latest Release](https://img.shields.io/github/v/release/gasoid/merge-bot?style=flat-square)](https://github.com/gasoid/merge-bot/releases/latest)
+
 ![screen](screen.webp)
 
 ## Features
