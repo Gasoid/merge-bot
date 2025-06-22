@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -9,19 +10,29 @@ import (
 	"github.com/Gasoid/mergebot/webhook"
 
 	"github.com/labstack/echo/v4"
+	"github.com/stretchr/testify/assert"
 )
 
+// setupTestProviders registers test providers and returns a cleanup function
+func setupTestProviders() func() {
+	webhook.Register("test", newTestProvider)
+	webhook.Register("failing", newFailingTestProvider)
+	webhook.Register("concurrent", newTestProvider)
+	webhook.Register("methodtest", newTestProvider)
+	webhook.Register("emptybody", newTestProvider)
+
+	// Return cleanup function (in a real scenario, you'd want to unregister)
+	return func() {
+		// No-op for now since webhook package doesn't provide unregister
+	}
+}
+
 type testWebhookProvider struct {
-	isValid   bool
 	id        int
 	projectID int
 	cmd       string
 	secret    string
 	err       error
-}
-
-func (p *testWebhookProvider) IsValid() bool {
-	return p.isValid
 }
 
 func (p *testWebhookProvider) GetCmd() string {
@@ -40,49 +51,176 @@ func (p *testWebhookProvider) GetSecret() string {
 	return p.secret
 }
 
-func newTestProvider() webhook.Provider {
-	return &testWebhookProvider{}
-}
-
 func (p *testWebhookProvider) ParseRequest(request *http.Request) error {
 	return p.err
 }
 
+func newTestProvider() webhook.Provider {
+	return &testWebhookProvider{
+		id:        456,
+		projectID: 123,
+		cmd:       "test-cmd",
+		secret:    "test-secret",
+	}
+}
+
+func newFailingTestProvider() webhook.Provider {
+	return &testWebhookProvider{
+		err: webhook.PayloadError,
+	}
+}
+
 func TestHandler(t *testing.T) {
+	cleanup := setupTestProviders()
+	defer cleanup()
+
+	tests := []struct {
+		name           string
+		provider       string
+		body           string
+		expectedStatus int
+		expectedError  bool
+	}{
+		{
+			name:           "valid provider",
+			provider:       "test",
+			body:           `{"test": "data"}`,
+			expectedStatus: http.StatusCreated,
+			expectedError:  false,
+		},
+		{
+			name:           "invalid provider",
+			provider:       "nonexistent",
+			body:           `{"test": "data"}`,
+			expectedStatus: 0, // Error case
+			expectedError:  true,
+		},
+		{
+			name:           "failing provider parse",
+			provider:       "failing",
+			body:           `invalid json`,
+			expectedStatus: 0, // Error case
+			expectedError:  true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			e := echo.New()
+			req := httptest.NewRequest(http.MethodPost, "/mergebot/webhook/"+tt.provider+"/", strings.NewReader(tt.body))
+			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+			c.SetParamNames("provider")
+			c.SetParamValues(tt.provider)
+
+			err := Handler(c)
+
+			if tt.expectedError {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.expectedStatus, rec.Code)
+			}
+		})
+	}
+}
+
+func TestHandlerConcurrency(t *testing.T) {
+	cleanup := setupTestProviders()
+	defer cleanup()
+
 	e := echo.New()
-	// provider := &testWebhookProvider{}
-	webhook.Register("test", newTestProvider)
-	req := httptest.NewRequest(http.MethodPost, "/mergebot/webhook/test/", strings.NewReader("{}"))
+	const numRequests = 5
+
+	// Use a channel to synchronize goroutines
+	done := make(chan error, numRequests)
+
+	// Test multiple concurrent requests
+	for i := 0; i < numRequests; i++ {
+		go func() {
+			req := httptest.NewRequest(http.MethodPost, "/mergebot/webhook/concurrent/", strings.NewReader(`{}`))
+			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+			c.SetParamNames("provider")
+			c.SetParamValues("concurrent")
+
+			err := Handler(c)
+			done <- err
+		}()
+	}
+
+	// Wait for all goroutines to complete and check results
+	for i := 0; i < numRequests; i++ {
+		err := <-done
+		assert.NoError(t, err)
+	}
+}
+
+func TestHandlerWithDifferentMethods(t *testing.T) {
+	cleanup := setupTestProviders()
+	defer cleanup()
+
+	tests := []struct {
+		method         string
+		expectedStatus int
+	}{
+		{http.MethodPost, http.StatusCreated},
+		{http.MethodGet, http.StatusCreated},   // Handler doesn't validate method
+		{http.MethodPut, http.StatusCreated},   // Handler doesn't validate method
+		{http.MethodPatch, http.StatusCreated}, // Handler doesn't validate method
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.method, func(t *testing.T) {
+			e := echo.New()
+			req := httptest.NewRequest(tt.method, "/mergebot/webhook/methodtest/", strings.NewReader(`{}`))
+			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+			c.SetParamNames("provider")
+			c.SetParamValues("methodtest")
+
+			err := Handler(c)
+			assert.NoError(t, err)
+			assert.Equal(t, tt.expectedStatus, rec.Code)
+		})
+	}
+}
+
+func TestHandlerWithEmptyBody(t *testing.T) {
+	cleanup := setupTestProviders()
+	defer cleanup()
+
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodPost, "/mergebot/webhook/emptybody/", bytes.NewReader([]byte{}))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 	c.SetParamNames("provider")
+	c.SetParamValues("emptybody")
+
+	err := Handler(c)
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusCreated, rec.Code)
+}
+
+func TestHandlerWithNilRequest(t *testing.T) {
+	cleanup := setupTestProviders()
+	defer cleanup()
+
+	e := echo.New()
+	rec := httptest.NewRecorder()
+	c := e.NewContext(nil, rec)
+	c.SetParamNames("provider")
 	c.SetParamValues("test")
-	cErr := e.NewContext(req, rec)
-	type args struct {
-		c echo.Context
-	}
-	tests := []struct {
-		name    string
-		args    args
-		wantErr bool
-	}{
-		{
-			name:    "Test",
-			args:    args{c: c},
-			wantErr: false,
-		},
-		{
-			name:    "TestErr",
-			args:    args{c: cErr},
-			wantErr: true,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if err := Handler(tt.args.c); (err != nil) != tt.wantErr {
-				t.Errorf("Handler() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
+
+	err := Handler(c)
+	// Should return an error since request is nil
+	assert.Error(t, err)
+}
+
+func TestConstants(t *testing.T) {
+	assert.Equal(t, "/healthy", HealthyEndpoint)
 }
