@@ -1,4 +1,4 @@
-# MergeBot: MR bot for Gitlab
+# MergeBot: Merge Request Bot for GitLab
 
 [![Docker Image Version](https://img.shields.io/docker/v/gasoid/merge-bot?style=flat-square&label=docker&sort=semver)](https://hub.docker.com/r/gasoid/merge-bot)
 [![Helm Chart Version](https://img.shields.io/github/v/release/gasoid/helm-charts?style=flat-square&label=helm&filter=merge-bot-*)](https://github.com/gasoid/helm-charts/releases)
@@ -6,192 +6,212 @@
 
 ![screen](screen.webp)
 
-## Features
-- [x] rule for title
-- [x] rule for approvals
-- [x] rule for approvers
-- [x] merge on command
-- [x] update branch (pull changes from master)
-- [x] delete stale branches
+MergeBot is an automated merge request bot for GitLab that enforces repository-specific rules and helps streamline your code review process.
 
+## Features
+
+- ✅ **Title validation** - Enforce naming conventions with regex patterns
+- ✅ **Approval rules** - Set minimum approvals and specific approvers
+- ✅ **Automated merging** - Merge on command when rules are met
+- ✅ **Branch updates** - Automatically pull changes from target branch
+- ✅ **Stale branch cleanup** - Remove outdated branches automatically
+- ✅ **Customizable rules** - Per-repository configuration via `.mrbot.yaml`
+
+## Quick Start
+
+Try the bot on our [demo repository](https://gitlab.com/Gasoid/sugar-test) or invite [@mergeapprovebot](https://gitlab.com/mergeapprovebot) to your project.
+
+### Available Commands
+
+- `!merge` - Merges MR if all repository rules are satisfied
+- `!check` - Validates whether the MR meets all rules
+- `!update` - Updates the branch from the target branch (e.g., main/master)
 
 ## Table of Contents
 
 - [Installation](#installation)
-  - [Gitlab Cloud](#gitlab-cloud)
-  - [Docker-compose](#Docker-compose)
+  - [GitLab Cloud](#gitlab-cloud)
+  - [Docker Compose](#docker-compose)
   - [Helm](#helm)
   - [CLI](#cli)
-- [Required bot permissions](#required-bot-permissions)
-- [Webhook secret](#webhook-secret)
-- [Stale branches](#stale-branches)
-- [Config file](#config-file)
-  - [Example](#example)
-  - [Demo project on gitlab](https://gitlab.com/Gasoid/sugar-test)
-
-
-### Demo repo
-
-https://gitlab.com/Gasoid/sugar-test
-
-### Commands
-- `!merge`: merges MR if the MR meets rules of the repo
-- `!check`: checks whether the MR meets rules of the repo
-- `!update`: updates the branch from destination branch (e.g. master) changes
-
-### Use-cases
-- Given a lot of repos,  therefore we require to set up various rules for each of them. It is complicated and tedious to run as many bot instances as teams. The Merge-bot checks whether MRs meet rules of the repository (.mrbot.yaml file). Owner of repo can create his own set of rules.
-
-- Opensource solution to get premium features
+- [Configuration](#configuration)
+  - [Required Bot Permissions](#required-bot-permissions)
+  - [Webhook Secret](#webhook-secret)
+  - [Config File](#config-file)
+- [Features](#features-1)
+  - [Stale Branches](#stale-branches)
+  - [Greetings](#greetings)
+- [Demo](#demo)
 
 ## Installation
-The Bot could be run within your infrastructure as container.
-In case you want to test the bot you can use gitlab cloud bot.
 
+### GitLab Cloud
 
-### Gitlab Cloud
-1. Invite bot ([@mergeapprovebot](https://gitlab.com/mergeapprovebot)) in your repository as **maintainer** (you can revoke permissions from usual developers in order to prevent merging)
-2. Add webhook `https://mergebot.tools/mergebot/webhook/gitlab/` (Comments and merge request events)
-3. PROFIT: now you can create MR, leave commands: !check and then !merge (comment in MR)
+1. **Invite the bot**: Add [@mergeapprovebot](https://gitlab.com/mergeapprovebot) to your repository with **Maintainer** role
+2. **Configure webhook**: 
+   - URL: `https://mergebot.tools/mergebot/webhook/gitlab/`
+   - Trigger events: Comments and Merge Request events
+3. **Create configuration**: Add `.mrbot.yaml` to your repository root (see [Config File](#config-file))
+4. **Start using**: Create an MR and use commands like `!check` and `!merge`
 
-You can test bot on gitlab public repo: https://gitlab.com/Gasoid/sugar-test
+### Docker Compose
 
-### Docker-compose
-
-1. bot.env:
+1. **Create environment file** (`bot.env`):
+```env
+GITLAB_TOKEN=your_personal_access_token
+# Optional: Enable TLS
+# TLS_ENABLED=true
+# TLS_DOMAIN=your-domain.com
+# GITLAB_URL=https://your-gitlab-instance.com
 ```
-GITLAB_TOKEN="your_token"
-#TLS_ENABLED="false"
-#TLS_DOMAIN="domain.your-example.com"
-#GITLAB_URL=""
-```
 
-2. run docker-compose
-```
+2. **Run the container**:
+```bash
 docker-compose up -d
 ```
 
-3. set up webhook please follow these instruction [Gitlab Cloud](#gitlab-cloud)
+3. **Configure webhook**: Follow the [GitLab Cloud](#gitlab-cloud) instructions, but use your own bot URL
 
 ### Helm
 
-[Helm](https://helm.sh) must be installed to use the charts.  Please refer to
-Helm's [documentation](https://helm.sh/docs) to get started.
+Add the Helm repository:
+```bash
+helm repo add merge-bot https://gasoid.github.io/helm-charts
+helm repo update
+```
 
-Once Helm has been set up correctly, add the repo as follows:
+Install the chart:
+```bash
+helm install my-merge-bot merge-bot/merge-bot
+```
 
-    helm repo add merge-bot https://gasoid.github.io/helm-charts
-
-If you had already added this repo earlier, run `helm repo update` to retrieve
-the latest versions of the packages.  You can then run `helm search repo merge-bot` to see the charts.
-
-To install the merge-bot chart:
-
-    helm install my-merge-bot merge-bot/merge-bot
-
-To uninstall the chart:
-
-    helm uninstall my-merge-bot
-
-In order to set up webhook, please read [Gitlab Cloud](#gitlab-cloud)
+For webhook configuration, follow the [GitLab Cloud](#gitlab-cloud) instructions.
 
 ### CLI
 
-Create personal/repo/org token in gitlab, copy it and set as env variable
+1. **Set environment variables**:
 ```bash
 export GITLAB_TOKEN="your_token"
-export GITLAB_URL="" # if it is not public gitlab cloud
-export TLS_ENABLED="true"
-export TLS_DOMAIN="bot.domain.com"
+export GITLAB_URL=""  # Optional: for self-hosted GitLab
+export TLS_ENABLED="true"  # Optional
+export TLS_DOMAIN="bot.yourdomain.com"  # Optional
 ```
 
-you can configure bot using cli args as well:
+2. **Run the bot**:
 ```bash
-Usage of merge-bot:
-  -debug
-    	whether debug logging is enabled, default is false (also via DEBUG)
-  -gitlab-token string
-    	in order to communicate with gitlab api, bot needs token (also via GITLAB_TOKEN)
-  -gitlab-url string
-    	in case of self-hosted gitlab, you need to set this var up (also via GITLAB_URL)
-  -gitlab-max-repo-size string
-      max size of repo in in Gb/Mb/Kb, default is 500Mb (also via GITLAB_MAX_REPO_SIZE)
-  -tls-domain string
-    	which domain is used for ssl certificate (also via TLS_DOMAIN)
-  -tls-enabled
-    	whether tls enabled or not, bot will use Letsencrypt, default is false (also via TLS_ENABLED)
-  -sentry-enabled
-      whether sentry enabled or not, default is true (also via SENTRY_ENABLED)
-```
-
-Run bot
-```
 go run ./
 ```
 
-### Required bot permissions
-- Bot must have __Maintainer__ role in order to comment, merge and delete branches
-- Access Token must have following permissions: api, read_repository, write_repository
+**Available CLI flags**:
+```
+  -debug
+        Enable debug logging (also via DEBUG)
+  -gitlab-token string
+        GitLab personal access token (also via GITLAB_TOKEN)
+  -gitlab-url string
+        GitLab instance URL for self-hosted (also via GITLAB_URL)
+  -gitlab-max-repo-size string
+        Maximum repository size (default: 500Mb, also via GITLAB_MAX_REPO_SIZE)
+  -tls-domain string
+        Domain for SSL certificate (also via TLS_DOMAIN)
+  -tls-enabled
+        Enable TLS with Let's Encrypt (also via TLS_ENABLED)
+  -sentry-enabled
+        Enable Sentry error reporting (default: true, also via SENTRY_ENABLED)
+```
 
-### Webhook secret
-You can enforce security by using `secret`.
+## Configuration
 
-1. You need to create CI/CD var `MERGE_BOT_SECRET` in your project with your secure/random value. This var will be compared with webhook secret.
-2. Set up the same webhook secret as `MERGE_BOT_SECRET` value.
+### Required Bot Permissions
 
-The bot will read `MERGE_BOT_SECRET` value, if it doesn't exist, it will be considered as empty string ("").
+- **Bot role**: Maintainer (required for commenting, merging, and deleting branches)
+- **Access token scopes**: `api`, `read_repository`, `write_repository`
 
-### Stale branches
-If `stale branches deletion` feature is enabled, deletion of stale branches will work.
-The bot deletes stale branches once a MR is merged.
+### Webhook Secret
 
+Enhance security by using webhook secrets:
 
+1. **Create CI/CD variable**: Add `MERGE_BOT_SECRET` to your GitLab project variables
+2. **Configure webhook**: Set the same secret value in your webhook configuration
+3. **Verification**: The bot will validate incoming webhooks against this secret
 
-## Config file
+### Config File
 
-Config file must be named `.mrbot.yaml`, placed in root directory, default branch (main/master)
+Create `.mrbot.yaml` in your repository root on the default branch:
 
 ```yaml
 rules:
-  approvers: [] # list of users who must approve MR/PR, default is empty ([])
-  min_approvals: 1 # minimum number of required approvals, default is 1
-  allow_empty_description: true # whether MR description is allowed to be empty or not, default is true
-  allow_failing_pipelines: true # whether pipelines are allowed to fail, default is true
-  title_regex: ".*" # pattern of title, default is ".*"
+  approvers: []  # Specific users who must approve (empty = any approver)
+  min_approvals: 1  # Minimum number of approvals required
+  allow_empty_description: true  # Allow empty MR descriptions
+  allow_failing_pipelines: true  # Allow merging with failed pipelines
+  title_regex: ".*"  # Title validation regex pattern
 
 greetings:
-  enabled: false # enable message for new MR, default is false
-  template: "" # template of message for new MR, default is "Requirements:\n - Min approvals: {{ .MinApprovals }}\n - Title regex: {{ .TitleRegex }}\n\nOnce you've done, send **!merge** command and i will merge it!"
+  enabled: false  # Send welcome message on new MRs
+  template: "Requirements:\n - Min approvals: {{ .MinApprovals }}\n - Title regex: {{ .TitleRegex }}\n\nSend **!merge** when ready!"
 
-auto_master_merge: false # the bot tries to update branch from master, default is false
+auto_master_merge: false  # Auto-update branch from target branch
 
 stale_branches_deletion:
-  enabled: false # enable deletion of stale branches after every merge, default is false
-  days: 90 # branch is staled after int days, default is 90
+  enabled: false  # Clean up stale branches after merge
+  days: 90  # Consider branches stale after N days
 ```
 
-#### Example:
+#### Example Configuration
 
 ```yaml
 rules:
   approvers:
-    - user1
-    - user2
-  min_approvals: 1
-  allow_empty_description: true
-  allow_failing_pipelines: true
-  allow_failing_tests: true
-  title_regex: "^[A-Z]+-[0-9]+" # title begins with jira key prefix, e.g. SCO-123 My cool Title
+    - alice
+    - bob
+  min_approvals: 2
+  allow_empty_description: false
+  allow_failing_pipelines: false
+  title_regex: "^(feat|fix|docs|style|refactor|test|chore):"  # Conventional commits
 
 greetings:
   enabled: true
-  template: "Requirements:\n - Min approvals: {{ .MinApprovals }}\n - Title regex: {{ .TitleRegex }}\n\nOnce you've done, send **!merge** command and i will merge it!"
+  template: |
+    ## 🤖 MergeBot Requirements
+    
+    - **Min approvals**: {{ .MinApprovals }}
+    - **Title format**: {{ .TitleRegex }}
+    - **Approvers**: {{ .Approvers }}
+    
+    Use `!check` to validate and `!merge` when ready!
 
 auto_master_merge: true
 
 stale_branches_deletion:
   enabled: true
-  days: 90
+  days: 30
 ```
 
-place it in root of your repo and name it `.mrbot.yaml`
+## Features
+
+### Stale Branches
+
+When enabled, the bot automatically deletes stale branches after each successful merge. Branches are considered stale based on the configured number of days since their last activity.
+
+### Greetings
+
+Customize welcome messages for new merge requests using Go templates. Available variables:
+- `{{ .MinApprovals }}`
+- `{{ .TitleRegex }}`
+- `{{ .Approvers }}`
+
+## Demo
+
+Test the bot on our public demo repository: [https://gitlab.com/Gasoid/sugar-test](https://gitlab.com/Gasoid/sugar-test)
+
+## Use Cases
+
+- **Multi-repository management**: Configure different rules per repository without running multiple bot instances
+- **Open-source alternative**: Get premium GitLab features without the cost
+- **Automated compliance**: Enforce consistent review processes across teams
+- **Branch hygiene**: Automatically clean up stale branches
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit issues and pull requests.
