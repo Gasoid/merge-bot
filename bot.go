@@ -121,7 +121,7 @@ func Handler(c echo.Context) error {
 			// }
 
 			if !command.ValidateSecret(hook.GetProjectID(), hook.GetSecret()) {
-				logger.Error("webhook secret is not valid", "projectId", hook.GetProjectID(), "provider", providerName)
+				logger.Info("webhook secret is not valid", "projectId", hook.GetProjectID(), "provider", providerName)
 				return
 			}
 

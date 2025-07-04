@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"sync"
 
 	"github.com/Gasoid/mergebot/logger"
 
@@ -19,8 +20,15 @@ const (
 	defaultRemote = "origin"
 )
 
+var (
+	mergeLock sync.Mutex
+)
+
 //nolint:errcheck
 func MergeMaster(username, password, repoUrl, branchName, master string) error {
+	mergeLock.Lock()
+	defer mergeLock.Unlock()
+
 	if username != "" && password != "" {
 		parsedUrl, err := url.Parse(repoUrl)
 		if err != nil {
