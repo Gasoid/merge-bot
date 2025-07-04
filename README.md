@@ -156,6 +156,7 @@ auto_master_merge: false  # Auto-update branch from target branch
 stale_branches_deletion:
   enabled: false  # Clean up stale branches after merge
   days: 90  # Consider branches stale after N days
+  batch_size: 5 # Number of branches can be deleted at once
 ```
 
 #### Example Configuration
@@ -186,6 +187,7 @@ auto_master_merge: true
 stale_branches_deletion:
   enabled: true
   days: 30
+  batch_size: 2
 ```
 
 ## Features

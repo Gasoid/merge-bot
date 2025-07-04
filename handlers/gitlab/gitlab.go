@@ -227,19 +227,22 @@ func (g *GitlabProvider) GetVar(projectId int, varName string) (string, error) {
 	return secretVar.Value, nil
 }
 
-func (g *GitlabProvider) ListBranches(projectId int) ([]handlers.Branch, error) {
+func (g *GitlabProvider) ListBranches(projectId, size int) ([]handlers.Branch, error) {
 	branches, _, err := g.client.Branches.ListBranches(projectId, &gitlab.ListBranchesOptions{})
 	if err != nil {
 		return nil, err
 	}
 
-	staleBranches := []handlers.Branch{}
+	staleBranches := make([]handlers.Branch, 0, size)
 	for _, b := range branches {
 		if b.Default || b.Protected {
 			continue
 		}
 
 		staleBranches = append(staleBranches, handlers.Branch{Name: b.Name, LastUpdated: *b.Commit.CreatedAt})
+		if len(staleBranches) == size {
+			break
+		}
 	}
 	return staleBranches, nil
 }
