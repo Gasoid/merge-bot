@@ -46,7 +46,7 @@ type RequestProvider interface {
 	LeaveComment(projectId, mergeId int, message string) error
 	GetMRInfo(projectId, mergeId int, path string) (*MrInfo, error)
 	UpdateFromMaster(projectId, mergeId int) error
-	ListBranches(projectId int) ([]Branch, error)
+	ListBranches(projectId, size int) ([]Branch, error)
 	DeleteBranch(projectId int, name string) error
 	GetVar(projectId int, varName string) (string, error)
 }
@@ -71,8 +71,9 @@ type Config struct {
 	AutoMasterMerge bool `yaml:"auto_master_merge"`
 
 	StaleBranchesDeletion struct {
-		Enabled bool `yaml:"enabled"`
-		Days    int  `yaml:"days"`
+		Enabled   bool `yaml:"enabled"`
+		Days      int  `yaml:"days"`
+		BatchSize int  `yaml:"batch_size"`
 	} `yaml:"stale_branches_deletion"`
 }
 

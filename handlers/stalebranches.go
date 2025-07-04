@@ -2,9 +2,14 @@ package handlers
 
 import (
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/Gasoid/mergebot/logger"
+)
+
+var (
+	cleanStaleBranchesLock sync.Mutex
 )
 
 type Branch struct {
@@ -13,9 +18,12 @@ type Branch struct {
 }
 
 func (r *Request) cleanStaleBranches(projectId int) error {
+	cleanStaleBranchesLock.Lock()
+	defer cleanStaleBranchesLock.Unlock()
+
 	logger.Debug("deletion of stale branches has been run")
 
-	candidates, err := r.provider.ListBranches(projectId)
+	candidates, err := r.provider.ListBranches(projectId, r.config.StaleBranchesDeletion.BatchSize)
 	if err != nil {
 		return fmt.Errorf("ListBranches returns error: %w", err)
 	}

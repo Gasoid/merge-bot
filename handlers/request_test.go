@@ -41,7 +41,7 @@ func (p *testProvider) Merge(projectId, id int, message string) error {
 	return p.err
 }
 
-func (p *testProvider) ListBranches(projectId int) ([]Branch, error) {
+func (p *testProvider) ListBranches(projectId, size int) ([]Branch, error) {
 	return nil, nil
 }
 
