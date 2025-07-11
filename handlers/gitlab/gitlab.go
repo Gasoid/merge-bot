@@ -187,6 +187,9 @@ func (g *GitlabProvider) GetMRInfo(projectId, mergeId int, configPath string) (*
 		return nil, err
 	}
 
+	info.Labels = g.mr.Labels
+	info.Branch = g.mr.SourceBranch
+
 	info.ConfigContent, err = g.GetFile(projectId, configPath)
 	if err != nil {
 		logger.Debug("i am using default config to validate a request")
@@ -269,16 +272,16 @@ func (g *GitlabProvider) DeleteBranch(projectId int, name string) error {
 	return err
 }
 
-func (g GitlabProvider) ListMergeRequests(projectId, size int) ([]handlers.StaleMergeRequest, error) {
+func (g GitlabProvider) ListMergeRequests(projectId, size int) ([]handlers.MR, error) {
 	listMr, _, err := g.client.MergeRequests.ListProjectMergeRequests(projectId,
 		&gitlab.ListProjectMergeRequestsOptions{State: gitlab.Ptr("opened")})
 	if err != nil {
 		return nil, err
 	}
 
-	staleMRS := make([]handlers.StaleMergeRequest, 0, size)
+	staleMRS := make([]handlers.MR, 0, size)
 	for _, mr := range listMr {
-		staleMRS = append(staleMRS, handlers.StaleMergeRequest{
+		staleMRS = append(staleMRS, handlers.MR{
 			Id:          mr.ID,
 			Labels:      mr.Labels,
 			Branch:      mr.SourceBranch,
@@ -289,6 +292,29 @@ func (g GitlabProvider) ListMergeRequests(projectId, size int) ([]handlers.Stale
 	}
 
 	return staleMRS, nil
+}
+
+func (g GitlabProvider) FindMergeRequests(projectId int, targetBranch, label string) ([]handlers.MR, error) {
+	listMr, _, err := g.client.MergeRequests.ListProjectMergeRequests(projectId,
+		&gitlab.ListProjectMergeRequestsOptions{
+			State:        gitlab.Ptr("opened"),
+			Labels:       &gitlab.LabelOptions{label},
+			TargetBranch: &targetBranch,
+		})
+	if err != nil {
+		return nil, err
+	}
+
+	mrs := make([]handlers.MR, 0)
+	for _, mr := range listMr {
+		mrs = append(mrs, handlers.MR{
+			Id:          mr.ID,
+			Labels:      mr.Labels,
+			Branch:      mr.SourceBranch,
+			LastUpdated: *mr.UpdatedAt})
+	}
+
+	return mrs, nil
 }
 
 func (g GitlabProvider) AssignLabel(projectId, mergeId int, name, color string) error {

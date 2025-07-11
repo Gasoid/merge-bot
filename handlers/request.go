@@ -145,10 +145,25 @@ func (r *Request) Merge() (bool, string, error) {
 	}
 }
 
-func (r *Request) UpdateFromMaster() error {
+func (r Request) UpdateFromMaster() error {
 	if err := r.provider.UpdateFromMaster(r.info.ProjectId, r.info.Id); err != nil {
 		return err
 	}
+	return nil
+}
+
+func (r Request) UpdateBranchesWithLabel(label string) error {
+	listMr, err := r.provider.FindMergeRequests(r.info.ProjectId, r.info.Branch, label)
+	if err != nil {
+		return err
+	}
+
+	for _, mr := range listMr {
+		if err := r.provider.UpdateFromMaster(r.info.ProjectId, mr.Id); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 

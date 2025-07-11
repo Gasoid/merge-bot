@@ -16,7 +16,7 @@ const (
 	staleLabelColor = "#cccccc"
 )
 
-type StaleMergeRequest struct {
+type MR struct {
 	Id          int
 	Branch      string
 	Labels      []string
