@@ -41,13 +41,27 @@ type MrInfo struct {
 	IsValid         bool
 }
 
-type RequestProvider interface {
-	Merge(projectId, mergeId int, message string) error
-	LeaveComment(projectId, mergeId int, message string) error
-	GetMRInfo(projectId, mergeId int, path string) (*MrInfo, error)
-	UpdateFromMaster(projectId, mergeId int) error
-	ListBranches(projectId, size int) ([]Branch, error)
+type Branches interface {
+	ListBranches(projectId, size int) ([]StaleBranch, error)
 	DeleteBranch(projectId int, name string) error
+	UpdateFromMaster(projectId, mergeId int) error
+}
+
+type Comments interface {
+	LeaveComment(projectId, mergeId int, message string) error
+}
+
+type MergeRequest interface {
+	Merge(projectId, mergeId int, message string) error
+	GetMRInfo(projectId, mergeId int, path string) (*MrInfo, error)
+	ListMergeRequests(projectId, size int) ([]StaleMergeRequest, error)
+	AssignLabel(projectId, mergeId int, name, color string) error
+}
+
+type RequestProvider interface {
+	Branches
+	Comments
+	MergeRequest
 	GetVar(projectId int, varName string) (string, error)
 }
 
@@ -74,6 +88,7 @@ type Config struct {
 		Enabled   bool `yaml:"enabled"`
 		Days      int  `yaml:"days"`
 		BatchSize int  `yaml:"batch_size"`
+		WaitDays  int  `yaml:"wait_days"`
 	} `yaml:"stale_branches_deletion"`
 }
 

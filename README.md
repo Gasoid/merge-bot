@@ -157,6 +157,7 @@ stale_branches_deletion:
   enabled: false  # Clean up stale branches after merge
   days: 90  # Consider branches stale after N days
   batch_size: 5 # Number of branches can be deleted at once
+  wait_days: 1 # Wait N days before MR/branch deletion
 ```
 
 #### Example Configuration

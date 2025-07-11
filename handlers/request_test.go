@@ -41,7 +41,7 @@ func (p *testProvider) Merge(projectId, id int, message string) error {
 	return p.err
 }
 
-func (p *testProvider) ListBranches(projectId, size int) ([]Branch, error) {
+func (p *testProvider) ListBranches(projectId, size int) ([]StaleBranch, error) {
 	return nil, nil
 }
 
@@ -75,6 +75,14 @@ func (p *testProvider) IsValid() bool {
 
 func (p *testProvider) UpdateFromMaster(projectId, mergeId int) error {
 	return nil
+}
+
+func (p *testProvider) ListMergeRequests(projectId, size int) ([]StaleMergeRequest, error) {
+	return nil, p.err
+}
+
+func (p *testProvider) AssignLabel(projectId, mergeId int, name, color string) error {
+	return p.err
 }
 
 func Test_Merge(t *testing.T) {

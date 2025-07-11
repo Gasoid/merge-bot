@@ -80,10 +80,12 @@ func (r *Request) ParseConfig(content string) (*Config, error) {
 			Enabled   bool `yaml:"enabled"`
 			Days      int  `yaml:"days"`
 			BatchSize int  `yaml:"batch_size"`
+			WaitDays  int  `yaml:"wait_days"`
 		}{
 			Enabled:   false,
 			Days:      90,
 			BatchSize: 5,
+			WaitDays:  1,
 		},
 	}
 
@@ -125,7 +127,13 @@ func (r *Request) DeleteStaleBranches(projectId, id int) error {
 	}
 
 	if r.config.StaleBranchesDeletion.Enabled {
-		return r.cleanStaleBranches(projectId)
+		if err := r.cleanStaleMergeRequests(projectId); err != nil {
+			return err
+		}
+
+		if err := r.cleanStaleBranches(projectId); err != nil {
+			return err
+		}
 	}
 
 	return nil
