@@ -55,6 +55,8 @@ func (p *testProvider) GetVar(projectId int, varName string) (string, error) {
 
 func (p *testProvider) GetMRInfo(projectId, id int, path string) (*MrInfo, error) {
 	return &MrInfo{
+		ProjectId:       projectId,
+		Id:              id,
 		Title:           p.title,
 		ConfigContent:   p.config,
 		Approvals:       p.approvals,
@@ -123,7 +125,13 @@ func Test_Merge(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ok, s, _ := tt.args.pr.Merge(1, 2)
+			// Load info and config first
+			err := tt.args.pr.LoadInfoAndConfig(1, 2)
+			if err != nil {
+				t.Fatalf("LoadInfoAndConfig failed: %v", err)
+			}
+
+			ok, s, _ := tt.args.pr.Merge()
 			if tt.wantErr {
 				assert.NotEmpty(t, s)
 				assert.Equal(t, false, ok)
@@ -245,7 +253,16 @@ func TestRequest_Greetings(t *testing.T) {
 			r := &Request{
 				provider: tt.fields.provider,
 			}
-			err := r.Greetings(tt.args.projectId, tt.args.id)
+
+			// Load info and config first (this is required for the current implementation)
+			err := r.LoadInfoAndConfig(tt.args.projectId, tt.args.id)
+			if err != nil && !tt.wantErr {
+				t.Fatalf("LoadInfoAndConfig failed: %v", err)
+			}
+
+			if err == nil {
+				err = r.Greetings()
+			}
 
 			if tt.wantErr {
 				assert.Error(t, err)

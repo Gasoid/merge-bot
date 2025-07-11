@@ -16,50 +16,50 @@ func init() {
 	handle(webhook.OnMerge, MergeEvent)
 }
 
-func UpdateBranchCmd(command *handlers.Request, hook *webhook.Webhook) error {
-	if err := command.UpdateFromMaster(hook.GetProjectID(), hook.GetID()); err != nil {
+func UpdateBranchCmd(command *handlers.Request) error {
+	if err := command.UpdateFromMaster(); err != nil {
 		logger.Error("command.UpdateFromMaster failed", "error", err)
-		return command.LeaveComment(hook.GetProjectID(), hook.GetID(), "❌ i couldn't update branch from master")
+		return command.LeaveComment("❌ i couldn't update branch from master")
 	}
 
 	return nil
 }
 
-func MergeCmd(command *handlers.Request, hook *webhook.Webhook) error {
-	ok, text, err := command.Merge(hook.GetProjectID(), hook.GetID())
+func MergeCmd(command *handlers.Request) error {
+	ok, text, err := command.Merge()
 	if err != nil {
 		return fmt.Errorf("command.Merge returns err: %w", err)
 	}
 
 	if !ok && len(text) > 0 {
-		return command.LeaveComment(hook.GetProjectID(), hook.GetID(), text)
+		return command.LeaveComment(text)
 	}
 	return err
 }
 
-func CheckCmd(command *handlers.Request, hook *webhook.Webhook) error {
-	ok, text, err := command.IsValid(hook.GetProjectID(), hook.GetID())
+func CheckCmd(command *handlers.Request) error {
+	ok, text, err := command.IsValid()
 	if err != nil {
 		return fmt.Errorf("command.IsValid returns err: %w", err)
 	}
 
 	if !ok && len(text) > 0 {
-		return command.LeaveComment(hook.GetProjectID(), hook.GetID(), text)
+		return command.LeaveComment(text)
 	} else {
-		return command.LeaveComment(hook.GetProjectID(), hook.GetID(), "You can merge, LGTM :D")
+		return command.LeaveComment("You can merge, LGTM :D")
 	}
 }
 
-func NewMR(command *handlers.Request, hook *webhook.Webhook) error {
-	if err := command.Greetings(hook.GetProjectID(), hook.GetID()); err != nil {
+func NewMR(command *handlers.Request) error {
+	if err := command.Greetings(); err != nil {
 		return fmt.Errorf("command.Greetings returns err: %w", err)
 	}
 
 	return nil
 }
 
-func MergeEvent(command *handlers.Request, hook *webhook.Webhook) error {
-	if err := command.DeleteStaleBranches(hook.GetProjectID(), hook.GetID()); err != nil {
+func MergeEvent(command *handlers.Request) error {
+	if err := command.DeleteStaleBranches(); err != nil {
 		return fmt.Errorf("command.MergeEvent returns err: %w", err)
 	}
 

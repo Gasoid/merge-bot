@@ -82,7 +82,7 @@ func start() {
 }
 
 var (
-	handlerFuncs = map[string]func(*handlers.Request, *webhook.Webhook) error{}
+	handlerFuncs = map[string]func(*handlers.Request) error{}
 	handlerMu    sync.RWMutex
 )
 
@@ -115,17 +115,17 @@ func Handler(c echo.Context) error {
 				return
 			}
 
-			// if err := command.LoadInfoAndConfig(hook.GetProjectID(), hook.GetID()); err != nil {
-			// 	logger.Error("can't load repo config", "provider", providerName, "command", command, "err", err)
-			// 	return
-			// }
+			if err := command.LoadInfoAndConfig(hook.GetProjectID(), hook.GetID()); err != nil {
+				logger.Error("can't load repo config", "provider", providerName, "command", command, "err", err)
+				return
+			}
 
-			if !command.ValidateSecret(hook.GetProjectID(), hook.GetSecret()) {
+			if !command.ValidateSecret(hook.GetSecret()) {
 				logger.Info("webhook secret is not valid", "projectId", hook.GetProjectID(), "provider", providerName)
 				return
 			}
 
-			if err := f(command, hook); err != nil {
+			if err := f(command); err != nil {
 				logger.Error("handlerFunc returns err", "provider", providerName, "event", hook.Event, "err", err)
 				return
 			}
@@ -135,11 +135,11 @@ func Handler(c echo.Context) error {
 	return nil
 }
 
-func handle(onEvent string, funcHandler func(*handlers.Request, *webhook.Webhook) error) {
+func handle(onEvent string, funcHandler func(*handlers.Request) error) {
 	handlerMu.Lock()
 	defer handlerMu.Unlock()
 
-	handlerFuncs[onEvent] = func(command *handlers.Request, hook *webhook.Webhook) error {
-		return funcHandler(command, hook)
+	handlerFuncs[onEvent] = func(command *handlers.Request) error {
+		return funcHandler(command)
 	}
 }
