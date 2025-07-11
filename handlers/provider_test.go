@@ -108,3 +108,92 @@ func TestRegisterDuplicate(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, req)
 }
+
+func TestRequest_ListMergeRequests(t *testing.T) {
+	type fields struct {
+		provider RequestProvider
+	}
+	type args struct {
+		projectId int
+		size      int
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    []StaleMergeRequest
+		wantErr bool
+	}{
+		{
+			name: "success",
+			fields: fields{
+				provider: &testProvider{},
+			},
+			args: args{
+				projectId: 1,
+				size:      10,
+			},
+			want:    nil,
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &Request{
+				provider: tt.fields.provider,
+			}
+			got, err := r.provider.ListMergeRequests(tt.args.projectId, tt.args.size)
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestRequest_AssignLabel(t *testing.T) {
+	type fields struct {
+		provider RequestProvider
+	}
+	type args struct {
+		projectId int
+		mergeId   int
+		name      string
+		color     string
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "success",
+			fields: fields{
+				provider: &testProvider{},
+			},
+			args: args{
+				projectId: 1,
+				mergeId:   1,
+				name:      "test-label",
+				color:     "#ff0000",
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &Request{
+				provider: tt.fields.provider,
+			}
+			err := r.provider.AssignLabel(tt.args.projectId, tt.args.mergeId, tt.args.name, tt.args.color)
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}

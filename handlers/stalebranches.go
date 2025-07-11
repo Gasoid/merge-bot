@@ -12,7 +12,7 @@ var (
 	cleanStaleBranchesLock sync.Mutex
 )
 
-type Branch struct {
+type StaleBranch struct {
 	Name        string
 	LastUpdated time.Time
 }
@@ -29,8 +29,8 @@ func (r *Request) cleanStaleBranches(projectId int) error {
 	}
 
 	days := r.config.StaleBranchesDeletion.Days
+	now := time.Now()
 	for _, b := range candidates {
-		now := time.Now()
 		span := now.Sub(b.LastUpdated)
 		if span > time.Duration(time.Duration(days)*24*time.Hour) {
 			// branch is stale
@@ -41,5 +41,6 @@ func (r *Request) cleanStaleBranches(projectId int) error {
 			}
 		}
 	}
+
 	return nil
 }

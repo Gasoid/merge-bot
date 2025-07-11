@@ -4,6 +4,7 @@ import (
 	b64 "encoding/base64"
 	"fmt"
 	"net/http"
+	"slices"
 
 	"github.com/Gasoid/mergebot/config"
 	"github.com/Gasoid/mergebot/handlers"
@@ -213,7 +214,7 @@ func (g *GitlabProvider) GetMRInfo(projectId, mergeId int, configPath string) (*
 	return &info, nil
 }
 
-func (g *GitlabProvider) GetVar(projectId int, varName string) (string, error) {
+func (g GitlabProvider) GetVar(projectId int, varName string) (string, error) {
 	secretVar, resp, err := g.client.ProjectVariables.GetVariable(projectId, varName, &gitlab.GetProjectVariableOptions{})
 	if err != nil {
 		if resp.StatusCode == http.StatusNotFound {
@@ -227,19 +228,31 @@ func (g *GitlabProvider) GetVar(projectId int, varName string) (string, error) {
 	return secretVar.Value, nil
 }
 
-func (g *GitlabProvider) ListBranches(projectId, size int) ([]handlers.Branch, error) {
+func (g GitlabProvider) ListBranches(projectId, size int) ([]handlers.StaleBranch, error) {
 	branches, _, err := g.client.Branches.ListBranches(projectId, &gitlab.ListBranchesOptions{})
 	if err != nil {
 		return nil, err
 	}
 
-	staleBranches := make([]handlers.Branch, 0, size)
+	staleBranches := make([]handlers.StaleBranch, 0, size)
 	for _, b := range branches {
 		if b.Default || b.Protected {
 			continue
 		}
 
-		staleBranches = append(staleBranches, handlers.Branch{Name: b.Name, LastUpdated: *b.Commit.CreatedAt})
+		listMr, _, err := g.client.MergeRequests.ListProjectMergeRequests(projectId,
+			&gitlab.ListProjectMergeRequestsOptions{
+				SourceBranch: &b.Name,
+			})
+		if err != nil {
+			return nil, err
+		}
+
+		if len(listMr) > 0 {
+			continue
+		}
+
+		staleBranches = append(staleBranches, handlers.StaleBranch{Name: b.Name, LastUpdated: *b.Commit.CreatedAt})
 		if len(staleBranches) == size {
 			break
 		}
@@ -250,6 +263,67 @@ func (g *GitlabProvider) ListBranches(projectId, size int) ([]handlers.Branch, e
 func (g *GitlabProvider) DeleteBranch(projectId int, name string) error {
 	_, err := g.client.Branches.DeleteBranch(projectId, name)
 	return err
+}
+
+func (g GitlabProvider) ListMergeRequests(projectId, size int) ([]handlers.StaleMergeRequest, error) {
+	listMr, _, err := g.client.MergeRequests.ListProjectMergeRequests(projectId,
+		&gitlab.ListProjectMergeRequestsOptions{State: gitlab.Ptr("opened")})
+	if err != nil {
+		return nil, err
+	}
+
+	staleMRS := make([]handlers.StaleMergeRequest, 0, size)
+	for _, mr := range listMr {
+		staleMRS = append(staleMRS, handlers.StaleMergeRequest{
+			Id:          mr.ID,
+			Labels:      mr.Labels,
+			Branch:      mr.SourceBranch,
+			LastUpdated: *mr.UpdatedAt})
+		if len(staleMRS) == size {
+			break
+		}
+	}
+
+	return staleMRS, nil
+}
+
+func (g GitlabProvider) AssignLabel(projectId, mergeId int, name, color string) error {
+	mr, _, err := g.client.MergeRequests.GetMergeRequest(projectId, mergeId, &gitlab.GetMergeRequestsOptions{})
+	if err != nil {
+		return fmt.Errorf("could't get merge request: %w", err)
+	}
+
+	if slices.Contains(mr.Labels, name) {
+		return nil
+	}
+
+	labels, _, err := g.client.Labels.ListLabels(projectId, &gitlab.ListLabelsOptions{Search: gitlab.Ptr(name)})
+	if err != nil {
+		return fmt.Errorf("listLabels failed to search: %w", err)
+	}
+
+	labelFound := false
+	for _, l := range labels {
+		if l.Name == name {
+			labelFound = true
+		}
+	}
+
+	if !labelFound {
+		if _, _, err := g.client.Labels.CreateLabel(
+			projectId,
+			&gitlab.CreateLabelOptions{Name: gitlab.Ptr(name), Color: gitlab.Ptr(color)}); err != nil {
+			return fmt.Errorf("could't create label: %w", err)
+		}
+	}
+
+	if _, _, err := g.client.MergeRequests.UpdateMergeRequest(
+		projectId,
+		mergeId,
+		&gitlab.UpdateMergeRequestOptions{AddLabels: &gitlab.LabelOptions{name}}); err != nil {
+		return fmt.Errorf("could't update mergeRequest: %w", err)
+	}
+	return nil
 }
 
 func New() handlers.RequestProvider {
