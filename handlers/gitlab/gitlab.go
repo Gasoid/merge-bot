@@ -177,7 +177,11 @@ func (g *GitlabProvider) GetFile(projectId int, path string) (string, error) {
 
 func (g *GitlabProvider) GetMRInfo(projectId, mergeId int, configPath string) (*handlers.MrInfo, error) {
 	var err error
-	info := handlers.MrInfo{}
+	info := handlers.MrInfo{
+		ProjectId: projectId,
+		Id:        mergeId,
+	}
+
 	info.IsValid, err = g.IsValid(projectId, mergeId)
 	if err != nil {
 		return nil, err

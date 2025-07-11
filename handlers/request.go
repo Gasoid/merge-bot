@@ -32,11 +32,7 @@ func (r *Request) LoadInfoAndConfig(projectId, id int) error {
 	return nil
 }
 
-func (r *Request) IsValid(projectId, id int) (bool, string, error) {
-	if err := r.LoadInfoAndConfig(projectId, id); err != nil {
-		return false, "", err
-	}
-
+func (r *Request) IsValid() (bool, string, error) {
 	if !r.info.IsValid {
 		return false, ValidError.Error(), nil
 	}
@@ -95,15 +91,11 @@ func (r *Request) ParseConfig(content string) (*Config, error) {
 	return mrConfig, nil
 }
 
-func (r *Request) LeaveComment(projectId, id int, message string) error {
-	return r.provider.LeaveComment(projectId, id, message)
+func (r *Request) LeaveComment(message string) error {
+	return r.provider.LeaveComment(r.info.ProjectId, r.info.Id, message)
 }
 
-func (r *Request) Greetings(projectId, id int) error {
-	if err := r.LoadInfoAndConfig(projectId, id); err != nil {
-		return err
-	}
-
+func (r *Request) Greetings() error {
 	if !r.config.Greetings.Enabled {
 		return nil
 	}
@@ -118,20 +110,16 @@ func (r *Request) Greetings(projectId, id int) error {
 		return err
 	}
 
-	return r.LeaveComment(projectId, id, buf.String())
+	return r.LeaveComment(buf.String())
 }
 
-func (r *Request) DeleteStaleBranches(projectId, id int) error {
-	if err := r.LoadInfoAndConfig(projectId, id); err != nil {
-		return err
-	}
-
+func (r *Request) DeleteStaleBranches() error {
 	if r.config.StaleBranchesDeletion.Enabled {
-		if err := r.cleanStaleMergeRequests(projectId); err != nil {
+		if err := r.cleanStaleMergeRequests(); err != nil {
 			return err
 		}
 
-		if err := r.cleanStaleBranches(projectId); err != nil {
+		if err := r.cleanStaleBranches(); err != nil {
 			return err
 		}
 	}
@@ -139,20 +127,16 @@ func (r *Request) DeleteStaleBranches(projectId, id int) error {
 	return nil
 }
 
-func (r *Request) Merge(projectId, id int) (bool, string, error) {
-	if err := r.LoadInfoAndConfig(projectId, id); err != nil {
-		return false, "", err
-	}
-
+func (r *Request) Merge() (bool, string, error) {
 	if r.config.AutoMasterMerge {
-		err := r.provider.UpdateFromMaster(projectId, id)
+		err := r.provider.UpdateFromMaster(r.info.ProjectId, r.info.Id)
 		if err != nil {
 			return false, "", err
 		}
 	}
 
-	if ok, text, err := r.IsValid(projectId, id); ok {
-		if err := r.provider.Merge(projectId, id, fmt.Sprintf("%s\nMerged by MergeApproveBot", r.info.Title)); err != nil {
+	if ok, text, err := r.IsValid(); ok {
+		if err := r.provider.Merge(r.info.ProjectId, r.info.Id, fmt.Sprintf("%s\nMerged by MergeApproveBot", r.info.Title)); err != nil {
 			return false, "", err
 		}
 		return true, "", nil
@@ -161,24 +145,19 @@ func (r *Request) Merge(projectId, id int) (bool, string, error) {
 	}
 }
 
-func (r *Request) UpdateFromMaster(projectId, id int) error {
-	if err := r.LoadInfoAndConfig(projectId, id); err != nil {
-		return err
-	}
-
-	if err := r.provider.UpdateFromMaster(projectId, id); err != nil {
+func (r *Request) UpdateFromMaster() error {
+	if err := r.provider.UpdateFromMaster(r.info.ProjectId, r.info.Id); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (r Request) ValidateSecret(projectId int, secret string) bool {
+func (r Request) ValidateSecret(secret string) bool {
 	const mergeBotSecret = "MERGE_BOT_SECRET"
 
-	secretVar, err := r.provider.GetVar(projectId, mergeBotSecret)
+	secretVar, err := r.provider.GetVar(r.info.ProjectId, mergeBotSecret)
 	if err != nil {
-		logger.Error("cound't validate secret", "err", err)
-
+		logger.Info("cound't validate secret", "err", err)
 		return false
 	}
 

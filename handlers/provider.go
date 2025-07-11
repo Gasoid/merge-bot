@@ -32,6 +32,8 @@ func Register(name string, constructor func() RequestProvider) {
 }
 
 type MrInfo struct {
+	ProjectId       int
+	Id              int
 	Approvals       map[string]struct{}
 	FailedPipelines int
 	FailedTests     int

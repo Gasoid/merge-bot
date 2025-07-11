@@ -58,7 +58,7 @@ func TestIntegrationWebhookFlow(t *testing.T) {
 
 	// Save original handlers
 	handlerMu.Lock()
-	originalHandlers := make(map[string]func(*handlers.Request, *webhook.Webhook) error)
+	originalHandlers := make(map[string]func(*handlers.Request) error)
 	for k, v := range handlerFuncs {
 		originalHandlers[k] = v
 	}
@@ -72,7 +72,7 @@ func TestIntegrationWebhookFlow(t *testing.T) {
 	}()
 
 	// Register a test handler
-	handle("!merge", func(command *handlers.Request, hook *webhook.Webhook) error {
+	handle("!merge", func(command *handlers.Request) error {
 		return nil
 	})
 

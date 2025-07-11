@@ -17,13 +17,13 @@ type StaleBranch struct {
 	LastUpdated time.Time
 }
 
-func (r *Request) cleanStaleBranches(projectId int) error {
+func (r Request) cleanStaleBranches() error {
 	cleanStaleBranchesLock.Lock()
 	defer cleanStaleBranchesLock.Unlock()
 
 	logger.Debug("deletion of stale branches has been run")
 
-	candidates, err := r.provider.ListBranches(projectId, r.config.StaleBranchesDeletion.BatchSize)
+	candidates, err := r.provider.ListBranches(r.info.ProjectId, r.config.StaleBranchesDeletion.BatchSize)
 	if err != nil {
 		return fmt.Errorf("ListBranches returns error: %w", err)
 	}
@@ -36,7 +36,7 @@ func (r *Request) cleanStaleBranches(projectId int) error {
 			// branch is stale
 			// delete branch
 			logger.Debug("branch info", "name", b.Name, "createdAt", b.LastUpdated.String())
-			if err := r.provider.DeleteBranch(projectId, b.Name); err != nil {
+			if err := r.provider.DeleteBranch(r.info.ProjectId, b.Name); err != nil {
 				return fmt.Errorf("DeleteBranch returns error: %w", err)
 			}
 		}
