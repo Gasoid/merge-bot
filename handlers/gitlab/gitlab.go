@@ -188,7 +188,7 @@ func (g *GitlabProvider) GetMRInfo(projectId, mergeId int, configPath string) (*
 	}
 
 	info.Labels = g.mr.Labels
-	info.Branch = g.mr.SourceBranch
+	info.TargetBranch = g.mr.TargetBranch
 
 	info.ConfigContent, err = g.GetFile(projectId, configPath)
 	if err != nil {
@@ -315,6 +315,8 @@ func (g GitlabProvider) FindMergeRequests(projectId int, targetBranch, label str
 			Branch:      mr.SourceBranch,
 			LastUpdated: *mr.UpdatedAt})
 	}
+
+	logger.Debug("FindMergeRequests", "mrs", mrs)
 
 	return mrs, nil
 }

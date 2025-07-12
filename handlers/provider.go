@@ -35,7 +35,7 @@ type MrInfo struct {
 	ProjectId       int
 	Id              int
 	Labels          []string
-	Branch          string
+	TargetBranch    string
 	Approvals       map[string]struct{}
 	FailedPipelines int
 	FailedTests     int

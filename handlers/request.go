@@ -153,7 +153,7 @@ func (r Request) UpdateFromMaster() error {
 }
 
 func (r Request) UpdateBranchesWithLabel(label string) error {
-	listMr, err := r.provider.FindMergeRequests(r.info.ProjectId, r.info.Branch, label)
+	listMr, err := r.provider.FindMergeRequests(r.info.ProjectId, r.info.TargetBranch, label)
 	if err != nil {
 		return err
 	}
