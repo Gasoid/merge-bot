@@ -291,6 +291,8 @@ func (g GitlabProvider) ListMergeRequests(projectId, size int) ([]handlers.MR, e
 		}
 	}
 
+	logger.Debug("listMRs", "mrs", staleMRS)
+
 	return staleMRS, nil
 }
 
