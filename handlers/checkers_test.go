@@ -37,9 +37,9 @@ func TestCheckTitle(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, applicable := checkTitle(tt.config, tt.mrInfo)
-			assert.True(t, applicable)
-			assert.Equal(t, tt.expected, result)
+			result := checkTitle(tt.config, tt.mrInfo)
+			assert.True(t, result.Required)
+			assert.Equal(t, tt.expected, result.Passed)
 		})
 	}
 }
@@ -78,9 +78,9 @@ func TestCheckDescription(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, applicable := checkDescription(tt.config, tt.mrInfo)
-			assert.Equal(t, tt.expectedApplicable, applicable)
-			assert.Equal(t, tt.expected, result)
+			result := checkDescription(tt.config, tt.mrInfo)
+			assert.Equal(t, tt.expectedApplicable, result.Required)
+			assert.Equal(t, tt.expected, result.Passed)
 		})
 	}
 }
@@ -116,9 +116,9 @@ func TestCheckApprovals(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, applicable := checkApprovals(tt.config, tt.mrInfo)
-			assert.True(t, applicable)
-			assert.Equal(t, tt.expected, result)
+			result := checkApprovals(tt.config, tt.mrInfo)
+			assert.True(t, result.Required)
+			assert.Equal(t, tt.expected, result.Passed)
 		})
 	}
 }
@@ -168,9 +168,9 @@ func TestCheckApprovers(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, applicable := checkApprovers(tt.config, tt.mrInfo)
-			assert.Equal(t, tt.expectedApplicable, applicable)
-			assert.Equal(t, tt.expected, result)
+			result := checkApprovers(tt.config, tt.mrInfo)
+			assert.Equal(t, tt.expectedApplicable, result.Required)
+			assert.Equal(t, tt.expected, result.Passed)
 		})
 	}
 }
@@ -209,9 +209,9 @@ func TestCheckPipelines(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, applicable := checkPipelines(tt.config, tt.mrInfo)
-			assert.Equal(t, tt.expectedApplicable, applicable)
-			assert.Equal(t, tt.expected, result)
+			result := checkPipelines(tt.config, tt.mrInfo)
+			assert.Equal(t, tt.expectedApplicable, result.Required)
+			assert.Equal(t, tt.expected, result.Passed)
 		})
 	}
 }
@@ -250,9 +250,9 @@ func TestCheckTests(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, applicable := checkTests(tt.config, tt.mrInfo)
-			assert.Equal(t, tt.expectedApplicable, applicable)
-			assert.Equal(t, tt.expected, result)
+			result := checkTests(tt.config, tt.mrInfo)
+			assert.Equal(t, tt.expectedApplicable, result.Required)
+			assert.Equal(t, tt.expected, result.Passed)
 		})
 	}
 }
