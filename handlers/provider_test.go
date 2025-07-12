@@ -121,7 +121,7 @@ func TestRequest_ListMergeRequests(t *testing.T) {
 		name    string
 		fields  fields
 		args    args
-		want    []StaleMergeRequest
+		want    []MR
 		wantErr bool
 	}{
 		{

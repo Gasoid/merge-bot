@@ -79,11 +79,19 @@ func (p *testProvider) UpdateFromMaster(projectId, mergeId int) error {
 	return nil
 }
 
-func (p *testProvider) ListMergeRequests(projectId, size int) ([]StaleMergeRequest, error) {
+func (p *testProvider) ListMergeRequests(projectId, size int) ([]MR, error) {
+	return nil, p.err
+}
+
+func (p *testProvider) FindMergeRequests(projectId int, targetBranch, label string) ([]MR, error) {
 	return nil, p.err
 }
 
 func (p *testProvider) AssignLabel(projectId, mergeId int, name, color string) error {
+	return p.err
+}
+
+func (p *testProvider) CreateLabel(projectId int, name, color string) error {
 	return p.err
 }
 

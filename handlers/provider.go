@@ -34,6 +34,8 @@ func Register(name string, constructor func() RequestProvider) {
 type MrInfo struct {
 	ProjectId       int
 	Id              int
+	Labels          []string
+	TargetBranch    string
 	Approvals       map[string]struct{}
 	FailedPipelines int
 	FailedTests     int
@@ -46,7 +48,6 @@ type MrInfo struct {
 type Branches interface {
 	ListBranches(projectId, size int) ([]StaleBranch, error)
 	DeleteBranch(projectId int, name string) error
-	UpdateFromMaster(projectId, mergeId int) error
 }
 
 type Comments interface {
@@ -56,15 +57,22 @@ type Comments interface {
 type MergeRequest interface {
 	Merge(projectId, mergeId int, message string) error
 	GetMRInfo(projectId, mergeId int, path string) (*MrInfo, error)
-	ListMergeRequests(projectId, size int) ([]StaleMergeRequest, error)
+	ListMergeRequests(projectId, size int) ([]MR, error)
+	FindMergeRequests(projectId int, targetBranch, label string) ([]MR, error)
+	UpdateFromMaster(projectId, mergeId int) error
 	AssignLabel(projectId, mergeId int, name, color string) error
+}
+
+type Project interface {
+	CreateLabel(projectId int, name, color string) error
+	GetVar(projectId int, varName string) (string, error)
 }
 
 type RequestProvider interface {
 	Branches
 	Comments
 	MergeRequest
-	GetVar(projectId int, varName string) (string, error)
+	Project
 }
 
 type Rules struct {

@@ -38,22 +38,18 @@ type GitlabProvider struct {
 	mr     *gitlab.MergeRequest
 }
 
-func (g *GitlabProvider) loadMR(projectId, mergeId int) error {
-	if g.mr != nil {
-		return nil
-	}
-
+func (g GitlabProvider) loadMR(projectId, mergeId int) (*gitlab.MergeRequest, error) {
 	mr, _, err := g.client.MergeRequests.GetMergeRequest(projectId, mergeId, &gitlab.GetMergeRequestsOptions{})
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	g.mr = mr
-	return nil
+	return mr, nil
 }
 
-func (g *GitlabProvider) UpdateFromMaster(projectId, mergeId int) error {
-	if err := g.loadMR(projectId, mergeId); err != nil {
+func (g GitlabProvider) UpdateFromMaster(projectId, mergeId int) error {
+	mr, err := g.loadMR(projectId, mergeId)
+	if err != nil {
 		return err
 	}
 
@@ -78,8 +74,8 @@ func (g *GitlabProvider) UpdateFromMaster(projectId, mergeId int) error {
 		tokenUsername,
 		gitlabToken,
 		project.HTTPURLToRepo,
-		g.mr.SourceBranch,
-		g.mr.TargetBranch,
+		mr.SourceBranch,
+		mr.TargetBranch,
 	)
 }
 
@@ -149,9 +145,12 @@ func (g *GitlabProvider) GetFailedPipelines() (int, error) {
 }
 
 func (g *GitlabProvider) IsValid(projectId, mergeId int) (bool, error) {
-	if err := g.loadMR(projectId, mergeId); err != nil {
+	mr, err := g.loadMR(projectId, mergeId)
+	if err != nil {
 		return false, err
 	}
+
+	g.mr = mr
 
 	if g.mr.State != "opened" {
 		return false, nil
@@ -186,6 +185,9 @@ func (g *GitlabProvider) GetMRInfo(projectId, mergeId int, configPath string) (*
 	if err != nil {
 		return nil, err
 	}
+
+	info.Labels = g.mr.Labels
+	info.TargetBranch = g.mr.TargetBranch
 
 	info.ConfigContent, err = g.GetFile(projectId, configPath)
 	if err != nil {
@@ -269,17 +271,17 @@ func (g *GitlabProvider) DeleteBranch(projectId int, name string) error {
 	return err
 }
 
-func (g GitlabProvider) ListMergeRequests(projectId, size int) ([]handlers.StaleMergeRequest, error) {
+func (g GitlabProvider) ListMergeRequests(projectId, size int) ([]handlers.MR, error) {
 	listMr, _, err := g.client.MergeRequests.ListProjectMergeRequests(projectId,
 		&gitlab.ListProjectMergeRequestsOptions{State: gitlab.Ptr("opened")})
 	if err != nil {
 		return nil, err
 	}
 
-	staleMRS := make([]handlers.StaleMergeRequest, 0, size)
+	staleMRS := make([]handlers.MR, 0, size)
 	for _, mr := range listMr {
-		staleMRS = append(staleMRS, handlers.StaleMergeRequest{
-			Id:          mr.ID,
+		staleMRS = append(staleMRS, handlers.MR{
+			Id:          mr.IID,
 			Labels:      mr.Labels,
 			Branch:      mr.SourceBranch,
 			LastUpdated: *mr.UpdatedAt})
@@ -288,19 +290,37 @@ func (g GitlabProvider) ListMergeRequests(projectId, size int) ([]handlers.Stale
 		}
 	}
 
+	logger.Debug("listMRs", "mrs", staleMRS)
+
 	return staleMRS, nil
 }
 
-func (g GitlabProvider) AssignLabel(projectId, mergeId int, name, color string) error {
-	mr, _, err := g.client.MergeRequests.GetMergeRequest(projectId, mergeId, &gitlab.GetMergeRequestsOptions{})
+func (g GitlabProvider) FindMergeRequests(projectId int, targetBranch, label string) ([]handlers.MR, error) {
+	listMr, _, err := g.client.MergeRequests.ListProjectMergeRequests(projectId,
+		&gitlab.ListProjectMergeRequestsOptions{
+			State:        gitlab.Ptr("opened"),
+			Labels:       &gitlab.LabelOptions{label},
+			TargetBranch: &targetBranch,
+		})
 	if err != nil {
-		return fmt.Errorf("could't get merge request: %w", err)
+		return nil, err
 	}
 
-	if slices.Contains(mr.Labels, name) {
-		return nil
+	mrs := make([]handlers.MR, 0)
+	for _, mr := range listMr {
+		mrs = append(mrs, handlers.MR{
+			Id:          mr.IID,
+			Labels:      mr.Labels,
+			Branch:      mr.SourceBranch,
+			LastUpdated: *mr.UpdatedAt})
 	}
 
+	logger.Debug("FindMergeRequests", "mrs", mrs)
+
+	return mrs, nil
+}
+
+func (g GitlabProvider) CreateLabel(projectId int, name, color string) error {
 	labels, _, err := g.client.Labels.ListLabels(projectId, &gitlab.ListLabelsOptions{Search: gitlab.Ptr(name)})
 	if err != nil {
 		return fmt.Errorf("listLabels failed to search: %w", err)
@@ -319,6 +339,22 @@ func (g GitlabProvider) AssignLabel(projectId, mergeId int, name, color string) 
 			&gitlab.CreateLabelOptions{Name: gitlab.Ptr(name), Color: gitlab.Ptr(color)}); err != nil {
 			return fmt.Errorf("could't create label: %w", err)
 		}
+	}
+	return nil
+}
+
+func (g GitlabProvider) AssignLabel(projectId, mergeId int, name, color string) error {
+	mr, _, err := g.client.MergeRequests.GetMergeRequest(projectId, mergeId, &gitlab.GetMergeRequestsOptions{})
+	if err != nil {
+		return fmt.Errorf("could't get merge request: %w", err)
+	}
+
+	if slices.Contains(mr.Labels, name) {
+		return nil
+	}
+
+	if err := g.CreateLabel(projectId, name, color); err != nil {
+		return err
 	}
 
 	if _, _, err := g.client.MergeRequests.UpdateMergeRequest(

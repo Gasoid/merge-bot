@@ -36,6 +36,10 @@ github.com/labstack/gommon v0.4.2 h1:F8qTUNXgG1+6WQmqoUWnz8WiEU60mXVVw0P4ht1WRA0
 github.com/labstack/gommon v0.4.2/go.mod h1:QlUFxVM+SNXhDL/Z7YhocGIBYOiwB0mXm1+1bAPHPyU=
 github.com/ldez/go-git-cmd-wrapper/v2 v2.8.0 h1:+lD1DY7jRCy0hBTgrlVSRQtfQvyCr4SGOlf+C+eXBtM=
 github.com/ldez/go-git-cmd-wrapper/v2 v2.8.0/go.mod h1:0eUeas7XtKDPKQbB0KijfaMPbuQ/cIprtoTRiwaUoFg=
+github.com/ldez/go-git-cmd-wrapper/v2 v2.8.1-0.20250712135928-73c6ef5f7899 h1:/rgNOZm7YzhB+cU8fXr1l+pgMUy7w/GmkK55FZR6E5A=
+github.com/ldez/go-git-cmd-wrapper/v2 v2.8.1-0.20250712135928-73c6ef5f7899/go.mod h1:0eUeas7XtKDPKQbB0KijfaMPbuQ/cIprtoTRiwaUoFg=
+github.com/ldez/go-git-cmd-wrapper/v2 v2.9.1 h1:QJRB9Gs5i/h6TVJI6yl09Qm6rNooznRiKwIw+VIxd90=
+github.com/ldez/go-git-cmd-wrapper/v2 v2.9.1/go.mod h1:0eUeas7XtKDPKQbB0KijfaMPbuQ/cIprtoTRiwaUoFg=
 github.com/mattn/go-colorable v0.1.13 h1:fFA4WZxdEF4tXPZVKMLwD8oUnCTTo08duU7wxecdEvA=
 github.com/mattn/go-colorable v0.1.13/go.mod h1:7S9/ev0klgBDR4GtXTXX8a3vIGJpMovkB8vQcUbaXHg=
 github.com/mattn/go-isatty v0.0.16/go.mod h1:kYGgaQfpe5nmfYZH+SKPsOc2e4SrIfOl2e/yFXSvRLM=
