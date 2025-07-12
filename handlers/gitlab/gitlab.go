@@ -188,6 +188,7 @@ func (g *GitlabProvider) GetMRInfo(projectId, mergeId int, configPath string) (*
 
 	info.Labels = g.mr.Labels
 	info.TargetBranch = g.mr.TargetBranch
+	info.Author = g.mr.Author.Username
 
 	info.ConfigContent, err = g.GetFile(projectId, configPath)
 	if err != nil {

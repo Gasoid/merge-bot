@@ -64,6 +64,10 @@ func checkApprovers(mrConfig *Config, info *MrInfo) CheckResult {
 	}
 
 	for _, requiredApprover := range mrConfig.Rules.Approvers {
+		if requiredApprover == info.Author {
+			continue
+		}
+
 		if _, approved := info.Approvals[requiredApprover]; !approved {
 			return CheckResult{
 				Passed:   false,
