@@ -38,22 +38,18 @@ type GitlabProvider struct {
 	mr     *gitlab.MergeRequest
 }
 
-func (g *GitlabProvider) loadMR(projectId, mergeId int) error {
-	if g.mr != nil {
-		return nil
-	}
-
+func (g GitlabProvider) loadMR(projectId, mergeId int) (*gitlab.MergeRequest, error) {
 	mr, _, err := g.client.MergeRequests.GetMergeRequest(projectId, mergeId, &gitlab.GetMergeRequestsOptions{})
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	g.mr = mr
-	return nil
+	return mr, nil
 }
 
 func (g GitlabProvider) UpdateFromMaster(projectId, mergeId int) error {
-	if err := g.loadMR(projectId, mergeId); err != nil {
+	mr, err := g.loadMR(projectId, mergeId)
+	if err != nil {
 		return err
 	}
 
@@ -78,8 +74,8 @@ func (g GitlabProvider) UpdateFromMaster(projectId, mergeId int) error {
 		tokenUsername,
 		gitlabToken,
 		project.HTTPURLToRepo,
-		g.mr.SourceBranch,
-		g.mr.TargetBranch,
+		mr.SourceBranch,
+		mr.TargetBranch,
 	)
 }
 
@@ -149,9 +145,12 @@ func (g *GitlabProvider) GetFailedPipelines() (int, error) {
 }
 
 func (g *GitlabProvider) IsValid(projectId, mergeId int) (bool, error) {
-	if err := g.loadMR(projectId, mergeId); err != nil {
+	mr, err := g.loadMR(projectId, mergeId)
+	if err != nil {
 		return false, err
 	}
+
+	g.mr = mr
 
 	if g.mr.State != "opened" {
 		return false, nil
