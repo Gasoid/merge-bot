@@ -60,7 +60,7 @@ func (r *Request) IsValid() (bool, string, error) {
 	}
 
 	if r.config.Rules.Approvers == nil {
-		result[len(checkers)] = "You need to set approvers explicitly, e.g. [] if you don't require any specific ones"
+		result[len(checkers)] = "You need to set approvers explicitly, set rules.approvers=[] if you don't require any specific ones"
 		resultOk = false
 	}
 
