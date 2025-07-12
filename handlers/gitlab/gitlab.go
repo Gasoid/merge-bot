@@ -52,7 +52,7 @@ func (g *GitlabProvider) loadMR(projectId, mergeId int) error {
 	return nil
 }
 
-func (g *GitlabProvider) UpdateFromMaster(projectId, mergeId int) error {
+func (g GitlabProvider) UpdateFromMaster(projectId, mergeId int) error {
 	if err := g.loadMR(projectId, mergeId); err != nil {
 		return err
 	}
