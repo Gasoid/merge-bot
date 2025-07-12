@@ -11,9 +11,9 @@ import (
 	"github.com/ldez/go-git-cmd-wrapper/v2/clone"
 	"github.com/ldez/go-git-cmd-wrapper/v2/config"
 	"github.com/ldez/go-git-cmd-wrapper/v2/git"
+	"github.com/ldez/go-git-cmd-wrapper/v2/global"
 	"github.com/ldez/go-git-cmd-wrapper/v2/merge"
 	"github.com/ldez/go-git-cmd-wrapper/v2/push"
-	"github.com/ldez/go-git-cmd-wrapper/v2/types"
 )
 
 const (
@@ -38,10 +38,7 @@ func MergeMaster(username, password, repoUrl, branchName, master string) error {
 		return fmt.Errorf("temp dir error: %w", err)
 	}
 
-	workingDir := func(g *types.Cmd) {
-		g.AddBaseOptions("-C")
-		g.AddBaseOptions(dir)
-	}
+	workingDir := global.UpperC(dir)
 
 	defer os.RemoveAll(dir)
 
