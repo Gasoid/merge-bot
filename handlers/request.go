@@ -60,7 +60,7 @@ func (r *Request) IsValid() (bool, string, error) {
 	}
 
 	if r.config.Rules.Approvers == nil {
-		result[len(checkers)] = "> [!important]\n > You need to set approvers explicitly, set rules.approvers=[] if you don't require any specific ones"
+		result[len(checkers)] = "> [!important]\n> **Approvers configuration missing**\n> \n> Please configure `rules.approvers` in your merge bot config:\n> - For specific approvers: `rules.approvers: [\"user1\", \"user2\"]`\n> - For no specific approvers: `rules.approvers: []`"
 		resultOk = false
 	}
 
