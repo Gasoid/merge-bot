@@ -157,7 +157,7 @@ stale_branches_deletion:
   enabled: false  # Clean up stale branches after merge
   days: 90  # Consider branches stale after N days
   batch_size: 5 # Number of branches can be deleted at once
-  wait_days: 1 # Wait N days before MR/branch deletion
+  wait_days: 1 # Wait N days before MR/branch deletion, merge-bot:stale label is set
 ```
 
 #### Example Configuration
@@ -189,6 +189,7 @@ stale_branches_deletion:
   enabled: true
   days: 30
   batch_size: 2
+  wait_days: 1
 ```
 
 ## Features
@@ -203,6 +204,14 @@ Customize welcome messages for new merge requests using Go templates. Available 
 - `{{ .MinApprovals }}`
 - `{{ .TitleRegex }}`
 - `{{ .Approvers }}`
+
+### Labels
+
+The bot creates 2 labels:
+- merge-bot:stale
+- merge-bot:auto-update
+
+Use `merge-bot:auto-update` label if you need to update merge request when target branch (master) is updated.
 
 ## Demo
 

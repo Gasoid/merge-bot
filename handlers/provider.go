@@ -37,6 +37,7 @@ type MrInfo struct {
 	Labels          []string
 	TargetBranch    string
 	Approvals       map[string]struct{}
+	Author          string
 	FailedPipelines int
 	FailedTests     int
 	Title           string

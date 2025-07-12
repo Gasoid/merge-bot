@@ -106,27 +106,27 @@ func Test_Merge(t *testing.T) {
 	}{
 		{
 			name:    "should not fail",
-			args:    args{pr: &Request{provider: &testProvider{approvals: map[string]struct{}{"user1": {}}, failedPipelines: 0, state: "opened", title: "DEVOPS-123"}}},
+			args:    args{pr: &Request{provider: &testProvider{config: "rules: {approvers: []}", approvals: map[string]struct{}{"user1": {}}, failedPipelines: 0, state: "opened", title: "DEVOPS-123"}}},
 			wantErr: false,
 		},
 		{
 			name:    "should fail because of title",
-			args:    args{pr: &Request{provider: &testProvider{config: "rules: {title_regex: '^[A-Z]+-[0-9]+'}", approvals: map[string]struct{}{"user1": {}}, failedPipelines: 0, state: "opened", title: "asd-123"}}},
+			args:    args{pr: &Request{provider: &testProvider{config: "rules: {title_regex: '^[A-Z]+-[0-9]+', approvers: []}", approvals: map[string]struct{}{"user1": {}}, failedPipelines: 0, state: "opened", title: "asd-123"}}},
 			wantErr: true,
 		},
 		{
 			name:    "should fail because of approvals",
-			args:    args{pr: &Request{provider: &testProvider{approvals: map[string]struct{}{}, state: "opened", title: "DEVOPS-123"}}},
+			args:    args{pr: &Request{provider: &testProvider{config: "rules: {approvers: []}", approvals: map[string]struct{}{}, state: "opened", title: "DEVOPS-123"}}},
 			wantErr: true,
 		},
 		{
 			name:    "should fail because of closed state",
-			args:    args{pr: &Request{provider: &testProvider{approvals: map[string]struct{}{"user1": {}}, failedPipelines: 0, state: "closed", title: "DEVOPS-123"}}},
+			args:    args{pr: &Request{provider: &testProvider{config: "rules: {approvers: []}", approvals: map[string]struct{}{"user1": {}}, failedPipelines: 0, state: "closed", title: "DEVOPS-123"}}},
 			wantErr: true,
 		},
 		{
 			name:    "should fail because of failed pipelines",
-			args:    args{pr: &Request{provider: &testProvider{config: "rules: {allow_failing_pipelines: false}", failedPipelines: 2, state: "opened", title: "DEVOPS-123", approvals: map[string]struct{}{"user1": {}}}}},
+			args:    args{pr: &Request{provider: &testProvider{config: "rules: {allow_failing_pipelines: false, approvers: []}", failedPipelines: 2, state: "opened", title: "DEVOPS-123", approvals: map[string]struct{}{"user1": {}}}}},
 			wantErr: true,
 		},
 	}

@@ -8,10 +8,11 @@ import (
 
 func TestCheckTitle(t *testing.T) {
 	tests := []struct {
-		name     string
-		config   *Config
-		mrInfo   *MrInfo
-		expected bool
+		name               string
+		config             *Config
+		mrInfo             *MrInfo
+		expected           bool
+		expectedApplicable bool
 	}{
 		{
 			name: "valid title",
@@ -21,7 +22,8 @@ func TestCheckTitle(t *testing.T) {
 			mrInfo: &MrInfo{
 				Title: "feat: add new feature",
 			},
-			expected: true,
+			expected:           true,
+			expectedApplicable: true,
 		},
 		{
 			name: "invalid title",
@@ -31,15 +33,38 @@ func TestCheckTitle(t *testing.T) {
 			mrInfo: &MrInfo{
 				Title: "invalid title",
 			},
-			expected: false,
+			expected:           false,
+			expectedApplicable: true,
+		},
+		{
+			name: "no title regex configured",
+			config: &Config{
+				Rules: Rules{TitleRegex: ""},
+			},
+			mrInfo: &MrInfo{
+				Title: "any title",
+			},
+			expected:           true,
+			expectedApplicable: false,
+		},
+		{
+			name: "invalid regex pattern",
+			config: &Config{
+				Rules: Rules{TitleRegex: "["},
+			},
+			mrInfo: &MrInfo{
+				Title: "any title",
+			},
+			expected:           false,
+			expectedApplicable: true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, applicable := checkTitle(tt.config, tt.mrInfo)
-			assert.True(t, applicable)
-			assert.Equal(t, tt.expected, result)
+			result := checkTitle(tt.config, tt.mrInfo)
+			assert.Equal(t, tt.expectedApplicable, result.Required)
+			assert.Equal(t, tt.expected, result.Passed)
 		})
 	}
 }
@@ -74,13 +99,35 @@ func TestCheckDescription(t *testing.T) {
 			expected:           false,
 			expectedApplicable: true,
 		},
+		{
+			name: "empty description when allowed",
+			config: &Config{
+				Rules: Rules{AllowEmptyDescription: true},
+			},
+			mrInfo: &MrInfo{
+				Description: "",
+			},
+			expected:           true,
+			expectedApplicable: false,
+		},
+		{
+			name: "non-empty description when allowed",
+			config: &Config{
+				Rules: Rules{AllowEmptyDescription: true},
+			},
+			mrInfo: &MrInfo{
+				Description: "This is a description",
+			},
+			expected:           true,
+			expectedApplicable: false,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, applicable := checkDescription(tt.config, tt.mrInfo)
-			assert.Equal(t, tt.expectedApplicable, applicable)
-			assert.Equal(t, tt.expected, result)
+			result := checkDescription(tt.config, tt.mrInfo)
+			assert.Equal(t, tt.expectedApplicable, result.Required)
+			assert.Equal(t, tt.expected, result.Passed)
 		})
 	}
 }
@@ -116,9 +163,9 @@ func TestCheckApprovals(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, applicable := checkApprovals(tt.config, tt.mrInfo)
-			assert.True(t, applicable)
-			assert.Equal(t, tt.expected, result)
+			result := checkApprovals(tt.config, tt.mrInfo)
+			assert.True(t, result.Required)
+			assert.Equal(t, tt.expected, result.Passed)
 		})
 	}
 }
@@ -168,9 +215,9 @@ func TestCheckApprovers(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, applicable := checkApprovers(tt.config, tt.mrInfo)
-			assert.Equal(t, tt.expectedApplicable, applicable)
-			assert.Equal(t, tt.expected, result)
+			result := checkApprovers(tt.config, tt.mrInfo)
+			assert.Equal(t, tt.expectedApplicable, result.Required)
+			assert.Equal(t, tt.expected, result.Passed)
 		})
 	}
 }
@@ -205,13 +252,35 @@ func TestCheckPipelines(t *testing.T) {
 			expected:           false,
 			expectedApplicable: true,
 		},
+		{
+			name: "failed pipelines when allowed",
+			config: &Config{
+				Rules: Rules{AllowFailingPipelines: true},
+			},
+			mrInfo: &MrInfo{
+				FailedPipelines: 1,
+			},
+			expected:           true,
+			expectedApplicable: false,
+		},
+		{
+			name: "no failed pipelines when allowed",
+			config: &Config{
+				Rules: Rules{AllowFailingPipelines: true},
+			},
+			mrInfo: &MrInfo{
+				FailedPipelines: 0,
+			},
+			expected:           true,
+			expectedApplicable: false,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, applicable := checkPipelines(tt.config, tt.mrInfo)
-			assert.Equal(t, tt.expectedApplicable, applicable)
-			assert.Equal(t, tt.expected, result)
+			result := checkPipelines(tt.config, tt.mrInfo)
+			assert.Equal(t, tt.expectedApplicable, result.Required)
+			assert.Equal(t, tt.expected, result.Passed)
 		})
 	}
 }
@@ -246,13 +315,35 @@ func TestCheckTests(t *testing.T) {
 			expected:           false,
 			expectedApplicable: true,
 		},
+		{
+			name: "failed tests when allowed",
+			config: &Config{
+				Rules: Rules{AllowFailingTests: true},
+			},
+			mrInfo: &MrInfo{
+				FailedTests: 1,
+			},
+			expected:           true,
+			expectedApplicable: false,
+		},
+		{
+			name: "no failed tests when allowed",
+			config: &Config{
+				Rules: Rules{AllowFailingTests: true},
+			},
+			mrInfo: &MrInfo{
+				FailedTests: 0,
+			},
+			expected:           true,
+			expectedApplicable: false,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, applicable := checkTests(tt.config, tt.mrInfo)
-			assert.Equal(t, tt.expectedApplicable, applicable)
-			assert.Equal(t, tt.expected, result)
+			result := checkTests(tt.config, tt.mrInfo)
+			assert.Equal(t, tt.expectedApplicable, result.Required)
+			assert.Equal(t, tt.expected, result.Passed)
 		})
 	}
 }

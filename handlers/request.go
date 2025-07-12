@@ -44,19 +44,24 @@ func (r *Request) IsValid() (bool, string, error) {
 		return false, ValidError.Error(), nil
 	}
 
-	result := make([]string, len(checkers))
+	result := make([]string, len(checkers)+1)
 	resultOk := true
-	for i, c := range checkers {
-		ok, enabled := c.checkFunc(r.config, r.info)
-		if !enabled {
+	for i, check := range checkers {
+		r := check(r.config, r.info)
+		if !r.Required {
 			continue
 		}
-		if ok {
-			result[i] = c.text + " ✅"
+		if r.Passed {
+			result[i] = r.Message + " ✅"
 		} else {
-			result[i] = c.text + " ❌"
+			result[i] = r.Message + " ❌"
 			resultOk = false
 		}
+	}
+
+	if r.config.Rules.Approvers == nil {
+		result[len(checkers)] = "> [!important]\n> **Approvers configuration missing**\n> \n> Please configure `rules.approvers` in your merge bot config:\n> - For specific approvers: `rules.approvers: [\"user1\", \"user2\"]`\n> - For no specific approvers: `rules.approvers: []`"
+		resultOk = false
 	}
 
 	return resultOk, strings.Join(result, "\n\n"), nil
