@@ -282,7 +282,7 @@ func (g GitlabProvider) ListMergeRequests(projectId, size int) ([]handlers.MR, e
 	staleMRS := make([]handlers.MR, 0, size)
 	for _, mr := range listMr {
 		staleMRS = append(staleMRS, handlers.MR{
-			Id:          mr.ID,
+			Id:          mr.IID,
 			Labels:      mr.Labels,
 			Branch:      mr.SourceBranch,
 			LastUpdated: *mr.UpdatedAt})
