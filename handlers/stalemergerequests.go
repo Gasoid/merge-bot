@@ -11,11 +11,6 @@ var (
 	cleanStaleMergeRquestsLock sync.Mutex
 )
 
-const (
-	staleLabel      = "merge-bot:stale"
-	staleLabelColor = "#cccccc"
-)
-
 type MR struct {
 	Id          int
 	Branch      string

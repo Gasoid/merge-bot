@@ -48,7 +48,6 @@ type MrInfo struct {
 type Branches interface {
 	ListBranches(projectId, size int) ([]StaleBranch, error)
 	DeleteBranch(projectId int, name string) error
-	UpdateFromMaster(projectId, mergeId int) error
 }
 
 type Comments interface {
@@ -60,14 +59,20 @@ type MergeRequest interface {
 	GetMRInfo(projectId, mergeId int, path string) (*MrInfo, error)
 	ListMergeRequests(projectId, size int) ([]MR, error)
 	FindMergeRequests(projectId int, targetBranch, label string) ([]MR, error)
+	UpdateFromMaster(projectId, mergeId int) error
 	AssignLabel(projectId, mergeId int, name, color string) error
+}
+
+type Project interface {
+	CreateLabel(projectId int, name, color string) error
+	GetVar(projectId int, varName string) (string, error)
 }
 
 type RequestProvider interface {
 	Branches
 	Comments
 	MergeRequest
-	GetVar(projectId int, varName string) (string, error)
+	Project
 }
 
 type Rules struct {

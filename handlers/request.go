@@ -11,6 +11,13 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+const (
+	autoUpdateLabel      = "merge-bot:auto-update"
+	autoUpdateLabelColor = "#6699cc"
+	staleLabel           = "merge-bot:stale"
+	staleLabelColor      = "#cccccc"
+)
+
 type Request struct {
 	provider RequestProvider
 	info     *MrInfo
@@ -152,8 +159,8 @@ func (r Request) UpdateFromMaster() error {
 	return nil
 }
 
-func (r Request) UpdateBranchesWithLabel(label string) error {
-	listMr, err := r.provider.FindMergeRequests(r.info.ProjectId, r.info.TargetBranch, label)
+func (r Request) UpdateBranches() error {
+	listMr, err := r.provider.FindMergeRequests(r.info.ProjectId, r.info.TargetBranch, autoUpdateLabel)
 	if err != nil {
 		return err
 	}
@@ -164,6 +171,17 @@ func (r Request) UpdateBranchesWithLabel(label string) error {
 		}
 	}
 
+	return nil
+}
+
+func (r Request) CreateLabels() error {
+	if err := r.provider.CreateLabel(r.info.ProjectId, staleLabel, staleLabelColor); err != nil {
+		return err
+	}
+
+	if err := r.provider.CreateLabel(r.info.ProjectId, autoUpdateLabel, autoUpdateLabelColor); err != nil {
+		return err
+	}
 	return nil
 }
 

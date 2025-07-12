@@ -59,8 +59,11 @@ func NewMR(command *handlers.Request) error {
 }
 
 func MergeEvent(command *handlers.Request) error {
-	const autoUpdateLabel = "merge-bot:auto-update"
-	if err := command.UpdateBranchesWithLabel(autoUpdateLabel); err != nil {
+	if err := command.CreateLabels(); err != nil {
+		return fmt.Errorf("command.CreateLabels returns err: %w", err)
+	}
+
+	if err := command.UpdateBranches(); err != nil {
 		return fmt.Errorf("command.UpdateBranchesWithLabel returns err: %w", err)
 	}
 

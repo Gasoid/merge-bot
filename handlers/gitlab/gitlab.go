@@ -320,16 +320,7 @@ func (g GitlabProvider) FindMergeRequests(projectId int, targetBranch, label str
 	return mrs, nil
 }
 
-func (g GitlabProvider) AssignLabel(projectId, mergeId int, name, color string) error {
-	mr, _, err := g.client.MergeRequests.GetMergeRequest(projectId, mergeId, &gitlab.GetMergeRequestsOptions{})
-	if err != nil {
-		return fmt.Errorf("could't get merge request: %w", err)
-	}
-
-	if slices.Contains(mr.Labels, name) {
-		return nil
-	}
-
+func (g GitlabProvider) CreateLabel(projectId int, name, color string) error {
 	labels, _, err := g.client.Labels.ListLabels(projectId, &gitlab.ListLabelsOptions{Search: gitlab.Ptr(name)})
 	if err != nil {
 		return fmt.Errorf("listLabels failed to search: %w", err)
@@ -348,6 +339,22 @@ func (g GitlabProvider) AssignLabel(projectId, mergeId int, name, color string) 
 			&gitlab.CreateLabelOptions{Name: gitlab.Ptr(name), Color: gitlab.Ptr(color)}); err != nil {
 			return fmt.Errorf("could't create label: %w", err)
 		}
+	}
+	return nil
+}
+
+func (g GitlabProvider) AssignLabel(projectId, mergeId int, name, color string) error {
+	mr, _, err := g.client.MergeRequests.GetMergeRequest(projectId, mergeId, &gitlab.GetMergeRequestsOptions{})
+	if err != nil {
+		return fmt.Errorf("could't get merge request: %w", err)
+	}
+
+	if slices.Contains(mr.Labels, name) {
+		return nil
+	}
+
+	if err := g.CreateLabel(projectId, name, color); err != nil {
+		return err
 	}
 
 	if _, _, err := g.client.MergeRequests.UpdateMergeRequest(

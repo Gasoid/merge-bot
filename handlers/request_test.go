@@ -91,6 +91,10 @@ func (p *testProvider) AssignLabel(projectId, mergeId int, name, color string) e
 	return p.err
 }
 
+func (p *testProvider) CreateLabel(projectId int, name, color string) error {
+	return p.err
+}
+
 func Test_Merge(t *testing.T) {
 	type args struct {
 		pr *Request
