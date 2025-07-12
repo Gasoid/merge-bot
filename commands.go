@@ -59,13 +59,13 @@ func NewMR(command *handlers.Request) error {
 }
 
 func MergeEvent(command *handlers.Request) error {
-	if err := command.DeleteStaleBranches(); err != nil {
-		return fmt.Errorf("command.DeleteStaleBranches returns err: %w", err)
-	}
-
 	const autoUpdateLabel = "merge-bot:auto-update"
 	if err := command.UpdateBranchesWithLabel(autoUpdateLabel); err != nil {
 		return fmt.Errorf("command.UpdateBranchesWithLabel returns err: %w", err)
+	}
+
+	if err := command.DeleteStaleBranches(); err != nil {
+		return fmt.Errorf("command.DeleteStaleBranches returns err: %w", err)
 	}
 	return nil
 }

@@ -310,7 +310,7 @@ func (g GitlabProvider) FindMergeRequests(projectId int, targetBranch, label str
 	mrs := make([]handlers.MR, 0)
 	for _, mr := range listMr {
 		mrs = append(mrs, handlers.MR{
-			Id:          mr.ID,
+			Id:          mr.IID,
 			Labels:      mr.Labels,
 			Branch:      mr.SourceBranch,
 			LastUpdated: *mr.UpdatedAt})
