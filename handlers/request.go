@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/Gasoid/mergebot/logger"
+	"github.com/Gasoid/mergebot/semaphore"
 
 	"gopkg.in/yaml.v3"
 )
@@ -125,16 +126,27 @@ func (r *Request) Greetings() error {
 	return r.LeaveComment(buf.String())
 }
 
-func (r *Request) DeleteStaleBranches() error {
-	if r.config.StaleBranchesDeletion.Enabled {
-		if err := r.cleanStaleMergeRequests(); err != nil {
-			return err
-		}
+var (
+	deleteStaleBranches = semaphore.NewQ(1)
+)
 
-		if err := r.cleanStaleBranches(); err != nil {
-			return err
-		}
+func (r *Request) DeleteStaleBranches() error {
+
+	if !r.config.StaleBranchesDeletion.Enabled {
+		return nil
 	}
+
+	deleteStaleBranches.Add("cleanStaleMergeRequests", func() {
+		if err := r.cleanStaleMergeRequests(); err != nil {
+			logger.Info("cleanStaleMergeRequests", "err", err)
+		}
+	})
+
+	deleteStaleBranches.Add("cleanStaleBranches", func() {
+		if err := r.cleanStaleBranches(); err != nil {
+			logger.Info("cleanStaleBranches", "err", err)
+		}
+	})
 
 	return nil
 }
@@ -164,6 +176,10 @@ func (r Request) UpdateFromMaster() error {
 	return nil
 }
 
+var (
+	updateBranch = semaphore.NewQ(2)
+)
+
 func (r Request) UpdateBranches() error {
 	listMr, err := r.provider.FindMergeRequests(r.info.ProjectId, r.info.TargetBranch, autoUpdateLabel)
 	if err != nil {
@@ -171,9 +187,11 @@ func (r Request) UpdateBranches() error {
 	}
 
 	for _, mr := range listMr {
-		if err := r.provider.UpdateFromMaster(r.info.ProjectId, mr.Id); err != nil {
-			return err
-		}
+		updateBranch.Add(fmt.Sprintf("%d-%d", r.info.ProjectId, mr.Id), func() {
+			if err := r.provider.UpdateFromMaster(r.info.ProjectId, mr.Id); err != nil {
+				logger.Info("UpdateFromMaster", "err", err)
+			}
+		})
 	}
 
 	return nil
