@@ -136,13 +136,13 @@ func (r *Request) DeleteStaleBranches() error {
 		return nil
 	}
 
-	deleteStaleBranches.Add("cleanStaleMergeRequests", func() {
+	deleteStaleBranches.Add(fmt.Sprintf("cleanStaleMergeRequests-%d", r.info.ProjectId), func() {
 		if err := r.cleanStaleMergeRequests(); err != nil {
 			logger.Info("cleanStaleMergeRequests", "err", err)
 		}
 	})
 
-	deleteStaleBranches.Add("cleanStaleBranches", func() {
+	deleteStaleBranches.Add(fmt.Sprintf("cleanStaleBranches-%d", r.info.ProjectId), func() {
 		if err := r.cleanStaleBranches(); err != nil {
 			logger.Info("cleanStaleBranches", "err", err)
 		}
