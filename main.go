@@ -1,10 +1,10 @@
 package main
 
 import (
-	"github.com/Gasoid/mergebot/config"
-	_ "github.com/Gasoid/mergebot/handlers/gitlab"
-	"github.com/Gasoid/mergebot/logger"
-	_ "github.com/Gasoid/mergebot/webhook/gitlab"
+	"github.com/Gasoid/merge-bot/config"
+	_ "github.com/Gasoid/merge-bot/handlers/gitlab"
+	"github.com/Gasoid/merge-bot/logger"
+	_ "github.com/Gasoid/merge-bot/webhook/gitlab"
 )
 
 func main() {

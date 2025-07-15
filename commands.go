@@ -3,9 +3,9 @@ package main
 import (
 	"fmt"
 
-	"github.com/Gasoid/mergebot/handlers"
-	"github.com/Gasoid/mergebot/logger"
-	"github.com/Gasoid/mergebot/webhook"
+	"github.com/Gasoid/merge-bot/handlers"
+	"github.com/Gasoid/merge-bot/logger"
+	"github.com/Gasoid/merge-bot/webhook"
 )
 
 func init() {

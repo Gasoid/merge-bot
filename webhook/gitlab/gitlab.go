@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/Gasoid/mergebot/logger"
-	"github.com/Gasoid/mergebot/webhook"
+	"github.com/Gasoid/merge-bot/logger"
+	"github.com/Gasoid/merge-bot/webhook"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
 )
 

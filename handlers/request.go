@@ -6,7 +6,8 @@ import (
 	"html/template"
 	"strings"
 
-	"github.com/Gasoid/mergebot/logger"
+	"github.com/Gasoid/merge-bot/logger"
+	"github.com/Gasoid/merge-bot/semaphore"
 
 	"gopkg.in/yaml.v3"
 )
@@ -16,6 +17,11 @@ const (
 	autoUpdateLabelColor = "#6699cc"
 	staleLabel           = "merge-bot:stale"
 	staleLabelColor      = "#cccccc"
+)
+
+var (
+	deleteStaleBranches = semaphore.NewKeyedSemaphore(1)
+	updateBranch        = semaphore.NewKeyedSemaphore(2)
 )
 
 type Request struct {
@@ -126,15 +132,22 @@ func (r *Request) Greetings() error {
 }
 
 func (r *Request) DeleteStaleBranches() error {
-	if r.config.StaleBranchesDeletion.Enabled {
-		if err := r.cleanStaleMergeRequests(); err != nil {
-			return err
-		}
 
-		if err := r.cleanStaleBranches(); err != nil {
-			return err
-		}
+	if !r.config.StaleBranchesDeletion.Enabled {
+		return nil
 	}
+
+	deleteStaleBranches.Add(fmt.Sprintf("clean_stale_merge_requests_%d", r.info.ProjectId), func() {
+		if err := r.cleanStaleMergeRequests(); err != nil {
+			logger.Info("cleanStaleMergeRequests", "err", err)
+		}
+	})
+
+	deleteStaleBranches.Add(fmt.Sprintf("clean_stale_branches_%d", r.info.ProjectId), func() {
+		if err := r.cleanStaleBranches(); err != nil {
+			logger.Info("cleanStaleBranches", "err", err)
+		}
+	})
 
 	return nil
 }
@@ -171,9 +184,11 @@ func (r Request) UpdateBranches() error {
 	}
 
 	for _, mr := range listMr {
-		if err := r.provider.UpdateFromMaster(r.info.ProjectId, mr.Id); err != nil {
-			return err
-		}
+		updateBranch.Add(fmt.Sprintf("update_branch_%d_%d", r.info.ProjectId, mr.Id), func() {
+			if err := r.provider.UpdateFromMaster(r.info.ProjectId, mr.Id); err != nil {
+				logger.Info("UpdateFromMaster", "err", err)
+			}
+		})
 	}
 
 	return nil

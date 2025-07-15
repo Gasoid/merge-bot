@@ -6,9 +6,9 @@ import (
 	"net/http"
 	"slices"
 
-	"github.com/Gasoid/mergebot/config"
-	"github.com/Gasoid/mergebot/handlers"
-	"github.com/Gasoid/mergebot/logger"
+	"github.com/Gasoid/merge-bot/config"
+	"github.com/Gasoid/merge-bot/handlers"
+	"github.com/Gasoid/merge-bot/logger"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
 
 	"github.com/dustin/go-humanize"

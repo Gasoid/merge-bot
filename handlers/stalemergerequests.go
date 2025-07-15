@@ -3,12 +3,7 @@ package handlers
 import (
 	"fmt"
 	"slices"
-	"sync"
 	"time"
-)
-
-var (
-	cleanStaleMergeRquestsLock sync.Mutex
 )
 
 type MR struct {
@@ -19,9 +14,6 @@ type MR struct {
 }
 
 func (r Request) cleanStaleMergeRequests() error {
-	cleanStaleMergeRquestsLock.Lock()
-	defer cleanStaleMergeRquestsLock.Unlock()
-
 	days := r.config.StaleBranchesDeletion.Days
 	coolDays := r.config.StaleBranchesDeletion.WaitDays
 	now := time.Now()
