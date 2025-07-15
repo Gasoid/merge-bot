@@ -127,7 +127,7 @@ func (r *Request) Greetings() error {
 }
 
 var (
-	deleteStaleBranches = semaphore.NewQ(1)
+	deleteStaleBranches = semaphore.NewKeyedSemaphore(1)
 )
 
 func (r *Request) DeleteStaleBranches() error {
@@ -177,7 +177,7 @@ func (r Request) UpdateFromMaster() error {
 }
 
 var (
-	updateBranch = semaphore.NewQ(2)
+	updateBranch = semaphore.NewKeyedSemaphore(2)
 )
 
 func (r Request) UpdateBranches() error {
