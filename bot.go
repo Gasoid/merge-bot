@@ -5,10 +5,10 @@ import (
 	"path"
 	"sync"
 
-	"github.com/Gasoid/mergebot/config"
-	"github.com/Gasoid/mergebot/handlers"
-	"github.com/Gasoid/mergebot/logger"
-	"github.com/Gasoid/mergebot/webhook"
+	"github.com/Gasoid/merge-bot/config"
+	"github.com/Gasoid/merge-bot/handlers"
+	"github.com/Gasoid/merge-bot/logger"
+	"github.com/Gasoid/merge-bot/webhook"
 
 	"net/http"
 
@@ -63,7 +63,7 @@ func start() {
 	}
 
 	e.GET(HealthyEndpoint, healthcheck)
-	e.POST("/mergebot/webhook/:provider/", Handler)
+	e.POST("/merge-bot/webhook/:provider/", Handler)
 
 	if tlsEnabled {
 		tmpDir := path.Join(os.TempDir(), "tls", ".cache")

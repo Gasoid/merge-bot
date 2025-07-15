@@ -10,6 +10,7 @@ type keyState struct {
 	running int
 }
 
+// counting semaphore
 type KeyedSemaphore struct {
 	counters  map[string]*keyState
 	maxPerKey int

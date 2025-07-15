@@ -6,8 +6,8 @@ import (
 	"html/template"
 	"strings"
 
-	"github.com/Gasoid/mergebot/logger"
-	"github.com/Gasoid/mergebot/semaphore"
+	"github.com/Gasoid/merge-bot/logger"
+	"github.com/Gasoid/merge-bot/semaphore"
 
 	"gopkg.in/yaml.v3"
 )
@@ -17,6 +17,11 @@ const (
 	autoUpdateLabelColor = "#6699cc"
 	staleLabel           = "merge-bot:stale"
 	staleLabelColor      = "#cccccc"
+)
+
+var (
+	deleteStaleBranches = semaphore.NewKeyedSemaphore(1)
+	updateBranch        = semaphore.NewKeyedSemaphore(2)
 )
 
 type Request struct {
@@ -126,23 +131,19 @@ func (r *Request) Greetings() error {
 	return r.LeaveComment(buf.String())
 }
 
-var (
-	deleteStaleBranches = semaphore.NewKeyedSemaphore(1)
-)
-
 func (r *Request) DeleteStaleBranches() error {
 
 	if !r.config.StaleBranchesDeletion.Enabled {
 		return nil
 	}
 
-	deleteStaleBranches.Add(fmt.Sprintf("cleanStaleMergeRequests-%d", r.info.ProjectId), func() {
+	deleteStaleBranches.Add(fmt.Sprintf("clean_stale_merge_requests_%d", r.info.ProjectId), func() {
 		if err := r.cleanStaleMergeRequests(); err != nil {
 			logger.Info("cleanStaleMergeRequests", "err", err)
 		}
 	})
 
-	deleteStaleBranches.Add(fmt.Sprintf("cleanStaleBranches-%d", r.info.ProjectId), func() {
+	deleteStaleBranches.Add(fmt.Sprintf("clean_stale_branches_%d", r.info.ProjectId), func() {
 		if err := r.cleanStaleBranches(); err != nil {
 			logger.Info("cleanStaleBranches", "err", err)
 		}
@@ -176,10 +177,6 @@ func (r Request) UpdateFromMaster() error {
 	return nil
 }
 
-var (
-	updateBranch = semaphore.NewKeyedSemaphore(2)
-)
-
 func (r Request) UpdateBranches() error {
 	listMr, err := r.provider.FindMergeRequests(r.info.ProjectId, r.info.TargetBranch, autoUpdateLabel)
 	if err != nil {
@@ -187,7 +184,7 @@ func (r Request) UpdateBranches() error {
 	}
 
 	for _, mr := range listMr {
-		updateBranch.Add(fmt.Sprintf("%d-%d", r.info.ProjectId, mr.Id), func() {
+		updateBranch.Add(fmt.Sprintf("update_branch_%d_%d", r.info.ProjectId, mr.Id), func() {
 			if err := r.provider.UpdateFromMaster(r.info.ProjectId, mr.Id); err != nil {
 				logger.Info("UpdateFromMaster", "err", err)
 			}
