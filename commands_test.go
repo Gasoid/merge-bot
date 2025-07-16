@@ -11,7 +11,7 @@ import (
 func TestHandle(t *testing.T) {
 	// Save original state
 	handlerMu.Lock()
-	originalHandlers := make(map[string]func(*handlers.Request) error)
+	originalHandlers := make(map[string]func(*handlers.Request, string) error)
 	for k, v := range handlerFuncs {
 		originalHandlers[k] = v
 	}
@@ -24,7 +24,7 @@ func TestHandle(t *testing.T) {
 		handlerMu.Unlock()
 	}()
 
-	testFunc := func(command *handlers.Request) error {
+	testFunc := func(command *handlers.Request, args string) error {
 		return nil
 	}
 

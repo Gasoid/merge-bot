@@ -188,6 +188,7 @@ func (g *GitlabProvider) GetMRInfo(projectId, mergeId int, configPath string) (*
 
 	info.Labels = g.mr.Labels
 	info.TargetBranch = g.mr.TargetBranch
+	info.SourceBranch = g.mr.SourceBranch
 	info.Author = g.mr.Author.Username
 
 	info.ConfigContent, err = g.GetFile(projectId, configPath)
@@ -364,6 +365,27 @@ func (g GitlabProvider) AssignLabel(projectId, mergeId int, name, color string) 
 		&gitlab.UpdateMergeRequestOptions{AddLabels: &gitlab.LabelOptions{name}}); err != nil {
 		return fmt.Errorf("could't update mergeRequest: %w", err)
 	}
+	return nil
+}
+
+func (g GitlabProvider) RerunPipeline(projectId, pipelineId int, ref string) error {
+	pipelineVars, _, err := g.client.Pipelines.GetPipelineVariables(projectId, pipelineId)
+	if err != nil {
+		return err
+	}
+
+	runVars := make([]*gitlab.PipelineVariableOptions, 0, len(pipelineVars))
+	for _, v := range pipelineVars {
+		runVars = append(runVars, &gitlab.PipelineVariableOptions{Key: &v.Key, Value: &v.Value, VariableType: &v.VariableType})
+	}
+
+	if _, _, err := g.client.Pipelines.CreatePipeline(projectId, &gitlab.CreatePipelineOptions{
+		Variables: &runVars,
+		Ref:       &ref,
+	}); err != nil {
+		return err
+	}
+
 	return nil
 }
 

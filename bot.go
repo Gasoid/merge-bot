@@ -82,7 +82,7 @@ func start() {
 }
 
 var (
-	handlerFuncs = map[string]func(*handlers.Request) error{}
+	handlerFuncs = map[string]func(*handlers.Request, string) error{}
 	handlerMu    sync.RWMutex
 )
 
@@ -125,7 +125,7 @@ func Handler(c echo.Context) error {
 				return
 			}
 
-			if err := f(command); err != nil {
+			if err := f(command, hook.Args); err != nil {
 				logger.Error("handlerFunc returns err", "provider", providerName, "event", hook.Event, "err", err)
 				return
 			}
@@ -135,11 +135,11 @@ func Handler(c echo.Context) error {
 	return nil
 }
 
-func handle(onEvent string, funcHandler func(*handlers.Request) error) {
+func handle(onEvent string, funcHandler func(*handlers.Request, string) error) {
 	handlerMu.Lock()
 	defer handlerMu.Unlock()
 
-	handlerFuncs[onEvent] = func(command *handlers.Request) error {
-		return funcHandler(command)
+	handlerFuncs[onEvent] = func(command *handlers.Request, args string) error {
+		return funcHandler(command, args)
 	}
 }

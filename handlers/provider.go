@@ -36,6 +36,7 @@ type MrInfo struct {
 	Id              int
 	Labels          []string
 	TargetBranch    string
+	SourceBranch    string
 	Approvals       map[string]struct{}
 	Author          string
 	FailedPipelines int
@@ -67,6 +68,7 @@ type MergeRequest interface {
 type Project interface {
 	CreateLabel(projectId int, name, color string) error
 	GetVar(projectId int, varName string) (string, error)
+	RerunPipeline(projectId, pipelineId int, ref string) error
 }
 
 type RequestProvider interface {
