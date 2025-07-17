@@ -26,6 +26,7 @@ Try the bot on our [demo repository](https://gitlab.com/Gasoid/sugar-test) or in
 - `!merge` - Merges MR if all repository rules are satisfied
 - `!check` - Validates whether the MR meets all rules
 - `!update` - Updates the branch from the target branch (e.g., main/master)
+- `!rerun` - Re-run pipeline, e.g. `!rerun #123123333` or `!rerun 123123333`, command will run pipeline against the branch of the merge request with variables of provided pipeline (e.g. 123123333)
 
 ## Table of Contents
 
