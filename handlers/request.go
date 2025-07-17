@@ -205,6 +205,11 @@ func (r Request) CreateLabels() error {
 	return nil
 }
 
+func (r Request) RerunPipeline(pipelineId int) error {
+	logger.Debug("rerun", "pipelineId", pipelineId)
+	return r.provider.RerunPipeline(r.info.ProjectId, pipelineId, r.info.SourceBranch)
+}
+
 func (r Request) ValidateSecret(secret string) bool {
 	const mergeBotSecret = "MERGE_BOT_SECRET"
 

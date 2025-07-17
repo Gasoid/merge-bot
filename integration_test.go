@@ -58,7 +58,7 @@ func TestIntegrationWebhookFlow(t *testing.T) {
 
 	// Save original handlers
 	handlerMu.Lock()
-	originalHandlers := make(map[string]func(*handlers.Request) error)
+	originalHandlers := make(map[string]func(*handlers.Request, string) error)
 	for k, v := range handlerFuncs {
 		originalHandlers[k] = v
 	}
@@ -72,12 +72,12 @@ func TestIntegrationWebhookFlow(t *testing.T) {
 	}()
 
 	// Register a test handler
-	handle("!merge", func(command *handlers.Request) error {
+	handle("!merge", func(command *handlers.Request, args string) error {
 		return nil
 	})
 
 	e := echo.New()
-	req := httptest.NewRequest(http.MethodPost, "/merge-bot/webhook/integration/", strings.NewReader(`{}`))
+	req := httptest.NewRequest(http.MethodPost, "/mergebot/webhook/integration/", strings.NewReader(`{}`))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)

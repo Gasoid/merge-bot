@@ -2,12 +2,14 @@ package webhook
 
 import (
 	"net/http"
+	"strings"
 	"sync"
 )
 
 const (
-	OnNewMR = "\anewMREvent"
-	OnMerge = "\amergeEvent"
+	OnNewMR     = "\anewMREvent"
+	OnMerge     = "\amergeEvent"
+	spaceSymbol = " "
 )
 
 var (
@@ -44,6 +46,7 @@ type Provider interface {
 type Webhook struct {
 	provider Provider
 	Event    string
+	Args     string
 }
 
 func (w Webhook) GetSecret() string {
@@ -71,7 +74,15 @@ func (w *Webhook) ParseRequest(request *http.Request) error {
 		return err
 	}
 
-	w.Event = w.provider.GetCmd()
+	if w.provider.GetCmd() != "" {
+		result := strings.SplitN(w.provider.GetCmd(), spaceSymbol, 2)
+		if len(result) > 0 {
+			w.Event = result[0]
+		}
+		if len(result) > 1 {
+			w.Args = strings.TrimSpace(result[1])
+		}
+	}
 
 	return nil
 }
