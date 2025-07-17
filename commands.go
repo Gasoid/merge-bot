@@ -83,6 +83,8 @@ func RerunPipeline(command *handlers.Request, args string) error {
 		logger.Debug("rerun", "args", args, "arg", arg)
 		return command.LeaveComment("Pipeline ID is wrong")
 	}
+
+	logger.Debug("rerun", "args", args, "arg", arg)
 	if err := command.RerunPipeline(pipelineId); err != nil {
 		return command.LeaveComment("Validate your pipeline")
 	}
