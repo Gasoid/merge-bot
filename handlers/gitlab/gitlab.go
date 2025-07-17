@@ -265,6 +265,9 @@ func (g GitlabProvider) ListBranches(projectId, size int) ([]handlers.StaleBranc
 			break
 		}
 	}
+
+	logger.Debug("listBranches", "staleBranches", staleBranches)
+
 	return staleBranches, nil
 }
 
