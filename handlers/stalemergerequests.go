@@ -30,6 +30,7 @@ func (r Request) cleanStaleMergeRequests() error {
 				if err := r.provider.DeleteBranch(r.info.ProjectId, mr.Branch); err != nil {
 					return fmt.Errorf("DeleteBranch returns error: %w", err)
 				}
+				continue
 			}
 		}
 
