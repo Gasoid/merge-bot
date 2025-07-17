@@ -107,7 +107,7 @@ func TestHandler(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			e := echo.New()
-			req := httptest.NewRequest(http.MethodPost, "/merge-bot/webhook/"+tt.provider+"/", strings.NewReader(tt.body))
+			req := httptest.NewRequest(http.MethodPost, "/mergebot/webhook/"+tt.provider+"/", strings.NewReader(tt.body))
 			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 			rec := httptest.NewRecorder()
 			c := e.NewContext(req, rec)
@@ -139,7 +139,7 @@ func TestHandlerConcurrency(t *testing.T) {
 	// Test multiple concurrent requests
 	for i := 0; i < numRequests; i++ {
 		go func() {
-			req := httptest.NewRequest(http.MethodPost, "/merge-bot/webhook/concurrent/", strings.NewReader(`{}`))
+			req := httptest.NewRequest(http.MethodPost, "/mergebot/webhook/concurrent/", strings.NewReader(`{}`))
 			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 			rec := httptest.NewRecorder()
 			c := e.NewContext(req, rec)
@@ -175,7 +175,7 @@ func TestHandlerWithDifferentMethods(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.method, func(t *testing.T) {
 			e := echo.New()
-			req := httptest.NewRequest(tt.method, "/merge-bot/webhook/methodtest/", strings.NewReader(`{}`))
+			req := httptest.NewRequest(tt.method, "/mergebot/webhook/methodtest/", strings.NewReader(`{}`))
 			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 			rec := httptest.NewRecorder()
 			c := e.NewContext(req, rec)
@@ -194,7 +194,7 @@ func TestHandlerWithEmptyBody(t *testing.T) {
 	defer cleanup()
 
 	e := echo.New()
-	req := httptest.NewRequest(http.MethodPost, "/merge-bot/webhook/emptybody/", bytes.NewReader([]byte{}))
+	req := httptest.NewRequest(http.MethodPost, "/mergebot/webhook/emptybody/", bytes.NewReader([]byte{}))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)

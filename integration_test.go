@@ -77,7 +77,7 @@ func TestIntegrationWebhookFlow(t *testing.T) {
 	})
 
 	e := echo.New()
-	req := httptest.NewRequest(http.MethodPost, "/merge-bot/webhook/integration/", strings.NewReader(`{}`))
+	req := httptest.NewRequest(http.MethodPost, "/mergebot/webhook/integration/", strings.NewReader(`{}`))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
