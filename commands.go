@@ -80,6 +80,7 @@ func RerunPipeline(command *handlers.Request, args string) error {
 	arg := strings.TrimPrefix(args, "#")
 	pipelineId, err := strconv.Atoi(arg)
 	if err != nil {
+		logger.Debug("rerun", "args", args, "arg", arg)
 		return command.LeaveComment("Pipeline ID is wrong")
 	}
 	if err := command.RerunPipeline(pipelineId); err != nil {

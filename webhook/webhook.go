@@ -7,8 +7,9 @@ import (
 )
 
 const (
-	OnNewMR = "\anewMREvent"
-	OnMerge = "\amergeEvent"
+	OnNewMR     = "\anewMREvent"
+	OnMerge     = "\amergeEvent"
+	spaceSymbol = " "
 )
 
 var (
@@ -74,12 +75,12 @@ func (w *Webhook) ParseRequest(request *http.Request) error {
 	}
 
 	if w.provider.GetCmd() != "" {
-		result := strings.Split(w.provider.GetCmd(), " ")
+		result := strings.SplitN(w.provider.GetCmd(), spaceSymbol, 1)
 		if len(result) > 0 {
 			w.Event = result[0]
 		}
 		if len(result) > 1 {
-			w.Args = result[1]
+			w.Args = strings.TrimSpace(result[1])
 		}
 	}
 
