@@ -75,7 +75,7 @@ func (w *Webhook) ParseRequest(request *http.Request) error {
 	}
 
 	if w.provider.GetCmd() != "" {
-		result := strings.SplitN(w.provider.GetCmd(), spaceSymbol, 1)
+		result := strings.SplitN(w.provider.GetCmd(), spaceSymbol, 2)
 		if len(result) > 0 {
 			w.Event = result[0]
 		}
