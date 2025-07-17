@@ -63,7 +63,7 @@ func start() {
 	}
 
 	e.GET(HealthyEndpoint, healthcheck)
-	e.POST("/merge-bot/webhook/:provider/", Handler)
+	e.POST("/mergebot/webhook/:provider/", Handler)
 
 	if tlsEnabled {
 		tmpDir := path.Join(os.TempDir(), "tls", ".cache")
