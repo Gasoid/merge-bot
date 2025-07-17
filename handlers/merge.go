@@ -62,9 +62,9 @@ func MergeMaster(username, password, repoUrl, branchName, master string) error {
 		return fmt.Errorf("git checkout error: %w, output: %s", err, output)
 	}
 
-	if output, err := git.Merge(workingDir, merge.Commits(master), merge.M("update from master")); err != nil {
+	if output, err := git.Merge(workingDir, merge.Commits(master), merge.M(fmt.Sprintf("✨ merged %s", master))); err != nil {
 		logger.Debug("git merge error", "output", output)
-		if output, err := git.Merge(workingDir, merge.NoFf, merge.Commits(master), merge.M("update from master")); err != nil {
+		if output, err := git.Merge(workingDir, merge.NoFf, merge.Commits(master), merge.M(fmt.Sprintf("✨ merged %s", master))); err != nil {
 			logger.Debug("git merge --noff error", "output", output)
 			return fmt.Errorf("git merge --noff error: %w, output: %s", err, output)
 		}

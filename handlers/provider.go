@@ -15,6 +15,7 @@ var (
 	StatusError   = &Error{"Is it opened?"}
 	ValidError    = &Error{"Your request can't be merged, because either it has conflicts or state is not opened"}
 	RepoSizeError = &Error{"Repository size is greater than allowed size"}
+	NotFoundError = &Error{"Resource is not found"}
 )
 
 type Error struct {

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -81,12 +82,16 @@ func RerunPipeline(command *handlers.Request, args string) error {
 	pipelineId, err := strconv.Atoi(arg)
 	if err != nil {
 		logger.Debug("rerun", "args", args, "arg", arg)
-		return command.LeaveComment("Pipeline ID is wrong")
+		return command.LeaveComment("> [!important]\n> Pipeline ID is invalid or wrong")
 	}
 
 	logger.Debug("rerun", "args", args, "arg", arg)
 	if err := command.RerunPipeline(pipelineId); err != nil {
-		return command.LeaveComment("Validate your pipeline")
+		if errors.Is(err, handlers.NotFoundError) {
+			return command.LeaveComment("> [!important]\n> Provided pipeline was not found")
+		}
+
+		return command.LeaveComment("> [!important]\n> Validate your pipeline syntax")
 	}
 	return nil
 }
