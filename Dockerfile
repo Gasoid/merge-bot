@@ -14,6 +14,8 @@ COPY --from=builder /tmp/bot /root/
 # HEALTHCHECK --interval=10s --timeout=3s \
 #   CMD curl -f http://localhost:8080/health || exit 1
 
-ENV SENTRY_RELEASE=3.2.0 SENTRY_ENVIRONMENT=container
+ARG MERGE_BOT_VERSION=dev
+
+ENV SENTRY_RELEASE=${MERGE_BOT_VERSION} SENTRY_ENVIRONMENT=container
 
 CMD exec /root/bot
