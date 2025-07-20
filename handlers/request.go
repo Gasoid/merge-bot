@@ -205,7 +205,7 @@ func (r Request) CreateLabels() error {
 	return nil
 }
 
-func (r Request) RerunPipeline(pipelineId int) error {
+func (r Request) RerunPipeline(pipelineId int) (string, error) {
 	logger.Debug("rerun", "pipelineId", pipelineId)
 	return r.provider.RerunPipeline(r.info.ProjectId, pipelineId, r.info.SourceBranch)
 }

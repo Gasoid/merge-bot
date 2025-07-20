@@ -371,10 +371,10 @@ func (g GitlabProvider) AssignLabel(projectId, mergeId int, name, color string) 
 	return nil
 }
 
-func (g GitlabProvider) RerunPipeline(projectId, pipelineId int, ref string) error {
+func (g GitlabProvider) RerunPipeline(projectId, pipelineId int, ref string) (string, error) {
 	pipelineVars, _, err := g.client.Pipelines.GetPipelineVariables(projectId, pipelineId)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	runVars := make([]*gitlab.PipelineVariableOptions, 0, len(pipelineVars))
@@ -382,14 +382,15 @@ func (g GitlabProvider) RerunPipeline(projectId, pipelineId int, ref string) err
 		runVars = append(runVars, &gitlab.PipelineVariableOptions{Key: &v.Key, Value: &v.Value, VariableType: &v.VariableType})
 	}
 
-	if _, _, err := g.client.Pipelines.CreatePipeline(projectId, &gitlab.CreatePipelineOptions{
+	pipeline, _, err := g.client.Pipelines.CreatePipeline(projectId, &gitlab.CreatePipelineOptions{
 		Variables: &runVars,
 		Ref:       &ref,
-	}); err != nil {
-		return err
+	})
+	if err != nil {
+		return "", err
 	}
 
-	return nil
+	return pipeline.WebURL, nil
 }
 
 func New() handlers.RequestProvider {

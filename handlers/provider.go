@@ -69,7 +69,7 @@ type MergeRequest interface {
 type Project interface {
 	CreateLabel(projectId int, name, color string) error
 	GetVar(projectId int, varName string) (string, error)
-	RerunPipeline(projectId, pipelineId int, ref string) error
+	RerunPipeline(projectId, pipelineId int, ref string) (string, error)
 }
 
 type RequestProvider interface {
