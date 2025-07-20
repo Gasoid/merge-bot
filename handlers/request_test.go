@@ -95,8 +95,8 @@ func (p *testProvider) CreateLabel(projectId int, name, color string) error {
 	return p.err
 }
 
-func (p *testProvider) RerunPipeline(projectId, pipelineId int, ref string) error {
-	return p.err
+func (p *testProvider) RerunPipeline(projectId, pipelineId int, ref string) (string, error) {
+	return "", p.err
 }
 
 func Test_Merge(t *testing.T) {
