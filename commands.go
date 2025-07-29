@@ -3,6 +3,8 @@ package main
 import (
 	"errors"
 	"fmt"
+	"net/url"
+	"path"
 	"strconv"
 	"strings"
 
@@ -86,12 +88,19 @@ func RerunPipeline(command *handlers.Request, args string) error {
 	}
 
 	logger.Debug("rerun", "args", args, "arg", arg)
-	if err := command.RerunPipeline(pipelineId); err != nil {
+	pipelineURL, err := command.RerunPipeline(pipelineId)
+	if err != nil {
 		if errors.Is(err, handlers.NotFoundError) {
 			return command.LeaveComment("> [!important]\n> Provided pipeline was not found")
 		}
 
 		return command.LeaveComment("> [!important]\n> Validate your pipeline syntax")
 	}
-	return nil
+
+	parsedUrl, err := url.Parse(pipelineURL)
+	if err != nil {
+		return command.LeaveComment("> [!important]\n> pipeline created, but provided url is wrong")
+	}
+
+	return command.LeaveComment(fmt.Sprintf("🤖 pipeline created: [%s](%s)", path.Base(parsedUrl.Path), pipelineURL))
 }
