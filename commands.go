@@ -99,8 +99,8 @@ func RerunPipeline(command *handlers.Request, args string) error {
 
 	parsedUrl, err := url.Parse(pipelineURL)
 	if err != nil {
-		return command.LeaveComment("pipeline created, but provided url is wrong")
+		return command.LeaveComment("> [!important]\n> pipeline created, but provided url is wrong")
 	}
 
-	return command.LeaveComment(fmt.Sprintf("pipeline created: [%s](%s)", path.Base(parsedUrl.Path), pipelineURL))
+	return command.LeaveComment(fmt.Sprintf("🤖 pipeline created: [%s](%s)", path.Base(parsedUrl.Path), pipelineURL))
 }
