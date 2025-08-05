@@ -10,12 +10,12 @@ import (
 func main() {
 	config.Parse()
 
-	logger.New()
-
 	if showVersion {
 		PrintVersion()
 		return
 	}
+
+	logger.New()
 
 	start()
 }
