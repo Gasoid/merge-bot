@@ -6,9 +6,9 @@ import (
 	"net/http"
 	"slices"
 
-	"github.com/Gasoid/merge-bot/config"
-	"github.com/Gasoid/merge-bot/handlers"
-	"github.com/Gasoid/merge-bot/logger"
+	"github.com/gasoid/merge-bot/config"
+	"github.com/gasoid/merge-bot/handlers"
+	"github.com/gasoid/merge-bot/logger"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
 
 	"github.com/dustin/go-humanize"
@@ -31,6 +31,7 @@ var (
 const (
 	tokenUsername = "oauth2"
 	gitlabTrue    = true
+	findMRSize    = 10
 )
 
 type GitlabProvider struct {
@@ -104,6 +105,7 @@ func (g *GitlabProvider) Merge(projectId, mergeId int, message string) error {
 func (g *GitlabProvider) GetApprovals(projectId, mergeId int) (map[string]struct{}, error) {
 	page := 1
 	approvals := map[string]struct{}{}
+
 	for {
 		notes, resp, err := g.client.Notes.ListMergeRequestNotes(
 			projectId,
@@ -237,13 +239,9 @@ func (g GitlabProvider) GetVar(projectId int, varName string) (string, error) {
 }
 
 func (g GitlabProvider) ListBranches(projectId, size int) ([]handlers.StaleBranch, error) {
-	branches, _, err := g.client.Branches.ListBranches(projectId, &gitlab.ListBranchesOptions{})
-	if err != nil {
-		return nil, err
-	}
-
 	staleBranches := make([]handlers.StaleBranch, 0, size)
-	for _, b := range branches {
+
+	for b := range g.listBranches(projectId, size) {
 		if b.Default || b.Protected {
 			continue
 		}
@@ -277,14 +275,14 @@ func (g *GitlabProvider) DeleteBranch(projectId int, name string) error {
 }
 
 func (g GitlabProvider) ListMergeRequests(projectId, size int) ([]handlers.MR, error) {
-	listMr, _, err := g.client.MergeRequests.ListProjectMergeRequests(projectId,
-		&gitlab.ListProjectMergeRequestsOptions{State: gitlab.Ptr("opened")})
-	if err != nil {
-		return nil, err
-	}
-
 	staleMRS := make([]handlers.MR, 0, size)
-	for _, mr := range listMr {
+
+	listMr := g.listMergeRequests(projectId, size,
+		&gitlab.ListProjectMergeRequestsOptions{
+			State: gitlab.Ptr("opened"),
+		})
+
+	for mr := range listMr {
 		staleMRS = append(staleMRS, handlers.MR{
 			Id:          mr.IID,
 			Labels:      mr.Labels,
@@ -301,18 +299,16 @@ func (g GitlabProvider) ListMergeRequests(projectId, size int) ([]handlers.MR, e
 }
 
 func (g GitlabProvider) FindMergeRequests(projectId int, targetBranch, label string) ([]handlers.MR, error) {
-	listMr, _, err := g.client.MergeRequests.ListProjectMergeRequests(projectId,
+	mrs := make([]handlers.MR, 0)
+
+	listMr := g.listMergeRequests(projectId, findMRSize,
 		&gitlab.ListProjectMergeRequestsOptions{
 			State:        gitlab.Ptr("opened"),
 			Labels:       &gitlab.LabelOptions{label},
 			TargetBranch: &targetBranch,
 		})
-	if err != nil {
-		return nil, err
-	}
 
-	mrs := make([]handlers.MR, 0)
-	for _, mr := range listMr {
+	for mr := range listMr {
 		mrs = append(mrs, handlers.MR{
 			Id:          mr.IID,
 			Labels:      mr.Labels,

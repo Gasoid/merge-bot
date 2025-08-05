@@ -6,8 +6,8 @@ import (
 	"html/template"
 	"strings"
 
-	"github.com/Gasoid/merge-bot/logger"
-	"github.com/Gasoid/merge-bot/semaphore"
+	"github.com/gasoid/merge-bot/logger"
+	"github.com/gasoid/merge-bot/semaphore"
 
 	"gopkg.in/yaml.v3"
 )

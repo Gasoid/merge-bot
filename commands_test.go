@@ -3,8 +3,8 @@ package main
 import (
 	"testing"
 
-	"github.com/Gasoid/merge-bot/handlers"
-	"github.com/Gasoid/merge-bot/webhook"
+	"github.com/gasoid/merge-bot/handlers"
+	"github.com/gasoid/merge-bot/webhook"
 	"github.com/stretchr/testify/assert"
 )
 

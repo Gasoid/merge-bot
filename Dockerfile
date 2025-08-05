@@ -1,10 +1,11 @@
 FROM golang:1.24.3-bookworm AS builder
+ARG MERGE_BOT_VERSION=dev
 WORKDIR /code
 ADD go.mod /code/
 ADD go.sum /code/
 RUN go mod download
 ADD ./ /code/
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o /tmp/bot .
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-X 'main.Version=$MERGE_BOT_VERSION' -X 'main.BuildTime=$(date)'" -a -o /tmp/bot .
 
 FROM alpine:3.21
 EXPOSE 8080 443

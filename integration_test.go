@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Gasoid/merge-bot/handlers"
-	"github.com/Gasoid/merge-bot/webhook"
+	"github.com/gasoid/merge-bot/handlers"
+	"github.com/gasoid/merge-bot/webhook"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 )

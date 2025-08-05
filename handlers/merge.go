@@ -5,7 +5,7 @@ import (
 	"net/url"
 	"os"
 
-	"github.com/Gasoid/merge-bot/logger"
+	"github.com/gasoid/merge-bot/logger"
 
 	"github.com/ldez/go-git-cmd-wrapper/v2/checkout"
 	"github.com/ldez/go-git-cmd-wrapper/v2/clone"
@@ -65,8 +65,8 @@ func MergeMaster(username, password, repoUrl, branchName, master string) error {
 	if output, err := git.Merge(workingDir, merge.Commits(master), merge.M(fmt.Sprintf("✨ merged %s", master))); err != nil {
 		logger.Debug("git merge error", "output", output)
 		if output, err := git.Merge(workingDir, merge.NoFf, merge.Commits(master), merge.M(fmt.Sprintf("✨ merged %s", master))); err != nil {
-			logger.Debug("git merge --noff error", "output", output)
-			return fmt.Errorf("git merge --noff error: %w, output: %s", err, output)
+			logger.Debug("git merge --no-ff error", "output", output)
+			return fmt.Errorf("git merge --no-ff error: %w, output: %s", err, output)
 		}
 	}
 
