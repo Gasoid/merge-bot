@@ -13,7 +13,7 @@ var (
 )
 
 func init() {
-	config.BoolVar(&showVersion, "version", false, "shows version and build time")
+	config.BoolVar(&showVersion, "version", false, "Shows version and build time")
 }
 
 func PrintVersion() {
