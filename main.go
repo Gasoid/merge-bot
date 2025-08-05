@@ -12,5 +12,10 @@ func main() {
 
 	logger.New()
 
+	if showVersion {
+		PrintVersion()
+		return
+	}
+
 	start()
 }
