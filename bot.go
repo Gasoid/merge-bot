@@ -5,10 +5,10 @@ import (
 	"path"
 	"sync"
 
-	"github.com/Gasoid/merge-bot/config"
-	"github.com/Gasoid/merge-bot/handlers"
-	"github.com/Gasoid/merge-bot/logger"
-	"github.com/Gasoid/merge-bot/webhook"
+	"github.com/gasoid/merge-bot/config"
+	"github.com/gasoid/merge-bot/handlers"
+	"github.com/gasoid/merge-bot/logger"
+	"github.com/gasoid/merge-bot/webhook"
 
 	"net/http"
 

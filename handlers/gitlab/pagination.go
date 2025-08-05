@@ -3,7 +3,7 @@ package gitlab
 import (
 	"iter"
 
-	"github.com/Gasoid/merge-bot/logger"
+	"github.com/gasoid/merge-bot/logger"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
 )
 

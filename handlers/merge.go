@@ -5,7 +5,7 @@ import (
 	"net/url"
 	"os"
 
-	"github.com/Gasoid/merge-bot/logger"
+	"github.com/gasoid/merge-bot/logger"
 
 	"github.com/ldez/go-git-cmd-wrapper/v2/checkout"
 	"github.com/ldez/go-git-cmd-wrapper/v2/clone"

@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/Gasoid/merge-bot/config"
+	"github.com/gasoid/merge-bot/config"
 )
 
 var (
