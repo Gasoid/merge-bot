@@ -29,9 +29,10 @@ var (
 )
 
 const (
-	tokenUsername = "oauth2"
-	gitlabTrue    = true
-	findMRSize    = 10
+	tokenUsername    = "oauth2"
+	gitlabTrue       = true
+	findMRSize       = 10
+	getApprovalsSize = 10
 )
 
 type GitlabProvider struct {
@@ -103,37 +104,21 @@ func (g *GitlabProvider) Merge(projectId, mergeId int, message string) error {
 }
 
 func (g *GitlabProvider) GetApprovals(projectId, mergeId int) (map[string]struct{}, error) {
-	page := 1
 	approvals := map[string]struct{}{}
 
-	for {
-		notes, resp, err := g.client.Notes.ListMergeRequestNotes(
-			projectId,
-			mergeId,
-			&gitlab.ListMergeRequestNotesOptions{ListOptions: gitlab.ListOptions{Page: page}})
-		if err != nil {
-			return nil, err
+	for note := range g.listMergeRequestNotes(projectId, mergeId, getApprovalsSize) {
+		if g.mr.Author.ID == note.Author.ID {
+			continue
 		}
 
-		for _, note := range notes {
-			if g.mr.Author.ID == note.Author.ID {
-				continue
+		if note.System {
+			if note.Body == "approved this merge request" {
+				approvals[note.Author.Username] = struct{}{}
 			}
-
-			if note.System {
-				if note.Body == "approved this merge request" {
-					approvals[note.Author.Username] = struct{}{}
-				}
-				if note.Body == "unapproved this merge request" {
-					delete(approvals, note.Author.Username)
-				}
+			if note.Body == "unapproved this merge request" {
+				delete(approvals, note.Author.Username)
 			}
 		}
-		if resp.NextPage == 0 {
-			break
-		}
-		page = resp.NextPage
-
 	}
 	return approvals, nil
 }

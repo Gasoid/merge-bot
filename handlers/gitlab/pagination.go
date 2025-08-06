@@ -7,24 +7,23 @@ import (
 	gitlab "gitlab.com/gitlab-org/api/client-go"
 )
 
-func (g GitlabProvider) listBranches(projectId, size int) iter.Seq[*gitlab.Branch] {
-	page := 1
+func paginate[T any](
+	fetchPage func(page, perPage int) ([]T, *gitlab.Response, error),
+	size int,
+) iter.Seq[T] {
+	return func(yield func(T) bool) {
+		page := 1
+		perPage := size * 2
 
-	return func(yield func(b *gitlab.Branch) bool) {
 		for {
-			branches, resp, err := g.client.Branches.ListBranches(projectId, &gitlab.ListBranchesOptions{
-				ListOptions: gitlab.ListOptions{
-					Page:    page,
-					PerPage: size * 2,
-				},
-			})
+			items, resp, err := fetchPage(page, perPage)
 			if err != nil {
-				logger.Error("listBranches", "err", err)
+				logger.Error("pagination error", "err", err)
 				return
 			}
 
-			for _, branch := range branches {
-				if !yield(branch) {
+			for _, item := range items {
+				if !yield(item) {
 					return
 				}
 			}
@@ -32,39 +31,33 @@ func (g GitlabProvider) listBranches(projectId, size int) iter.Seq[*gitlab.Branc
 			if resp.NextPage == 0 {
 				return
 			}
-
 			page = resp.NextPage
 		}
 	}
 }
 
+func (g GitlabProvider) listBranches(projectId, size int) iter.Seq[*gitlab.Branch] {
+	return paginate(func(page, perPage int) ([]*gitlab.Branch, *gitlab.Response, error) {
+		return g.client.Branches.ListBranches(projectId, &gitlab.ListBranchesOptions{
+			ListOptions: gitlab.ListOptions{Page: page, PerPage: perPage},
+		})
+	}, size)
+}
+
 func (g GitlabProvider) listMergeRequests(projectId, size int, options *gitlab.ListProjectMergeRequestsOptions) iter.Seq[*gitlab.BasicMergeRequest] {
-	page := 1
-
-	return func(yield func(*gitlab.BasicMergeRequest) bool) {
-		for {
-			options.ListOptions = gitlab.ListOptions{
-				Page:    page,
-				PerPage: size * 2,
-			}
-
-			mrs, resp, err := g.client.MergeRequests.ListProjectMergeRequests(projectId, options)
-			if err != nil {
-				logger.Error("listMergeRequests", "err", err)
-				return
-			}
-
-			for _, mergeRequest := range mrs {
-				if !yield(mergeRequest) {
-					return
-				}
-			}
-
-			if resp.NextPage == 0 {
-				return
-			}
-
-			page = resp.NextPage
+	return paginate(func(page, perPage int) ([]*gitlab.BasicMergeRequest, *gitlab.Response, error) {
+		if options == nil {
+			options = &gitlab.ListProjectMergeRequestsOptions{}
 		}
-	}
+		options.ListOptions = gitlab.ListOptions{Page: page, PerPage: perPage}
+		return g.client.MergeRequests.ListProjectMergeRequests(projectId, options)
+	}, size)
+}
+
+func (g GitlabProvider) listMergeRequestNotes(projectId, mergeId, size int) iter.Seq[*gitlab.Note] {
+	return paginate(func(page, perPage int) ([]*gitlab.Note, *gitlab.Response, error) {
+		return g.client.Notes.ListMergeRequestNotes(projectId, mergeId, &gitlab.ListMergeRequestNotesOptions{
+			ListOptions: gitlab.ListOptions{Page: page, PerPage: perPage},
+		})
+	}, size)
 }
