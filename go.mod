@@ -1,6 +1,6 @@
 module github.com/gasoid/merge-bot
 
-go 1.24.1
+go 1.25.1
 
 require (
 	github.com/dustin/go-humanize v1.0.1
