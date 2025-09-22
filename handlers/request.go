@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/gasoid/merge-bot/logger"
+	"github.com/gasoid/merge-bot/metrics"
 	"github.com/gasoid/merge-bot/semaphore"
 
 	"gopkg.in/yaml.v3"
@@ -137,17 +138,19 @@ func (r *Request) DeleteStaleBranches() error {
 		return nil
 	}
 
-	deleteStaleBranches.Add(fmt.Sprintf("clean_stale_merge_requests_%d", r.info.ProjectId), func() {
-		if err := r.cleanStaleMergeRequests(); err != nil {
-			logger.Info("cleanStaleMergeRequests", "err", err)
-		}
-	})
+	deleteStaleBranches.Add(fmt.Sprintf("clean_stale_merge_requests_%d", r.info.ProjectId),
+		metrics.BackgroundRun("clean_stale_merge_requests", func() {
+			if err := r.cleanStaleMergeRequests(); err != nil {
+				logger.Info("cleanStaleMergeRequests", "err", err)
+			}
+		}))
 
-	deleteStaleBranches.Add(fmt.Sprintf("clean_stale_branches_%d", r.info.ProjectId), func() {
-		if err := r.cleanStaleBranches(); err != nil {
-			logger.Info("cleanStaleBranches", "err", err)
-		}
-	})
+	deleteStaleBranches.Add(fmt.Sprintf("clean_stale_branches_%d", r.info.ProjectId),
+		metrics.BackgroundRun("clean_stale_branches", func() {
+			if err := r.cleanStaleBranches(); err != nil {
+				logger.Info("cleanStaleBranches", "err", err)
+			}
+		}))
 
 	return nil
 }
@@ -184,11 +187,12 @@ func (r Request) UpdateBranches() error {
 	}
 
 	for _, mr := range listMr {
-		updateBranch.Add(fmt.Sprintf("update_branch_%d_%d", r.info.ProjectId, mr.Id), func() {
-			if err := r.provider.UpdateFromMaster(r.info.ProjectId, mr.Id); err != nil {
-				logger.Info("UpdateFromMaster", "err", err)
-			}
-		})
+		updateBranch.Add(fmt.Sprintf("update_branch_%d_%d", r.info.ProjectId, mr.Id),
+			metrics.BackgroundRun("update_branch", func() {
+				if err := r.provider.UpdateFromMaster(r.info.ProjectId, mr.Id); err != nil {
+					logger.Info("UpdateFromMaster", "err", err)
+				}
+			}))
 	}
 
 	return nil

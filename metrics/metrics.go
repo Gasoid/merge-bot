@@ -13,8 +13,10 @@ import (
 )
 
 var (
-	commandsCounter *prometheus.CounterVec
-	updateDuration  prometheus.Histogram
+	commandsCounter               *prometheus.CounterVec
+	updateDuration                prometheus.Histogram
+	backgroundTaskEnqueuedCounter *prometheus.CounterVec
+	backgroundTaskCounter         *prometheus.CounterVec
 )
 
 const (
@@ -42,6 +44,15 @@ func Handler(event string, f func() error) error {
 	return err
 }
 
+func BackgroundRun(task string, f func()) func() {
+	backgroundTaskEnqueuedCounter.WithLabelValues(task).Inc()
+
+	return func() {
+		backgroundTaskCounter.WithLabelValues(task).Inc()
+		f()
+	}
+}
+
 func CommandSucceededInc(command string) {
 	commandsCounter.WithLabelValues(command, commandSucceeded).Inc()
 }
@@ -61,6 +72,22 @@ func initMetrics() error {
 			Help: "How many webhook commands bot has received",
 		},
 		[]string{"command", "status"},
+	)
+
+	backgroundTaskCounter = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "mergebot_background_tasks_total",
+			Help: "How many background tasks run",
+		},
+		[]string{"task"},
+	)
+
+	backgroundTaskEnqueuedCounter = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "mergebot_background_tasks_enqueued_total",
+			Help: "How many background tasks enqueued/added",
+		},
+		[]string{"task"},
 	)
 
 	updateDuration = prometheus.NewHistogram(prometheus.HistogramOpts{
