@@ -96,6 +96,14 @@ func initMetrics() error {
 		Buckets: prometheus.LinearBuckets(5, 4, 10),
 	})
 
+	if err := prometheus.Register(backgroundTaskCounter); err != nil {
+		return err
+	}
+
+	if err := prometheus.Register(backgroundTaskEnqueuedCounter); err != nil {
+		return err
+	}
+
 	if err := prometheus.Register(updateDuration); err != nil {
 		return err
 	}
