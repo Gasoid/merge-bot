@@ -8,6 +8,7 @@ import (
 	"github.com/gasoid/merge-bot/config"
 	"github.com/gasoid/merge-bot/handlers"
 	"github.com/gasoid/merge-bot/logger"
+	"github.com/gasoid/merge-bot/metrics"
 	"github.com/gasoid/merge-bot/webhook"
 
 	"net/http"
@@ -140,6 +141,12 @@ func handle(onEvent string, funcHandler func(*handlers.Request, string) error) {
 	defer handlerMu.Unlock()
 
 	handlerFuncs[onEvent] = func(command *handlers.Request, args string) error {
-		return funcHandler(command, args)
+
+		return metrics.Handler(
+			onEvent,
+			func() error {
+				return funcHandler(command, args)
+			},
+		)
 	}
 }
