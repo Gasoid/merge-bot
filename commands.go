@@ -26,7 +26,7 @@ func init() {
 
 func UpdateBranchCmd(command *handlers.Request, args string) error {
 	if err := command.UpdateFromMaster(); err != nil {
-		logger.Error("command.UpdateFromMaster failed", "error", err)
+		logger.Info("command.UpdateFromMaster failed", "error", err)
 		return command.LeaveComment("❌ i couldn't update the branch from the destination")
 	}
 
