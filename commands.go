@@ -7,6 +7,7 @@ import (
 	"path"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gasoid/merge-bot/handlers"
 	"github.com/gasoid/merge-bot/logger"
@@ -20,12 +21,13 @@ func init() {
 	handle("!rerun", RerunPipeline)
 	handle(webhook.OnNewMR, NewMR)
 	handle(webhook.OnMerge, MergeEvent)
+	handle(webhook.OnUpdate, UpdateEvent)
 }
 
 func UpdateBranchCmd(command *handlers.Request, args string) error {
 	if err := command.UpdateFromMaster(); err != nil {
 		logger.Error("command.UpdateFromMaster failed", "error", err)
-		return command.LeaveComment("❌ i couldn't update branch from master")
+		return command.LeaveComment("❌ i couldn't update the branch from the destination")
 	}
 
 	return nil
@@ -75,6 +77,18 @@ func MergeEvent(command *handlers.Request, args string) error {
 
 	if err := command.DeleteStaleBranches(); err != nil {
 		return fmt.Errorf("command.DeleteStaleBranches returns err: %w", err)
+	}
+	return nil
+}
+
+func UpdateEvent(command *handlers.Request, args string) error {
+	parsedTime, err := time.Parse("2006-01-02 15:04:05 UTC", args)
+	if err != nil {
+		return fmt.Errorf("time.Parse returns err: %w", err)
+	}
+
+	if err := command.ResetApprovals(parsedTime); err != nil {
+		return fmt.Errorf("command.ResetApprovals returns err: %w", err)
 	}
 	return nil
 }

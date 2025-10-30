@@ -1,6 +1,7 @@
 package gitlab
 
 import (
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -10,8 +11,13 @@ import (
 	gitlab "gitlab.com/gitlab-org/api/client-go"
 )
 
+const (
+	mergeAction  = "merge"
+	openAction   = "open"
+	updateAction = "update"
+)
+
 func init() {
-	// config.Register(webhookSecret, "")
 	webhook.Register("gitlab", New)
 }
 
@@ -19,6 +25,7 @@ type GitlabProvider struct {
 	payload   []byte
 	note      string
 	action    string
+	updatedAt string
 	projectId int
 	id        int
 	secret    string
@@ -33,10 +40,12 @@ func (g GitlabProvider) GetSecret() string {
 }
 
 func (g *GitlabProvider) ParseRequest(request *http.Request) error {
-	var err error
-	var ok bool
-	var comment *gitlab.MergeCommentEvent
-	var mr *gitlab.MergeEvent
+	var (
+		err     error
+		ok      bool
+		comment *gitlab.MergeCommentEvent
+		mr      *gitlab.MergeEvent
+	)
 
 	eventHeader := request.Header.Get("X-Gitlab-Event")
 	if strings.TrimSpace(eventHeader) == "" {
@@ -68,6 +77,7 @@ func (g *GitlabProvider) ParseRequest(request *http.Request) error {
 		g.projectId = mr.Project.ID
 		g.id = mr.ObjectAttributes.IID
 		g.action = mr.ObjectAttributes.Action
+		g.updatedAt = mr.ObjectAttributes.UpdatedAt
 	}
 
 	return nil
@@ -76,12 +86,16 @@ func (g *GitlabProvider) ParseRequest(request *http.Request) error {
 func (g *GitlabProvider) GetCmd() string {
 	logger.Debug("getCmd", "action", g.action)
 
-	if g.action == "merge" {
+	if g.action == mergeAction {
 		return webhook.OnMerge
 	}
 
-	if g.action == "open" {
+	if g.action == openAction {
 		return webhook.OnNewMR
+	}
+
+	if g.action == updateAction {
+		return fmt.Sprintf("%s %s", webhook.OnUpdate, g.updatedAt)
 	}
 
 	logger.Debug("getCmd", "note", g.note)

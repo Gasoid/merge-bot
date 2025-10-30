@@ -58,6 +58,8 @@ func (g GitlabProvider) listMergeRequestNotes(projectId, mergeId, size int) iter
 	return paginate(func(page, perPage int) ([]*gitlab.Note, *gitlab.Response, error) {
 		return g.client.Notes.ListMergeRequestNotes(projectId, mergeId, &gitlab.ListMergeRequestNotesOptions{
 			ListOptions: gitlab.ListOptions{Page: page, PerPage: perPage},
+			Sort:        gitlab.Ptr("desc"),
+			OrderBy:     gitlab.Ptr("created_at"),
 		})
 	}, size)
 }

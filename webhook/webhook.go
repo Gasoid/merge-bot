@@ -9,6 +9,7 @@ import (
 const (
 	OnNewMR     = "\anewMREvent"
 	OnMerge     = "\amergeEvent"
+	OnUpdate    = "\aupdateEvent"
 	spaceSymbol = " "
 )
 

@@ -2,9 +2,13 @@ package gitlab
 
 import (
 	b64 "encoding/base64"
+	"errors"
 	"fmt"
 	"net/http"
 	"slices"
+	"strings"
+	"sync"
+	"time"
 
 	"github.com/gasoid/merge-bot/config"
 	"github.com/gasoid/merge-bot/handlers"
@@ -23,14 +27,14 @@ func init() {
 }
 
 var (
-	gitlabToken string
-	gitlabURL   string
-	maxRepoSize string
+	gitlabToken    string
+	gitlabURL      string
+	maxRepoSize    string
+	projectVarLock *sync.Mutex
 )
 
 const (
 	tokenUsername    = "oauth2"
-	gitlabTrue       = true
 	findMRSize       = 10
 	getApprovalsSize = 10
 )
@@ -374,28 +378,123 @@ func (g GitlabProvider) RerunPipeline(projectId, pipelineId int, ref string) (st
 	return pipeline.WebURL, nil
 }
 
-func New() handlers.RequestProvider {
-	var err error
-	var p GitlabProvider
+func validateToken(token string) error {
+	tempClient := newGitlabClient(token, gitlabURL)
+	if tempClient == nil {
+		return errors.New("auth failed")
+	}
 
-	token := gitlabToken
+	_, resp, err := tempClient.Users.CurrentUser()
+	if err != nil {
+		return err
+	}
+
+	if resp.StatusCode == http.StatusUnauthorized {
+		return errors.New("token is invalid")
+	}
+	return err
+}
+
+func (g GitlabProvider) getToken(projectId int, name string) (string, error) {
+	if name == "" {
+		return "", errors.New("name can't be empty string")
+	}
+	val, err := g.GetVar(projectId, name)
+	if err != nil {
+		return "", err
+	}
+
+	if val != "" {
+		if err := validateToken(val); err == nil {
+			return val, nil
+		}
+	}
+
+	scopes := []string{"api", "self_rotate"}
+
+	resultToken, _, err := g.client.ProjectAccessTokens.CreateProjectAccessToken(projectId, &gitlab.CreateProjectAccessTokenOptions{
+		Name:        gitlab.Ptr(name),
+		Scopes:      gitlab.Ptr(scopes),
+		AccessLevel: gitlab.Ptr(gitlab.AccessLevelValue(40)),
+	})
+	if err != nil {
+		return "", err
+	}
+
+	projectVarLock.Lock()
+	defer projectVarLock.Unlock()
+
+	if _, err := g.client.ProjectVariables.RemoveVariable(projectId, name, &gitlab.RemoveProjectVariableOptions{}); err != nil {
+		return "", err
+	}
+
+	if _, _, err := g.client.ProjectVariables.CreateVariable(projectId, &gitlab.CreateProjectVariableOptions{
+		Key:    gitlab.Ptr(name),
+		Value:  gitlab.Ptr(resultToken.Token),
+		Masked: gitlab.Ptr(true),
+	}); err != nil {
+		return "", err
+	}
+
+	return resultToken.Token, nil
+}
+
+func (g GitlabProvider) ResetApprovals(projectId, mergeId int, updatedAt time.Time, config handlers.ResetApprovalsOnPush) error {
+	if config.IssueToken {
+		token, err := g.getToken(projectId, config.ProjectVarName)
+		if err != nil {
+			return err
+		}
+
+		g.client = newGitlabClient(token, gitlabURL)
+	}
+
+	for note := range g.listMergeRequestNotes(projectId, mergeId, getApprovalsSize) {
+		if note.UpdatedAt.After(updatedAt) {
+			continue
+		}
+
+		if strings.HasPrefix(note.Body, "added") {
+			_, err := g.client.MergeRequestApprovals.ResetApprovalsOfMergeRequest(projectId, mergeId)
+			if err != nil {
+				return err
+			}
+		}
+		break
+	}
+
+	return nil
+}
+
+func newGitlabClient(token, instanceUrl string) *gitlab.Client {
+	var (
+		err error
+		c   *gitlab.Client
+	)
+
 	if token == "" {
 		logger.Error("gitlab init", "err", "gitlab requires token, please set env variable GITLAB_TOKEN")
 		return nil
 	}
 
-	urlInstance := gitlabURL
-
-	if urlInstance != "" {
-		p.client, err = gitlab.NewClient(token, gitlab.WithBaseURL(urlInstance))
+	if instanceUrl != "" {
+		c, err = gitlab.NewClient(token, gitlab.WithBaseURL(instanceUrl))
 	} else {
-		p.client, err = gitlab.NewClient(token)
+		c, err = gitlab.NewClient(token)
 	}
+
 	if err != nil {
 		logger.Error("gitlabProvider new", "err", err)
 		return nil
 	}
 
+	return c
+}
+
+func New() handlers.RequestProvider {
+	var p GitlabProvider
+
+	p.client = newGitlabClient(gitlabToken, gitlabURL)
 	return &p
 }
 

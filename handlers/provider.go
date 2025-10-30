@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"sync"
+	"time"
 )
 
 const (
@@ -64,6 +65,7 @@ type MergeRequest interface {
 	FindMergeRequests(projectId int, targetBranch, label string) ([]MR, error)
 	UpdateFromMaster(projectId, mergeId int) error
 	AssignLabel(projectId, mergeId int, name, color string) error
+	ResetApprovals(projectId, mergeId int, updatedAt time.Time, config ResetApprovalsOnPush) error
 }
 
 type Project interface {
@@ -79,13 +81,20 @@ type RequestProvider interface {
 	Project
 }
 
+type ResetApprovalsOnPush struct {
+	Enabled        bool   `yaml:"enabled"`
+	IssueToken     bool   `yaml:"issue_token"`
+	ProjectVarName string `yaml:"project_var_name"`
+}
+
 type Rules struct {
-	MinApprovals          int      `yaml:"min_approvals"`
-	Approvers             []string `yaml:"approvers"`
-	AllowFailingPipelines bool     `yaml:"allow_failing_pipelines"`
-	AllowFailingTests     bool     `yaml:"allow_failing_tests"`
-	TitleRegex            string   `yaml:"title_regex"`
-	AllowEmptyDescription bool     `yaml:"allow_empty_description"`
+	MinApprovals          int                  `yaml:"min_approvals"`
+	Approvers             []string             `yaml:"approvers"`
+	AllowFailingPipelines bool                 `yaml:"allow_failing_pipelines"`
+	AllowFailingTests     bool                 `yaml:"allow_failing_tests"`
+	TitleRegex            string               `yaml:"title_regex"`
+	AllowEmptyDescription bool                 `yaml:"allow_empty_description"`
+	ResetApprovalsOnPush  ResetApprovalsOnPush `yaml:"reset_approvals_on_push"`
 }
 
 type Config struct {
