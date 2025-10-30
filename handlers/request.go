@@ -226,11 +226,8 @@ func (r Request) ResetApprovals(updatedAt time.Time) error {
 	}
 
 	if len(r.info.Approvals) == 0 {
-		logger.Info("approvals", "0")
 		return nil
 	}
-
-	logger.Info("reset approvals", "running")
 
 	return r.provider.ResetApprovals(r.info.ProjectId, r.info.Id, updatedAt, r.config.Rules.ResetApprovalsOnPush)
 }

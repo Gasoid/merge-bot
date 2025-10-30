@@ -13,10 +13,9 @@ func paginate[T any](
 ) iter.Seq[T] {
 	return func(yield func(T) bool) {
 		page := 1
-		perPage := size * 2
 
 		for {
-			items, resp, err := fetchPage(page, perPage)
+			items, resp, err := fetchPage(page, size)
 			if err != nil {
 				logger.Error("pagination error", "err", err)
 				return
