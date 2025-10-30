@@ -30,7 +30,7 @@ var (
 	gitlabToken    string
 	gitlabURL      string
 	maxRepoSize    string
-	projectVarLock *sync.Mutex
+	projectVarLock sync.Mutex
 )
 
 const (
