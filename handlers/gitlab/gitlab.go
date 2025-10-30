@@ -37,6 +37,7 @@ const (
 	tokenUsername    = "oauth2"
 	findMRSize       = 10
 	getApprovalsSize = 10
+	maintanerLevel   = 40
 )
 
 type GitlabProvider struct {
@@ -415,7 +416,7 @@ func (g GitlabProvider) getToken(projectId int, name string) (string, error) {
 	resultToken, _, err := g.client.ProjectAccessTokens.CreateProjectAccessToken(projectId, &gitlab.CreateProjectAccessTokenOptions{
 		Name:        gitlab.Ptr(name),
 		Scopes:      gitlab.Ptr(scopes),
-		AccessLevel: gitlab.Ptr(gitlab.AccessLevelValue(40)),
+		AccessLevel: gitlab.Ptr(gitlab.AccessLevelValue(maintanerLevel)),
 	})
 	if err != nil {
 		return "", err
