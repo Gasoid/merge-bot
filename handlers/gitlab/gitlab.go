@@ -458,7 +458,7 @@ func (g GitlabProvider) ResetApprovals(projectId, mergeId int, updatedAt time.Ti
 			continue
 		}
 
-		if strings.HasPrefix(note.Body, "added") {
+		if strings.Contains(note.Body, "commit") {
 			_, err := g.client.MergeRequestApprovals.ResetApprovalsOfMergeRequest(projectId, mergeId)
 			if err != nil {
 				return err
