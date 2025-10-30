@@ -34,11 +34,12 @@ var (
 )
 
 const (
-	tokenUsername    = "oauth2"
-	findMRSize       = 10
-	getApprovalsSize = 10
-	maintainerLevel  = 40
-	lifetime         = 30
+	tokenUsername         = "oauth2"
+	findMRSize            = 10
+	getApprovalsSize      = 10
+	maintainerLevel       = 40
+	lifetime              = 30
+	approvalsResetMessage = "approvals were reset"
 )
 
 type GitlabProvider struct {
@@ -115,6 +116,10 @@ func (g *GitlabProvider) GetApprovals(projectId, mergeId int) (map[string]struct
 	for note := range g.listMergeRequestNotes(projectId, mergeId, getApprovalsSize) {
 		if g.mr.Author.ID == note.Author.ID {
 			continue
+		}
+
+		if note.Body == approvalsResetMessage {
+			break
 		}
 
 		if note.System {
@@ -397,6 +402,17 @@ func validateToken(token string) error {
 	return err
 }
 
+func (g GitlabProvider) deleteToken(projectId int, name string) error {
+	for token := range g.listProjectAccessTokens(projectId, 20) {
+		if token.Name == name {
+			if _, err := g.client.ProjectAccessTokens.RevokeProjectAccessToken(projectId, token.ID); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 func (g GitlabProvider) getToken(projectId int, name string) (string, error) {
 	if name == "" {
 		return "", errors.New("name can't be empty string")
@@ -429,7 +445,11 @@ func (g GitlabProvider) getToken(projectId int, name string) (string, error) {
 	defer projectVarLock.Unlock()
 
 	if _, err := g.client.ProjectVariables.RemoveVariable(projectId, name, &gitlab.RemoveProjectVariableOptions{}); err != nil {
-		logger.Debug("ignored error: %w", err)
+		logger.Debug("could not remove CI/CD variable, error was ignored: %w", err)
+	}
+
+	if err := g.deleteToken(projectId, name); err != nil {
+		logger.Debug("could not revoke token, error was ignored: %w", err)
 	}
 
 	if _, _, err := g.client.ProjectVariables.CreateVariable(projectId, &gitlab.CreateProjectVariableOptions{
@@ -465,6 +485,10 @@ func (g GitlabProvider) ResetApprovals(projectId, mergeId int, updatedAt time.Ti
 		if strings.Contains(note.Body, "commit") {
 			_, err := g.client.MergeRequestApprovals.ResetApprovalsOfMergeRequest(projectId, mergeId)
 			if err != nil {
+				return err
+			}
+
+			if err := g.LeaveComment(projectId, mergeId, approvalsResetMessage); err != nil {
 				return err
 			}
 		}

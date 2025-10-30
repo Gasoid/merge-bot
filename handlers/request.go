@@ -224,6 +224,11 @@ func (r Request) ResetApprovals(updatedAt time.Time) error {
 	if !r.config.Rules.ResetApprovalsOnPush.Enabled {
 		return nil
 	}
+
+	if len(r.info.Approvals) == 0 {
+		return nil
+	}
+
 	return r.provider.ResetApprovals(r.info.ProjectId, r.info.Id, updatedAt, r.config.Rules.ResetApprovalsOnPush)
 }
 
