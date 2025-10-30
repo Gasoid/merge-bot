@@ -39,7 +39,7 @@ const (
 	getApprovalsSize      = 10
 	maintainerLevel       = 40
 	lifetime              = 30
-	approvalsResetMessage = "approvals were reset"
+	approvalsResetMessage = "✨ approvals were reset"
 )
 
 type GitlabProvider struct {

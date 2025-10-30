@@ -86,7 +86,7 @@ func (r *Request) ParseConfig(content string) (*Config, error) {
 			ResetApprovalsOnPush: ResetApprovalsOnPush{
 				Enabled:        false,
 				IssueToken:     true,
-				ProjectVarName: "MergeApproveBot",
+				ProjectVarName: "MergeBot",
 			},
 		},
 		Greetings: struct {
