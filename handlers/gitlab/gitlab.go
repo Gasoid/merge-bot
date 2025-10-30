@@ -431,6 +431,13 @@ func (g GitlabProvider) getToken(projectId int, name string) (string, error) {
 	scopes := []string{"api", "self_rotate"}
 	expiresAt := time.Now().AddDate(0, 0, lifetime)
 
+	projectVarLock.Lock()
+	defer projectVarLock.Unlock()
+
+	if err := g.deleteToken(projectId, name); err != nil {
+		logger.Debug("could not revoke token, error was ignored", "err", err)
+	}
+
 	resultToken, _, err := g.client.ProjectAccessTokens.CreateProjectAccessToken(projectId, &gitlab.CreateProjectAccessTokenOptions{
 		Name:        gitlab.Ptr(name),
 		Scopes:      gitlab.Ptr(scopes),
@@ -441,15 +448,8 @@ func (g GitlabProvider) getToken(projectId int, name string) (string, error) {
 		return "", err
 	}
 
-	projectVarLock.Lock()
-	defer projectVarLock.Unlock()
-
 	if _, err := g.client.ProjectVariables.RemoveVariable(projectId, name, &gitlab.RemoveProjectVariableOptions{}); err != nil {
-		logger.Debug("could not remove CI/CD variable, error was ignored: %w", err)
-	}
-
-	if err := g.deleteToken(projectId, name); err != nil {
-		logger.Debug("could not revoke token, error was ignored: %w", err)
+		logger.Debug("could not remove CI/CD variable, error was ignored", "err", err)
 	}
 
 	if _, _, err := g.client.ProjectVariables.CreateVariable(projectId, &gitlab.CreateProjectVariableOptions{
