@@ -454,6 +454,10 @@ func (g GitlabProvider) ResetApprovals(projectId, mergeId int, updatedAt time.Ti
 	}
 
 	for note := range g.listMergeRequestNotes(projectId, mergeId, getApprovalsSize) {
+		if !note.System {
+			continue
+		}
+
 		if note.UpdatedAt.After(updatedAt) {
 			continue
 		}
