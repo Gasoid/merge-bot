@@ -429,7 +429,7 @@ func (g GitlabProvider) getToken(projectId int, name string) (string, error) {
 	defer projectVarLock.Unlock()
 
 	if _, err := g.client.ProjectVariables.RemoveVariable(projectId, name, &gitlab.RemoveProjectVariableOptions{}); err != nil {
-		return "", err
+		logger.Debug("ignored error: %w", err)
 	}
 
 	if _, _, err := g.client.ProjectVariables.CreateVariable(projectId, &gitlab.CreateProjectVariableOptions{
