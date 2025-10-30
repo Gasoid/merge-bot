@@ -37,7 +37,8 @@ const (
 	tokenUsername    = "oauth2"
 	findMRSize       = 10
 	getApprovalsSize = 10
-	maintanerLevel   = 40
+	maintainerLevel  = 40
+	lifetime         = 30
 )
 
 type GitlabProvider struct {
@@ -412,11 +413,13 @@ func (g GitlabProvider) getToken(projectId int, name string) (string, error) {
 	}
 
 	scopes := []string{"api", "self_rotate"}
+	expiresAt := time.Now().AddDate(0, 0, lifetime)
 
 	resultToken, _, err := g.client.ProjectAccessTokens.CreateProjectAccessToken(projectId, &gitlab.CreateProjectAccessTokenOptions{
 		Name:        gitlab.Ptr(name),
 		Scopes:      gitlab.Ptr(scopes),
-		AccessLevel: gitlab.Ptr(gitlab.AccessLevelValue(maintanerLevel)),
+		AccessLevel: gitlab.Ptr(gitlab.AccessLevelValue(maintainerLevel)),
+		ExpiresAt:   gitlab.Ptr(gitlab.ISOTime(expiresAt)),
 	})
 	if err != nil {
 		return "", err
