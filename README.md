@@ -151,7 +151,7 @@ rules:
   title_regex: ".*"  # Title validation regex pattern
   reset_approvals_on_push:
     enabled: false  # Reset approvals on new commits
-    issue_token: true
+    issue_token: true # Whether token will be created or current GITLAB_TOKEN will be used
     project_var_name: MergeBot
 
 greetings:
