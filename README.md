@@ -152,7 +152,7 @@ rules:
   reset_approvals_on_push:
     enabled: false  # Reset approvals on new commits
     issue_token: true
-    project_var_name: MERGE_BOT_RESET_APPROVAL_TOKEN
+    project_var_name: MergeBot
 
 greetings:
   enabled: false  # Send welcome message on new MRs
