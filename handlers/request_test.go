@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -97,6 +98,10 @@ func (p *testProvider) CreateLabel(projectId int, name, color string) error {
 
 func (p *testProvider) RerunPipeline(projectId, pipelineId int, ref string) (string, error) {
 	return "", p.err
+}
+
+func (p *testProvider) ResetApprovals(projectId, mergeId int, updatedAt time.Time, config ResetApprovalsOnPush) error {
+	return p.err
 }
 
 func Test_Merge(t *testing.T) {

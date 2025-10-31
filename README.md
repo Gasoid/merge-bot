@@ -149,6 +149,10 @@ rules:
   allow_empty_description: true  # Allow empty MR descriptions
   allow_failing_pipelines: true  # Allow merging with failed pipelines
   title_regex: ".*"  # Title validation regex pattern
+  reset_approvals_on_push:
+    enabled: false  # Reset approvals on new commits
+    issue_token: true # Whether token will be created or current GITLAB_TOKEN will be used
+    project_var_name: MergeBot
 
 greetings:
   enabled: false  # Send welcome message on new MRs
@@ -174,6 +178,8 @@ rules:
   allow_empty_description: false
   allow_failing_pipelines: false
   title_regex: "^(feat|fix|docs|style|refactor|test|chore):"  # Conventional commits
+  reset_approvals_on_push:
+    enabled: true  # Reset approvals on new commits
 
 greetings:
   enabled: true

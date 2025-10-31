@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"html/template"
 	"strings"
+	"time"
 
 	"github.com/gasoid/merge-bot/logger"
 	"github.com/gasoid/merge-bot/metrics"
@@ -82,6 +83,11 @@ func (r *Request) ParseConfig(content string) (*Config, error) {
 			AllowFailingTests:     true,
 			TitleRegex:            ".*",
 			AllowEmptyDescription: true,
+			ResetApprovalsOnPush: ResetApprovalsOnPush{
+				Enabled:        false,
+				IssueToken:     true,
+				ProjectVarName: "MergeBot",
+			},
 		},
 		Greetings: struct {
 			Enabled  bool   `yaml:"enabled"`
@@ -190,7 +196,7 @@ func (r Request) UpdateBranches() error {
 		updateBranch.Add(fmt.Sprintf("update_branch_%d_%d", r.info.ProjectId, mr.Id),
 			metrics.BackgroundRun("update_branch", func() {
 				if err := r.provider.UpdateFromMaster(r.info.ProjectId, mr.Id); err != nil {
-					logger.Info("UpdateFromMaster", "err", err)
+					logger.Info("UpdateFromDestination", "err", err)
 				}
 			}))
 	}
@@ -212,6 +218,18 @@ func (r Request) CreateLabels() error {
 func (r Request) RerunPipeline(pipelineId int) (string, error) {
 	logger.Debug("rerun", "pipelineId", pipelineId)
 	return r.provider.RerunPipeline(r.info.ProjectId, pipelineId, r.info.SourceBranch)
+}
+
+func (r Request) ResetApprovals(updatedAt time.Time) error {
+	if !r.config.Rules.ResetApprovalsOnPush.Enabled {
+		return nil
+	}
+
+	if len(r.info.Approvals) == 0 {
+		return nil
+	}
+
+	return r.provider.ResetApprovals(r.info.ProjectId, r.info.Id, updatedAt, r.config.Rules.ResetApprovalsOnPush)
 }
 
 func (r Request) ValidateSecret(secret string) bool {

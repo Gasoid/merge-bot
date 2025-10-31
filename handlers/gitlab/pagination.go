@@ -13,10 +13,9 @@ func paginate[T any](
 ) iter.Seq[T] {
 	return func(yield func(T) bool) {
 		page := 1
-		perPage := size * 2
 
 		for {
-			items, resp, err := fetchPage(page, perPage)
+			items, resp, err := fetchPage(page, size)
 			if err != nil {
 				logger.Error("pagination error", "err", err)
 				return
@@ -57,6 +56,16 @@ func (g GitlabProvider) listMergeRequests(projectId, size int, options *gitlab.L
 func (g GitlabProvider) listMergeRequestNotes(projectId, mergeId, size int) iter.Seq[*gitlab.Note] {
 	return paginate(func(page, perPage int) ([]*gitlab.Note, *gitlab.Response, error) {
 		return g.client.Notes.ListMergeRequestNotes(projectId, mergeId, &gitlab.ListMergeRequestNotesOptions{
+			ListOptions: gitlab.ListOptions{Page: page, PerPage: perPage},
+			Sort:        gitlab.Ptr("desc"),
+			OrderBy:     gitlab.Ptr("created_at"),
+		})
+	}, size)
+}
+
+func (g GitlabProvider) listProjectAccessTokens(projectId, size int) iter.Seq[*gitlab.ProjectAccessToken] {
+	return paginate(func(page, perPage int) ([]*gitlab.ProjectAccessToken, *gitlab.Response, error) {
+		return g.client.ProjectAccessTokens.ListProjectAccessTokens(projectId, &gitlab.ListProjectAccessTokensOptions{
 			ListOptions: gitlab.ListOptions{Page: page, PerPage: perPage},
 		})
 	}, size)
