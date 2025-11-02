@@ -25,23 +25,18 @@ func init() {
 }
 
 func UpdateBranchCmd(command *handlers.Request, args string) error {
-	var (
+	const (
 		mergeText = `
 🛠️ You have to merge %s branch manually
 
 <details>
 <summary>
-
 How to merge branch manually:
-
 </summary>
-
-<code>
-git checkout %s
+<pre><code>git checkout %s
 git pull origin
 git checkout %s
-git merge %s
-</code>
+git merge %s</code></pre>
 
 </details>
 `
