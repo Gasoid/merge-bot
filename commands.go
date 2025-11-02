@@ -25,8 +25,39 @@ func init() {
 }
 
 func UpdateBranchCmd(command *handlers.Request, args string) error {
+	const (
+		mergeText = `
+🛠️ I failed to merge %s into your branch, you have to resolve conflicts manually
+
+<details>
+<summary>
+How to merge branch manually:
+</summary>
+<pre><code>git checkout %s
+git pull origin
+git checkout %s
+git merge %s
+# resolve conflicts
+git push origin</code></pre>
+
+</details>
+`
+	)
 	if err := command.UpdateFromMaster(); err != nil {
 		logger.Info("command.UpdateFromMaster failed", "error", err)
+		mergeError := &handlers.MergeError{}
+		if errors.As(err, &mergeError) {
+			text := fmt.Sprintf(
+				mergeText,
+				mergeError.DestinationBranch,
+				mergeError.DestinationBranch,
+				mergeError.SourceBranch,
+				mergeError.DestinationBranch,
+			)
+
+			return command.LeaveComment(text)
+		}
+
 		return command.LeaveComment("❌ i couldn't update the branch from the destination")
 	}
 
@@ -39,7 +70,7 @@ func MergeCmd(command *handlers.Request, args string) error {
 		return fmt.Errorf("command.Merge returns err: %w", err)
 	}
 
-	if !ok && len(text) > 0 {
+	if !ok {
 		return command.LeaveComment(text)
 	}
 	return err
@@ -51,7 +82,7 @@ func CheckCmd(command *handlers.Request, args string) error {
 		return fmt.Errorf("command.IsValid returns err: %w", err)
 	}
 
-	if !ok && len(text) > 0 {
+	if !ok {
 		return command.LeaveComment(text)
 	} else {
 		return command.LeaveComment("You can merge, LGTM :D")

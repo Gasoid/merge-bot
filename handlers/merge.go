@@ -20,6 +20,15 @@ const (
 	defaultRemote = "origin"
 )
 
+type MergeError struct {
+	SourceBranch      string
+	DestinationBranch string
+}
+
+func (e *MergeError) Error() string {
+	return "you have to merge your destination branch manually"
+}
+
 //nolint:errcheck
 func MergeMaster(username, password, repoUrl, branchName, master string) error {
 
@@ -66,7 +75,13 @@ func MergeMaster(username, password, repoUrl, branchName, master string) error {
 		logger.Debug("git merge error", "output", output)
 		if output, err := git.Merge(workingDir, merge.NoFf, merge.Commits(master), merge.M(fmt.Sprintf("✨ merged %s", master))); err != nil {
 			logger.Debug("git merge --no-ff error", "output", output)
-			return fmt.Errorf("git merge --no-ff error: %w, output: %s", err, output)
+
+			mergeError := &MergeError{
+				DestinationBranch: master,
+				SourceBranch:      branchName,
+			}
+
+			return fmt.Errorf("git merge --no-ff error: %w, output: %s", mergeError, output)
 		}
 	}
 
