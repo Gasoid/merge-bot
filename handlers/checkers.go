@@ -65,22 +65,26 @@ func checkApprovers(mrConfig *Config, info *MrInfo) CheckResult {
 
 	for _, requiredApprover := range mrConfig.Rules.Approvers {
 		if requiredApprover == info.Author {
-			continue
+			return CheckResult{
+				Passed:   true,
+				Required: true,
+				Message:  "Required approver has approved",
+			}
 		}
 
-		if _, approved := info.Approvals[requiredApprover]; !approved {
+		if _, approved := info.Approvals[requiredApprover]; approved {
 			return CheckResult{
-				Passed:   false,
+				Passed:   true,
 				Required: true,
-				Message:  fmt.Sprintf("Missing approval from required approver: %s", requiredApprover),
+				Message:  "Required approver has approved",
 			}
 		}
 	}
 
 	return CheckResult{
-		Passed:   true,
+		Passed:   false,
 		Required: true,
-		Message:  "All required approvers have approved",
+		Message:  "No approvals from required approvers",
 	}
 }
 
