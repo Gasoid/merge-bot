@@ -195,7 +195,7 @@ func TestCheckApprovers(t *testing.T) {
 				Rules: Rules{Approvers: []string{"user1", "user2"}},
 			},
 			mrInfo: &MrInfo{
-				Approvals: map[string]struct{}{"user1": {}, "user3": {}},
+				Approvals: map[string]struct{}{"user4": {}, "user3": {}},
 			},
 			expected:           false,
 			expectedApplicable: true,
