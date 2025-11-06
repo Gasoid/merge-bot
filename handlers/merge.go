@@ -66,6 +66,11 @@ func MergeMaster(username, password, repoUrl, branchName, master string) error {
 		return fmt.Errorf("git config error: %w, output: %s", err, output)
 	}
 
+	if output, err := git.Checkout(workingDir, checkout.Branch(master)); err != nil {
+		logger.Debug("git checkout error", "branch", master, "output", output)
+		return fmt.Errorf("git checkout error: %w, output: %s", err, output)
+	}
+
 	if output, err := git.Checkout(workingDir, checkout.Branch(branchName)); err != nil {
 		logger.Debug("git checkout error", "branch", branchName, "output", output)
 		return fmt.Errorf("git checkout error: %w, output: %s", err, output)
