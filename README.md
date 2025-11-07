@@ -162,6 +162,7 @@ auto_master_merge: false  # Auto-update branch from target branch
 
 stale_branches_deletion:
   enabled: false  # Clean up stale branches after merge
+  protected: false # Whether to consider protected branches for deletion
   days: 90  # Consider branches stale after N days
   batch_size: 5 # Number of branches can be deleted at once
   wait_days: 1 # Wait N days before MR/branch deletion, merge-bot:stale label is set
@@ -196,6 +197,7 @@ auto_master_merge: true
 
 stale_branches_deletion:
   enabled: true
+  protected: true
   days: 30
   batch_size: 2
   wait_days: 1

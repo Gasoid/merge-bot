@@ -238,7 +238,7 @@ func (g GitlabProvider) ListBranches(projectId, size int) ([]handlers.StaleBranc
 	staleBranches := make([]handlers.StaleBranch, 0, size)
 
 	for b := range g.listBranches(projectId, size) {
-		if b.Default || b.Protected {
+		if b.Default {
 			continue
 		}
 
@@ -254,7 +254,7 @@ func (g GitlabProvider) ListBranches(projectId, size int) ([]handlers.StaleBranc
 			continue
 		}
 
-		staleBranches = append(staleBranches, handlers.StaleBranch{Name: b.Name, LastUpdated: *b.Commit.CreatedAt})
+		staleBranches = append(staleBranches, handlers.StaleBranch{Name: b.Name, LastUpdated: *b.Commit.CreatedAt, Protected: b.Protected})
 		if len(staleBranches) == size {
 			break
 		}

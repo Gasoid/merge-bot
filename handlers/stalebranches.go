@@ -10,6 +10,7 @@ import (
 type StaleBranch struct {
 	Name        string
 	LastUpdated time.Time
+	Protected   bool
 }
 
 func (r Request) cleanStaleBranches() error {
@@ -23,6 +24,10 @@ func (r Request) cleanStaleBranches() error {
 	days := r.config.StaleBranchesDeletion.Days
 	now := time.Now()
 	for _, b := range candidates {
+		if b.Protected && !r.config.StaleBranchesDeletion.Protected {
+			continue
+		}
+
 		span := now.Sub(b.LastUpdated)
 		if span > time.Duration(time.Duration(days)*24*time.Hour) {
 			// branch is stale
