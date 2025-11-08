@@ -99,11 +99,13 @@ func (r *Request) ParseConfig(content string) (*Config, error) {
 		AutoMasterMerge: false,
 		StaleBranchesDeletion: struct {
 			Enabled   bool `yaml:"enabled"`
+			Protected bool `yaml:"protected"`
 			Days      int  `yaml:"days"`
 			BatchSize int  `yaml:"batch_size"`
 			WaitDays  int  `yaml:"wait_days"`
 		}{
 			Enabled:   false,
+			Protected: false,
 			Days:      90,
 			BatchSize: 5,
 			WaitDays:  1,

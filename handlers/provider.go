@@ -109,6 +109,7 @@ type Config struct {
 
 	StaleBranchesDeletion struct {
 		Enabled   bool `yaml:"enabled"`
+		Protected bool `yaml:"protected"`
 		Days      int  `yaml:"days"`
 		BatchSize int  `yaml:"batch_size"`
 		WaitDays  int  `yaml:"wait_days"`
