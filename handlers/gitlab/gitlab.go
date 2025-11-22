@@ -88,6 +88,101 @@ func (g GitlabProvider) UpdateFromMaster(projectId, mergeId int) error {
 	)
 }
 
+func (g GitlabProvider) findDiscussion(projectId, mergeId int) (string, string, int, error) {
+	discussions, _, err := g.client.Discussions.ListMergeRequestDiscussions(
+		projectId,
+		mergeId,
+		&gitlab.ListMergeRequestDiscussionsOptions{})
+	if err != nil {
+		return "", "", 0, err
+	}
+
+	for _, d := range discussions {
+		if len(d.Notes) == 0 {
+			continue
+		}
+
+		note := d.Notes[0]
+		if !note.Resolvable {
+			continue
+		}
+
+		// if !note.Resolved {
+		// 	continue
+		// }
+
+		user, _, err := g.client.Users.CurrentUser()
+		if err != nil {
+			return "", "", 0, err
+		}
+
+		if note.Author.ID != user.ID {
+			continue
+		}
+
+		return d.ID, note.Body, note.ID, nil
+	}
+	return "", "", 0, errors.New("could not find my discussion")
+}
+
+func (g GitlabProvider) UpdateDiscussion(projectId, mergeId int, message string) error {
+	discussionId, body, noteId, err := g.findDiscussion(projectId, mergeId)
+	if err != nil {
+		return err
+	}
+
+	if body == message {
+		return nil
+	}
+
+	_, _, err = g.client.Discussions.UpdateMergeRequestDiscussionNote(
+		projectId,
+		mergeId,
+		discussionId,
+		noteId,
+		&gitlab.UpdateMergeRequestDiscussionNoteOptions{
+			Body: gitlab.Ptr(message),
+		})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (g GitlabProvider) UnresolveDiscussion(projectId, mergeId int) error {
+	discussionId, _, noteId, err := g.findDiscussion(projectId, mergeId)
+	if err != nil {
+		return err
+	}
+
+	_, _, err = g.client.Discussions.UpdateMergeRequestDiscussionNote(
+		projectId,
+		mergeId,
+		discussionId,
+		noteId,
+		&gitlab.UpdateMergeRequestDiscussionNoteOptions{
+			Resolved: gitlab.Ptr(false),
+		})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (g GitlabProvider) CreateDiscussion(projectId, mergeId int, message string) error {
+	logger.Debug("createDiscussion in gitlab", "message", message, "projectId", projectId)
+
+	_, _, err := g.client.Discussions.CreateMergeRequestDiscussion(
+		projectId,
+		mergeId,
+		&gitlab.CreateMergeRequestDiscussionOptions{
+			Body: &message,
+		},
+	)
+	return err
+}
+
 func (g *GitlabProvider) LeaveComment(projectId, mergeId int, message string) error {
 	logger.Debug("leaveComment in gitlab", "message", message, "projectId", projectId)
 

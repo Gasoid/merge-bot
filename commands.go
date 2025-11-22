@@ -77,16 +77,12 @@ func MergeCmd(command *handlers.Request, args string) error {
 }
 
 func CheckCmd(command *handlers.Request, args string) error {
-	ok, text, err := command.IsValid()
+	_, text, err := command.IsValid()
 	if err != nil {
 		return fmt.Errorf("command.IsValid returns err: %w", err)
 	}
 
-	if !ok {
-		return command.LeaveComment(text)
-	} else {
-		return command.LeaveComment("You can merge, LGTM :D")
-	}
+	return command.LeaveNote(text)
 }
 
 func NewMR(command *handlers.Request, args string) error {
@@ -113,6 +109,10 @@ func MergeEvent(command *handlers.Request, args string) error {
 }
 
 func UpdateEvent(command *handlers.Request, args string) error {
+	if err := command.UnresolveDiscussion(); err != nil {
+		return err
+	}
+
 	parsedTime, err := time.Parse("2006-01-02 15:04:05 UTC", args)
 	if err != nil {
 		return fmt.Errorf("time.Parse returns err: %w", err)

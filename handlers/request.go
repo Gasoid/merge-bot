@@ -90,11 +90,13 @@ func (r *Request) ParseConfig(content string) (*Config, error) {
 			},
 		},
 		Greetings: struct {
-			Enabled  bool   `yaml:"enabled"`
-			Template string `yaml:"template"`
+			Enabled    bool   `yaml:"enabled"`
+			Resolvable bool   `yaml:"resolvable"`
+			Template   string `yaml:"template"`
 		}{
-			Enabled:  false,
-			Template: "Requirements:\n - Min approvals: {{ .MinApprovals }}\n - Title regex: {{ .TitleRegex }}\n\nOnce you've done, send **!merge** command and i will merge it!",
+			Enabled:    false,
+			Resolvable: false,
+			Template:   "Requirements:\n - Min approvals: {{ .MinApprovals }}\n - Title regex: {{ .TitleRegex }}\n\nOnce you've done, send **!merge** command and i will merge it!",
 		},
 		AutoMasterMerge: false,
 		StaleBranchesDeletion: struct {
@@ -122,22 +124,73 @@ func (r *Request) LeaveComment(message string) error {
 	return r.provider.LeaveComment(r.info.ProjectId, r.info.Id, message)
 }
 
+func (r *Request) CreateDiscussion(message string) error {
+	return r.provider.CreateDiscussion(r.info.ProjectId, r.info.Id, message)
+}
+
+func (r *Request) LeaveNote(message string) error {
+	if !r.config.Greetings.Enabled {
+		return r.provider.LeaveComment(r.info.ProjectId, r.info.Id, message)
+	}
+
+	greetings, err := r.getGreetingsText()
+	if err != nil {
+		return err
+	}
+
+	return r.provider.UpdateDiscussion(r.info.ProjectId, r.info.Id, fmt.Sprintf("%s\n\n%s", greetings, message))
+}
+
+func (r Request) UnresolveDiscussion() error {
+	if !r.config.Greetings.Resolvable {
+		return nil
+	}
+
+	ok, text, err := r.IsValid()
+	if err != nil {
+		return err
+	}
+
+	if ok {
+		return nil
+	}
+
+	if err := r.provider.UnresolveDiscussion(r.info.ProjectId, r.info.Id); err != nil {
+		return err
+	}
+
+	return r.LeaveNote(text)
+}
+
+func (r Request) getGreetingsText() (string, error) {
+	tmpl, err := template.New("greetings").Parse(r.config.Greetings.Template)
+	if err != nil {
+		return "", err
+	}
+
+	buf := &bytes.Buffer{}
+	if err = tmpl.Execute(buf, r.config.Rules); err != nil {
+		return "", err
+	}
+
+	return buf.String(), nil
+}
+
 func (r *Request) Greetings() error {
 	if !r.config.Greetings.Enabled {
 		return nil
 	}
 
-	tmpl, err := template.New("greetings").Parse(r.config.Greetings.Template)
+	renderedMessage, err := r.getGreetingsText()
 	if err != nil {
 		return err
 	}
 
-	buf := &bytes.Buffer{}
-	if err = tmpl.Execute(buf, r.config.Rules); err != nil {
-		return err
+	if r.config.Greetings.Resolvable {
+		return r.CreateDiscussion(renderedMessage)
 	}
 
-	return r.LeaveComment(buf.String())
+	return r.LeaveComment(renderedMessage)
 }
 
 func (r *Request) DeleteStaleBranches() error {

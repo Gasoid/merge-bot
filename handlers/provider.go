@@ -58,6 +58,12 @@ type Comments interface {
 	LeaveComment(projectId, mergeId int, message string) error
 }
 
+type Discussions interface {
+	CreateDiscussion(projectId, mergeId int, message string) error
+	UnresolveDiscussion(projectId, mergeId int) error
+	UpdateDiscussion(projectId, mergeId int, message string) error
+}
+
 type MergeRequest interface {
 	Merge(projectId, mergeId int, message string) error
 	GetMRInfo(projectId, mergeId int, path string) (*MrInfo, error)
@@ -79,6 +85,7 @@ type RequestProvider interface {
 	Comments
 	MergeRequest
 	Project
+	Discussions
 }
 
 type ResetApprovalsOnPush struct {
@@ -101,8 +108,9 @@ type Config struct {
 	Rules Rules `yaml:"rules"`
 
 	Greetings struct {
-		Enabled  bool   `yaml:"enabled"`
-		Template string `yaml:"template"`
+		Enabled    bool   `yaml:"enabled"`
+		Resolvable bool   `yaml:"resolvable"`
+		Template   string `yaml:"template"`
 	} `yaml:"greetings"`
 
 	AutoMasterMerge bool `yaml:"auto_master_merge"`
