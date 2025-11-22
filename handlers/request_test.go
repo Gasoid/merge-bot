@@ -108,6 +108,10 @@ func (p *testProvider) CreateDiscussion(projectId, mergeId int, message string) 
 	return p.err
 }
 
+func (p *testProvider) UnresolveDiscussion(projectId, mergeId int) error {
+	return p.err
+}
+
 func Test_Merge(t *testing.T) {
 	type args struct {
 		pr *Request

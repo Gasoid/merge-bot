@@ -113,6 +113,10 @@ func MergeEvent(command *handlers.Request, args string) error {
 }
 
 func UpdateEvent(command *handlers.Request, args string) error {
+	if err := command.UnresolveDiscussion(); err != nil {
+		return err
+	}
+
 	parsedTime, err := time.Parse("2006-01-02 15:04:05 UTC", args)
 	if err != nil {
 		return fmt.Errorf("time.Parse returns err: %w", err)

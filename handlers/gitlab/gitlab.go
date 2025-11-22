@@ -88,7 +88,60 @@ func (g GitlabProvider) UpdateFromMaster(projectId, mergeId int) error {
 	)
 }
 
-func (g *GitlabProvider) CreateDiscussion(projectId, mergeId int, message string) error {
+func (g *GitlabProvider) UnresolveDiscussion(projectId, mergeId int) error {
+	discussions, _, err := g.client.Discussions.ListMergeRequestDiscussions(
+		projectId,
+		mergeId,
+		&gitlab.ListMergeRequestDiscussionsOptions{})
+	if err != nil {
+		return err
+	}
+
+	discussionId := ""
+	noteId := 0
+
+	for _, d := range discussions {
+		if len(d.Notes) == 0 {
+			continue
+		}
+
+		note := d.Notes[0]
+		if !note.Resolvable {
+			continue
+		}
+
+		if !note.Resolved {
+			continue
+		}
+
+		user, _, err := g.client.Users.CurrentUser()
+		if err != nil {
+			return err
+		}
+
+		if note.Author.ID != user.ID {
+			continue
+		}
+
+		discussionId = d.ID
+		noteId = note.ID
+	}
+
+	_, _, err = g.client.Discussions.UpdateMergeRequestDiscussionNote(
+		projectId,
+		mergeId,
+		discussionId,
+		noteId,
+		&gitlab.UpdateMergeRequestDiscussionNoteOptions{
+			Resolved: gitlab.Ptr(false),
+		})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (g GitlabProvider) CreateDiscussion(projectId, mergeId int, message string) error {
 	logger.Debug("createDiscussion in gitlab", "message", message, "projectId", projectId)
 
 	_, _, err := g.client.Discussions.CreateMergeRequestDiscussion(

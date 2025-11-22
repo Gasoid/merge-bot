@@ -128,6 +128,14 @@ func (r *Request) CreateDiscussion(message string) error {
 	return r.provider.CreateDiscussion(r.info.ProjectId, r.info.Id, message)
 }
 
+func (r *Request) UnresolveDiscussion() error {
+	if !r.config.Greetings.Resolvable {
+		return nil
+	}
+
+	return r.provider.UnresolveDiscussion(r.info.ProjectId, r.info.Id)
+}
+
 func (r *Request) Greetings() error {
 	if !r.config.Greetings.Enabled {
 		return nil
