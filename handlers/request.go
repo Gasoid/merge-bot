@@ -128,6 +128,19 @@ func (r *Request) CreateDiscussion(message string) error {
 	return r.provider.CreateDiscussion(r.info.ProjectId, r.info.Id, message)
 }
 
+func (r *Request) LeaveNote(message string) error {
+	if !r.config.Greetings.Resolvable || !r.config.Greetings.Enabled {
+		return r.provider.LeaveComment(r.info.ProjectId, r.info.Id, message)
+	}
+
+	greetings, err := r.getGreetingsText()
+	if err != nil {
+		return err
+	}
+
+	return r.provider.UpdateDiscussion(r.info.ProjectId, r.info.Id, fmt.Sprintf("%s\n\n%s", greetings, message))
+}
+
 func (r *Request) UnresolveDiscussion() error {
 	if !r.config.Greetings.Resolvable {
 		return nil
@@ -145,22 +158,29 @@ func (r *Request) UnresolveDiscussion() error {
 	return r.provider.UnresolveDiscussion(r.info.ProjectId, r.info.Id)
 }
 
+func (r Request) getGreetingsText() (string, error) {
+	tmpl, err := template.New("greetings").Parse(r.config.Greetings.Template)
+	if err != nil {
+		return "", err
+	}
+
+	buf := &bytes.Buffer{}
+	if err = tmpl.Execute(buf, r.config.Rules); err != nil {
+		return "", err
+	}
+
+	return buf.String(), nil
+}
+
 func (r *Request) Greetings() error {
 	if !r.config.Greetings.Enabled {
 		return nil
 	}
 
-	tmpl, err := template.New("greetings").Parse(r.config.Greetings.Template)
+	renderedMessage, err := r.getGreetingsText()
 	if err != nil {
 		return err
 	}
-
-	buf := &bytes.Buffer{}
-	if err = tmpl.Execute(buf, r.config.Rules); err != nil {
-		return err
-	}
-
-	renderedMessage := buf.String()
 
 	if r.config.Greetings.Resolvable {
 		return r.CreateDiscussion(renderedMessage)

@@ -58,6 +58,12 @@ type Comments interface {
 	LeaveComment(projectId, mergeId int, message string) error
 }
 
+type Discussions interface {
+	CreateDiscussion(projectId, mergeId int, message string) error
+	UnresolveDiscussion(projectId, mergeId int) error
+	UpdateDiscussion(projectId, mergeId int, message string) error
+}
+
 type MergeRequest interface {
 	Merge(projectId, mergeId int, message string) error
 	GetMRInfo(projectId, mergeId int, path string) (*MrInfo, error)
@@ -66,8 +72,6 @@ type MergeRequest interface {
 	UpdateFromMaster(projectId, mergeId int) error
 	AssignLabel(projectId, mergeId int, name, color string) error
 	ResetApprovals(projectId, mergeId int, updatedAt time.Time, config ResetApprovalsOnPush) error
-	CreateDiscussion(projectId, mergeId int, message string) error
-	UnresolveDiscussion(projectId, mergeId int) error
 }
 
 type Project interface {
@@ -81,6 +85,7 @@ type RequestProvider interface {
 	Comments
 	MergeRequest
 	Project
+	Discussions
 }
 
 type ResetApprovalsOnPush struct {

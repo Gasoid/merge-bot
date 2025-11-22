@@ -77,16 +77,12 @@ func MergeCmd(command *handlers.Request, args string) error {
 }
 
 func CheckCmd(command *handlers.Request, args string) error {
-	ok, text, err := command.IsValid()
+	_, text, err := command.IsValid()
 	if err != nil {
 		return fmt.Errorf("command.IsValid returns err: %w", err)
 	}
 
-	if !ok {
-		return command.LeaveComment(text)
-	} else {
-		return command.LeaveComment("You can merge, LGTM :D")
-	}
+	return command.LeaveNote(text)
 }
 
 func NewMR(command *handlers.Request, args string) error {

@@ -88,17 +88,14 @@ func (g GitlabProvider) UpdateFromMaster(projectId, mergeId int) error {
 	)
 }
 
-func (g *GitlabProvider) UnresolveDiscussion(projectId, mergeId int) error {
+func (g GitlabProvider) findDiscussion(projectId, mergeId int) (string, int, error) {
 	discussions, _, err := g.client.Discussions.ListMergeRequestDiscussions(
 		projectId,
 		mergeId,
 		&gitlab.ListMergeRequestDiscussionsOptions{})
 	if err != nil {
-		return err
+		return "", 0, err
 	}
-
-	discussionId := ""
-	noteId := 0
 
 	for _, d := range discussions {
 		if len(d.Notes) == 0 {
@@ -116,15 +113,43 @@ func (g *GitlabProvider) UnresolveDiscussion(projectId, mergeId int) error {
 
 		user, _, err := g.client.Users.CurrentUser()
 		if err != nil {
-			return err
+			return "", 0, err
 		}
 
 		if note.Author.ID != user.ID {
 			continue
 		}
 
-		discussionId = d.ID
-		noteId = note.ID
+		return d.ID, note.ID, nil
+	}
+	return "", 0, errors.New("could not find my discussion")
+}
+
+func (g GitlabProvider) UpdateDiscussion(projectId, mergeId int, message string) error {
+	discussionId, noteId, err := g.findDiscussion(projectId, mergeId)
+	if err != nil {
+		return err
+	}
+
+	_, _, err = g.client.Discussions.UpdateMergeRequestDiscussionNote(
+		projectId,
+		mergeId,
+		discussionId,
+		noteId,
+		&gitlab.UpdateMergeRequestDiscussionNoteOptions{
+			Body: gitlab.Ptr(message),
+		})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (g GitlabProvider) UnresolveDiscussion(projectId, mergeId int) error {
+	discussionId, noteId, err := g.findDiscussion(projectId, mergeId)
+	if err != nil {
+		return err
 	}
 
 	_, _, err = g.client.Discussions.UpdateMergeRequestDiscussionNote(
