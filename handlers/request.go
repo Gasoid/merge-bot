@@ -129,7 +129,7 @@ func (r *Request) CreateDiscussion(message string) error {
 }
 
 func (r *Request) LeaveNote(message string) error {
-	if !r.config.Greetings.Resolvable || !r.config.Greetings.Enabled {
+	if !r.config.Greetings.Enabled {
 		return r.provider.LeaveComment(r.info.ProjectId, r.info.Id, message)
 	}
 
