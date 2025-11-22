@@ -141,12 +141,12 @@ func (r *Request) LeaveNote(message string) error {
 	return r.provider.UpdateDiscussion(r.info.ProjectId, r.info.Id, fmt.Sprintf("%s\n\n%s", greetings, message))
 }
 
-func (r *Request) UnresolveDiscussion() error {
+func (r Request) UnresolveDiscussion() error {
 	if !r.config.Greetings.Resolvable {
 		return nil
 	}
 
-	ok, _, err := r.IsValid()
+	ok, text, err := r.IsValid()
 	if err != nil {
 		return err
 	}
@@ -155,7 +155,11 @@ func (r *Request) UnresolveDiscussion() error {
 		return nil
 	}
 
-	return r.provider.UnresolveDiscussion(r.info.ProjectId, r.info.Id)
+	if err := r.provider.UnresolveDiscussion(r.info.ProjectId, r.info.Id); err != nil {
+		return err
+	}
+
+	return r.LeaveNote(text)
 }
 
 func (r Request) getGreetingsText() (string, error) {
