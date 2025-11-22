@@ -124,6 +124,10 @@ func (r *Request) LeaveComment(message string) error {
 	return r.provider.LeaveComment(r.info.ProjectId, r.info.Id, message)
 }
 
+func (r *Request) CreateDiscussion(message string) error {
+	return r.provider.CreateDiscussion(r.info.ProjectId, r.info.Id, message)
+}
+
 func (r *Request) Greetings() error {
 	if !r.config.Greetings.Enabled {
 		return nil
@@ -139,7 +143,13 @@ func (r *Request) Greetings() error {
 		return err
 	}
 
-	return r.LeaveComment(buf.String())
+	renderedMessage := buf.String()
+
+	if r.config.Greetings.Resolvable {
+		return r.CreateDiscussion(renderedMessage)
+	}
+
+	return r.LeaveComment(renderedMessage)
 }
 
 func (r *Request) DeleteStaleBranches() error {

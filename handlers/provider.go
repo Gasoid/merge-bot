@@ -66,6 +66,7 @@ type MergeRequest interface {
 	UpdateFromMaster(projectId, mergeId int) error
 	AssignLabel(projectId, mergeId int, name, color string) error
 	ResetApprovals(projectId, mergeId int, updatedAt time.Time, config ResetApprovalsOnPush) error
+	CreateDiscussion(projectId, mergeId int, message string) error
 }
 
 type Project interface {

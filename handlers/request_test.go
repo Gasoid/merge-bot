@@ -104,6 +104,10 @@ func (p *testProvider) ResetApprovals(projectId, mergeId int, updatedAt time.Tim
 	return p.err
 }
 
+func (p *testProvider) CreateDiscussion(projectId, mergeId int, message string) error {
+	return p.err
+}
+
 func Test_Merge(t *testing.T) {
 	type args struct {
 		pr *Request
