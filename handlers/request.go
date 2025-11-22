@@ -133,6 +133,15 @@ func (r *Request) UnresolveDiscussion() error {
 		return nil
 	}
 
+	ok, _, err := r.IsValid()
+	if err != nil {
+		return err
+	}
+
+	if ok {
+		return nil
+	}
+
 	return r.provider.UnresolveDiscussion(r.info.ProjectId, r.info.Id)
 }
 
