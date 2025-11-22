@@ -107,9 +107,9 @@ func (g GitlabProvider) findDiscussion(projectId, mergeId int) (string, int, err
 			continue
 		}
 
-		if !note.Resolved {
-			continue
-		}
+		// if !note.Resolved {
+		// 	continue
+		// }
 
 		user, _, err := g.client.Users.CurrentUser()
 		if err != nil {
