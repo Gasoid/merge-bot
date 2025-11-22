@@ -88,6 +88,19 @@ func (g GitlabProvider) UpdateFromMaster(projectId, mergeId int) error {
 	)
 }
 
+func (g *GitlabProvider) CreateDiscussion(projectId, mergeId int, message string) error {
+	logger.Debug("createDiscussion in gitlab", "message", message, "projectId", projectId)
+
+	_, _, err := g.client.Discussions.CreateMergeRequestDiscussion(
+		projectId,
+		mergeId,
+		&gitlab.CreateMergeRequestDiscussionOptions{
+			Body: &message,
+		},
+	)
+	return err
+}
+
 func (g *GitlabProvider) LeaveComment(projectId, mergeId int, message string) error {
 	logger.Debug("leaveComment in gitlab", "message", message, "projectId", projectId)
 

@@ -90,11 +90,13 @@ func (r *Request) ParseConfig(content string) (*Config, error) {
 			},
 		},
 		Greetings: struct {
-			Enabled  bool   `yaml:"enabled"`
-			Template string `yaml:"template"`
+			Enabled    bool   `yaml:"enabled"`
+			Resolvable bool   `yaml:"resolvable"`
+			Template   string `yaml:"template"`
 		}{
-			Enabled:  false,
-			Template: "Requirements:\n - Min approvals: {{ .MinApprovals }}\n - Title regex: {{ .TitleRegex }}\n\nOnce you've done, send **!merge** command and i will merge it!",
+			Enabled:    false,
+			Resolvable: false,
+			Template:   "Requirements:\n - Min approvals: {{ .MinApprovals }}\n - Title regex: {{ .TitleRegex }}\n\nOnce you've done, send **!merge** command and i will merge it!",
 		},
 		AutoMasterMerge: false,
 		StaleBranchesDeletion: struct {

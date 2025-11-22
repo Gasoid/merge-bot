@@ -101,8 +101,9 @@ type Config struct {
 	Rules Rules `yaml:"rules"`
 
 	Greetings struct {
-		Enabled  bool   `yaml:"enabled"`
-		Template string `yaml:"template"`
+		Enabled    bool   `yaml:"enabled"`
+		Resolvable bool   `yaml:"resolvable"`
+		Template   string `yaml:"template"`
 	} `yaml:"greetings"`
 
 	AutoMasterMerge bool `yaml:"auto_master_merge"`
