@@ -212,7 +212,7 @@ func TestRequest_Greetings(t *testing.T) {
 			args:              args{projectId: 1, id: 1},
 			wantErr:           false,
 			wantCommentCalled: true,
-			expectedComment:   "Requirements:\n - Min approvals: 1\n - Title regex: .*\n\nOnce you're done, send **!merge** command and i will merge it!",
+			expectedComment:   "Requirements:\n - Min approvals: 1\n - Title regex: .*\n\nOnce you're done, send **!merge** command and I will merge it!",
 		},
 		{
 			name: "greetings enabled with custom template - should leave comment",
