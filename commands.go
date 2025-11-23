@@ -24,6 +24,8 @@ func init() {
 	handle(webhook.OnUpdate, UpdateEvent)
 }
 
+const success = "You can merge, LGTM :D"
+
 func UpdateBranchCmd(command *handlers.Request, args string) error {
 	const (
 		mergeText = `
@@ -77,12 +79,22 @@ func MergeCmd(command *handlers.Request, args string) error {
 }
 
 func CheckCmd(command *handlers.Request, args string) error {
-	_, text, err := command.IsValid()
+	ok, text, err := command.IsValid()
 	if err != nil {
 		return fmt.Errorf("command.IsValid returns err: %w", err)
 	}
 
-	return command.LeaveNote(text)
+	if ok {
+		text = success
+	}
+
+	if err := command.UpdateDiscussion(text); err != nil {
+		if errors.Is(err, handlers.FeatureDisabled) || errors.Is(err, handlers.DiscussionError) {
+			return command.LeaveComment(text)
+		}
+		return err
+	}
+	return nil
 }
 
 func NewMR(command *handlers.Request, args string) error {
@@ -113,8 +125,6 @@ func MergeEvent(command *handlers.Request, args string) error {
 }
 
 func UpdateEvent(command *handlers.Request, args string) error {
-	const success = "You can merge, LGTM :D"
-
 	ok, text, err := command.IsValid()
 	if err != nil {
 		return fmt.Errorf("command.IsValid returns err: %w", err)
@@ -124,14 +134,16 @@ func UpdateEvent(command *handlers.Request, args string) error {
 		if err := command.UnresolveDiscussion(); err != nil {
 			return fmt.Errorf("command.UnresolveDiscussion returns err: %w", err)
 		}
-	}
-
-	if ok {
+	} else {
 		text = success
 	}
 
-	if err := command.LeaveNote(text); err != nil {
-		return fmt.Errorf("command.LeaveNote returns err: %w", err)
+	if err := command.UpdateDiscussion(text); err != nil {
+		if errors.Is(err, handlers.FeatureDisabled) || errors.Is(err, handlers.DiscussionError) {
+			logger.Debug("UpdateDiscussion: Feature is disabled")
+		} else {
+			return fmt.Errorf("command.UpdateDiscussion returns err: %w", err)
+		}
 	}
 
 	parsedTime, err := time.Parse("2006-01-02 15:04:05 UTC", args)

@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"html/template"
 	"strings"
@@ -129,24 +128,23 @@ func (r *Request) CreateDiscussion(message string) error {
 	return r.provider.CreateDiscussion(r.info.ProjectId, r.info.Id, message)
 }
 
-func (r *Request) LeaveNote(message string) error {
-	if r.config.Greetings.Enabled && r.config.Greetings.Resolvable {
-		greetings, err := r.getGreetingsText()
-		if err != nil {
-			return err
-		}
-
-		if err := r.provider.UpdateDiscussion(
-			r.info.ProjectId,
-			r.info.Id,
-			fmt.Sprintf("%s\n---\n%s", greetings, message)); err != nil {
-			if !errors.Is(err, DiscussionError) {
-				return err
-			}
-		}
+func (r *Request) UpdateDiscussion(message string) error {
+	if !r.config.Greetings.Enabled && !r.config.Greetings.Resolvable {
+		return FeatureDisabled
 	}
 
-	return r.provider.LeaveComment(r.info.ProjectId, r.info.Id, message)
+	greetings, err := r.getGreetingsText()
+	if err != nil {
+		return err
+	}
+
+	if err := r.provider.UpdateDiscussion(
+		r.info.ProjectId,
+		r.info.Id,
+		fmt.Sprintf("%s\n---\n%s", greetings, message)); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (r Request) UnresolveDiscussion() error {

@@ -18,6 +18,7 @@ var (
 	RepoSizeError   = &Error{"Repository size is greater than allowed size"}
 	NotFoundError   = &Error{"Resource is not found"}
 	DiscussionError = &Error{"Could not find resolvable discussion for merge request"}
+	FeatureDisabled = &Error{"Feature is disabled"}
 )
 
 type Error struct {
