@@ -129,16 +129,16 @@ func (r *Request) CreateDiscussion(message string) error {
 }
 
 func (r *Request) LeaveNote(message string) error {
-	if !r.config.Greetings.Enabled && !r.config.Greetings.Resolvable {
-		return r.provider.LeaveComment(r.info.ProjectId, r.info.Id, message)
+	if r.config.Greetings.Enabled && r.config.Greetings.Resolvable {
+		greetings, err := r.getGreetingsText()
+		if err != nil {
+			return err
+		}
+
+		return r.provider.UpdateDiscussion(r.info.ProjectId, r.info.Id, fmt.Sprintf("%s\n---\n%s", greetings, message))
 	}
 
-	greetings, err := r.getGreetingsText()
-	if err != nil {
-		return err
-	}
-
-	return r.provider.UpdateDiscussion(r.info.ProjectId, r.info.Id, fmt.Sprintf("%s\n---\n%s", greetings, message))
+	return r.provider.LeaveComment(r.info.ProjectId, r.info.Id, message)
 }
 
 func (r Request) UnresolveDiscussion() error {
