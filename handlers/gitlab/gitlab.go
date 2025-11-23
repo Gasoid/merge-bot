@@ -97,6 +97,11 @@ func (g GitlabProvider) findDiscussion(projectId, mergeId int) (string, string, 
 		return "", "", 0, err
 	}
 
+	user, _, err := g.client.Users.CurrentUser()
+	if err != nil {
+		return "", "", 0, err
+	}
+
 	for _, d := range discussions {
 		if len(d.Notes) == 0 {
 			continue
@@ -105,15 +110,6 @@ func (g GitlabProvider) findDiscussion(projectId, mergeId int) (string, string, 
 		note := d.Notes[0]
 		if !note.Resolvable {
 			continue
-		}
-
-		// if !note.Resolved {
-		// 	continue
-		// }
-
-		user, _, err := g.client.Users.CurrentUser()
-		if err != nil {
-			return "", "", 0, err
 		}
 
 		if note.Author.ID != user.ID {
