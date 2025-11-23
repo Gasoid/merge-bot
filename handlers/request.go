@@ -97,7 +97,7 @@ func (r *Request) ParseConfig(content string) (*Config, error) {
 		}{
 			Enabled:    false,
 			Resolvable: false,
-			Template:   "Requirements:\n - Min approvals: {{ .MinApprovals }}\n - Title regex: {{ .TitleRegex }}\n\nOnce you've done, send **!merge** command and i will merge it!",
+			Template:   "Requirements:\n - Min approvals: {{ .MinApprovals }}\n - Title regex: {{ .TitleRegex }}\n\nOnce you're done, send **!merge** command and I will merge it!",
 		},
 		AutoMasterMerge: false,
 		StaleBranchesDeletion: struct {
