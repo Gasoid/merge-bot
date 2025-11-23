@@ -143,6 +143,8 @@ Enhance security by using webhook secrets:
 Create `.mrbot.yaml` in your repository root on the default branch:
 
 ```yaml
+# all settings are optional, defaults are shown below
+
 rules:
   approvers: []  # Specific users who must approve (empty = any approver)
   min_approvals: 1  # Minimum number of approvals required
@@ -156,6 +158,7 @@ rules:
 
 greetings:
   enabled: false  # Send welcome message on new MRs
+  resolvable: false # Whether greeting message can be updated and resolved
   template: "Requirements:\n - Min approvals: {{ .MinApprovals }}\n - Title regex: {{ .TitleRegex }}\n\nSend **!merge** when ready!"
 
 auto_master_merge: false  # Auto-update branch from target branch
@@ -184,6 +187,7 @@ rules:
 
 greetings:
   enabled: true
+  resolvable: true
   template: |
     ## 🤖 MergeBot Requirements
     
@@ -207,7 +211,7 @@ stale_branches_deletion:
 
 ### Stale Branches
 
-When enabled, the bot automatically deletes stale branches after each successful merge. Branches are considered stale based on the configured number of days since their last activity.
+When enabled, the bot automatically deletes stale branches after each successful merge/update. Branches are considered stale based on the configured number of days since their last activity.
 
 ### Greetings
 
@@ -215,6 +219,8 @@ Customize welcome messages for new merge requests using Go templates. Available 
 - `{{ .MinApprovals }}`
 - `{{ .TitleRegex }}`
 - `{{ .Approvers }}`
+
+You can also enable the `resolvable` option to allow the bot to update and resolve the greeting message once all requirements are met. Merge Request will be blocked until requirements are met. (You need to enable "All threads must be resolved" in project settings for this feature to work.)
 
 ### Labels
 
