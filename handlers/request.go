@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"html/template"
 	"strings"
@@ -135,7 +136,14 @@ func (r *Request) LeaveNote(message string) error {
 			return err
 		}
 
-		return r.provider.UpdateDiscussion(r.info.ProjectId, r.info.Id, fmt.Sprintf("%s\n---\n%s", greetings, message))
+		if err := r.provider.UpdateDiscussion(
+			r.info.ProjectId,
+			r.info.Id,
+			fmt.Sprintf("%s\n---\n%s", greetings, message)); err != nil {
+			if !errors.Is(err, DiscussionError) {
+				return err
+			}
+		}
 	}
 
 	return r.provider.LeaveComment(r.info.ProjectId, r.info.Id, message)

@@ -120,7 +120,10 @@ func (g GitlabProvider) findDiscussion(projectId, mergeId int) (string, string, 
 
 		return d.ID, note.Body, note.ID, nil
 	}
-	return "", "", 0, fmt.Errorf("could not find resolvable discussion for merge request %d in project %d", mergeId, projectId)
+
+	logger.Info("could not find resolvable discussion", "merge request", mergeId, "project", projectId)
+
+	return "", "", 0, handlers.DiscussionError
 }
 
 func (g GitlabProvider) UpdateDiscussion(projectId, mergeId int, message string) error {

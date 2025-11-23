@@ -13,10 +13,11 @@ var (
 	providers   = map[string]func() RequestProvider{}
 	providersMu sync.RWMutex
 
-	StatusError   = &Error{"Is it opened?"}
-	ValidError    = &Error{"Your request can't be merged, because either it has conflicts or state is not opened"}
-	RepoSizeError = &Error{"Repository size is greater than allowed size"}
-	NotFoundError = &Error{"Resource is not found"}
+	StatusError     = &Error{"Is it opened?"}
+	ValidError      = &Error{"Your request can't be merged, because either it has conflicts or state is not opened"}
+	RepoSizeError   = &Error{"Repository size is greater than allowed size"}
+	NotFoundError   = &Error{"Resource is not found"}
+	DiscussionError = &Error{"Could not find resolvable discussion for merge request"}
 )
 
 type Error struct {
