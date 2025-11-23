@@ -263,6 +263,8 @@ func (r Request) RerunPipeline(pipelineId int) (string, error) {
 }
 
 func (r Request) ResetApprovals(updatedAt time.Time) error {
+	logger.Debug("resetApprovals", "updatedAt", updatedAt)
+
 	if !r.config.Rules.ResetApprovalsOnPush.Enabled {
 		return nil
 	}
