@@ -113,6 +113,8 @@ func MergeEvent(command *handlers.Request, args string) error {
 }
 
 func UpdateEvent(command *handlers.Request, args string) error {
+	const success = "You can merge, LGTM :D"
+
 	ok, text, err := command.IsValid()
 	if err != nil {
 		return fmt.Errorf("command.IsValid returns err: %w", err)
@@ -122,6 +124,10 @@ func UpdateEvent(command *handlers.Request, args string) error {
 		if err := command.UnresolveDiscussion(); err != nil {
 			return fmt.Errorf("command.UnresolveDiscussion returns err: %w", err)
 		}
+	}
+
+	if ok {
+		text = success
 	}
 
 	if err := command.LeaveNote(text); err != nil {

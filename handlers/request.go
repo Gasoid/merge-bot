@@ -138,7 +138,7 @@ func (r *Request) LeaveNote(message string) error {
 		return err
 	}
 
-	return r.provider.UpdateDiscussion(r.info.ProjectId, r.info.Id, fmt.Sprintf("%s\n\n%s", greetings, message))
+	return r.provider.UpdateDiscussion(r.info.ProjectId, r.info.Id, fmt.Sprintf("%s\n---\n%s", greetings, message))
 }
 
 func (r Request) UnresolveDiscussion() error {
