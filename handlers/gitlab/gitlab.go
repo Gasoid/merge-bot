@@ -45,8 +45,9 @@ const (
 )
 
 type GitlabProvider struct {
-	client *gitlab.Client
-	mr     *gitlab.MergeRequest
+	client        *gitlab.Client
+	mr            *gitlab.MergeRequest
+	currentUserId int
 }
 
 func (g GitlabProvider) loadMR(projectId, mergeId int) (*gitlab.MergeRequest, error) {
@@ -99,11 +100,6 @@ func (g GitlabProvider) findDiscussion(projectId, mergeId int) (string, string, 
 		return "", "", 0, err
 	}
 
-	user, _, err := g.client.Users.CurrentUser()
-	if err != nil {
-		return "", "", 0, err
-	}
-
 	for _, d := range discussions {
 		if len(d.Notes) == 0 {
 			continue
@@ -114,7 +110,7 @@ func (g GitlabProvider) findDiscussion(projectId, mergeId int) (string, string, 
 			continue
 		}
 
-		if note.Author.ID != user.ID {
+		if note.Author.ID != g.currentUserId {
 			continue
 		}
 
@@ -624,6 +620,13 @@ func New() handlers.RequestProvider {
 	var p GitlabProvider
 
 	p.client = newGitlabClient(gitlabToken, gitlabURL)
+	user, _, err := p.client.Users.CurrentUser()
+	if err != nil {
+		logger.Error("gitlab client could not get currentUser", "err", err)
+		return nil
+	}
+
+	p.currentUserId = user.ID
 	return &p
 }
 
