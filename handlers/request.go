@@ -142,24 +142,11 @@ func (r *Request) LeaveNote(message string) error {
 }
 
 func (r Request) UnresolveDiscussion() error {
-	if !r.config.Greetings.Resolvable {
+	if !r.config.Greetings.Resolvable && !r.config.Greetings.Enabled {
 		return nil
 	}
 
-	ok, text, err := r.IsValid()
-	if err != nil {
-		return err
-	}
-
-	if ok {
-		return nil
-	}
-
-	if err := r.provider.UnresolveDiscussion(r.info.ProjectId, r.info.Id); err != nil {
-		return err
-	}
-
-	return r.LeaveNote(text)
+	return r.provider.UnresolveDiscussion(r.info.ProjectId, r.info.Id)
 }
 
 func (r Request) getGreetingsText() (string, error) {

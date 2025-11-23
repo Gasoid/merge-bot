@@ -93,13 +93,9 @@ func NewMR(command *handlers.Request, args string) error {
 	return nil
 }
 
-func MergeEvent(command *handlers.Request, args string) error {
+func staleBranchesRoutine(command *handlers.Request) error {
 	if err := command.CreateLabels(); err != nil {
 		return fmt.Errorf("command.CreateLabels returns err: %w", err)
-	}
-
-	if err := command.UpdateBranches(); err != nil {
-		return fmt.Errorf("command.UpdateBranchesWithLabel returns err: %w", err)
 	}
 
 	if err := command.DeleteStaleBranches(); err != nil {
@@ -108,9 +104,28 @@ func MergeEvent(command *handlers.Request, args string) error {
 	return nil
 }
 
+func MergeEvent(command *handlers.Request, args string) error {
+	if err := command.UpdateBranches(); err != nil {
+		return fmt.Errorf("command.UpdateBranchesWithLabel returns err: %w", err)
+	}
+
+	return staleBranchesRoutine(command)
+}
+
 func UpdateEvent(command *handlers.Request, args string) error {
-	if err := command.UnresolveDiscussion(); err != nil {
-		return err
+	ok, text, err := command.IsValid()
+	if err != nil {
+		return fmt.Errorf("command.IsValid returns err: %w", err)
+	}
+
+	if !ok {
+		if err := command.UnresolveDiscussion(); err != nil {
+			return fmt.Errorf("command.UnresolveDiscussion returns err: %w", err)
+		}
+	}
+
+	if err := command.LeaveNote(text); err != nil {
+		return fmt.Errorf("command.LeaveNote returns err: %w", err)
 	}
 
 	parsedTime, err := time.Parse("2006-01-02 15:04:05 UTC", args)
@@ -121,7 +136,8 @@ func UpdateEvent(command *handlers.Request, args string) error {
 	if err := command.ResetApprovals(parsedTime); err != nil {
 		return fmt.Errorf("command.ResetApprovals returns err: %w", err)
 	}
-	return nil
+
+	return staleBranchesRoutine(command)
 }
 
 func RerunPipeline(command *handlers.Request, args string) error {
