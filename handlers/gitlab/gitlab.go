@@ -40,6 +40,8 @@ const (
 	maintainerLevel       = 40
 	lifetime              = 30
 	approvalsResetMessage = "✨ approvals were reset"
+	sortDesc              = "desc"
+	sortAsc               = "asc"
 )
 
 type GitlabProvider struct {
@@ -204,7 +206,7 @@ func (g *GitlabProvider) Merge(projectId, mergeId int, message string) error {
 func (g *GitlabProvider) GetApprovals(projectId, mergeId int) (map[string]struct{}, error) {
 	approvals := map[string]struct{}{}
 
-	for note := range g.listMergeRequestNotes(projectId, mergeId, getApprovalsSize) {
+	for note := range g.listMergeRequestNotes(projectId, mergeId, getApprovalsSize, sortAsc) {
 		if g.mr.Author.ID == note.Author.ID {
 			continue
 		}
@@ -572,7 +574,7 @@ func (g GitlabProvider) ResetApprovals(projectId, mergeId int, updatedAt time.Ti
 		g.client = newGitlabClient(token, gitlabURL)
 	}
 
-	for note := range g.listMergeRequestNotes(projectId, mergeId, getApprovalsSize) {
+	for note := range g.listMergeRequestNotes(projectId, mergeId, getApprovalsSize, sortDesc) {
 		if !note.System {
 			continue
 		}
