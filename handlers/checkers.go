@@ -3,6 +3,8 @@ package handlers
 import (
 	"fmt"
 	"regexp"
+
+	"github.com/gasoid/merge-bot/logger"
 )
 
 type CheckResult struct {
@@ -43,6 +45,8 @@ func checkDescription(mrConfig *Config, info *MrInfo) CheckResult {
 func checkApprovals(mrConfig *Config, info *MrInfo) CheckResult {
 	actual := len(info.Approvals)
 	required := mrConfig.Rules.MinApprovals
+
+	logger.Debug("checkApprovals", "approvals", actual)
 
 	if actual >= required {
 		return CheckResult{
