@@ -46,7 +46,7 @@ func checkApprovals(mrConfig *Config, info *MrInfo) CheckResult {
 	actual := len(info.Approvals)
 	required := mrConfig.Rules.MinApprovals
 
-	logger.Debug("checkApprovals", "approvals", actual)
+	logger.Debug("checkApprovals", "approvals", actual, "approvers", info.Approvals)
 
 	if actual >= required {
 		return CheckResult{
