@@ -212,7 +212,8 @@ func (g *GitlabProvider) GetApprovals(projectId, mergeId int) (map[string]struct
 		}
 
 		if note.Body == approvalsResetMessage {
-			break
+			approvals = map[string]struct{}{}
+			continue
 		}
 
 		if note.System {
@@ -222,14 +223,6 @@ func (g *GitlabProvider) GetApprovals(projectId, mergeId int) (map[string]struct
 			case "unapproved this merge request":
 				delete(approvals, note.Author.Username)
 			}
-
-			// if note.Body == "approved this merge request" {
-			// 	approvals[note.Author.Username] = struct{}{}
-			// }
-
-			// if note.Body == "unapproved this merge request" {
-			// 	delete(approvals, note.Author.Username)
-			// }
 		}
 	}
 	return approvals, nil
