@@ -150,7 +150,7 @@ func (r *Request) LeaveNote(message string) error {
 }
 
 func (r Request) UnresolveDiscussion() error {
-	if !r.config.Greetings.Resolvable && !r.config.Greetings.Enabled {
+	if !r.config.Greetings.Resolvable || !r.config.Greetings.Enabled {
 		return nil
 	}
 
