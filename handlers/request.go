@@ -124,11 +124,11 @@ func (r *Request) LeaveComment(message string) error {
 	return r.provider.LeaveComment(r.info.ProjectId, r.info.Id, message)
 }
 
-func (r *Request) CreateDiscussion(message string) error {
+func (r Request) CreateDiscussion(message string) error {
 	return r.provider.CreateDiscussion(r.info.ProjectId, r.info.Id, message)
 }
 
-func (r *Request) UpdateDiscussion(message string) error {
+func (r Request) UpdateDiscussion(message string) error {
 	if !r.config.Greetings.Enabled && !r.config.Greetings.Resolvable {
 		return FeatureDisabled
 	}
