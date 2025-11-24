@@ -63,7 +63,6 @@ type Comments interface {
 type Discussions interface {
 	CreateDiscussion(projectId, mergeId int, message string) error
 	UnresolveDiscussion(projectId, mergeId int) error
-	UpdateDiscussion(projectId, mergeId int, message string) error
 }
 
 type MergeRequest interface {

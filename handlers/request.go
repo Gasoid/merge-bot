@@ -129,25 +129,6 @@ func (r Request) CreateDiscussion(message string) error {
 	return r.provider.CreateDiscussion(r.info.ProjectId, r.info.Id, message)
 }
 
-func (r Request) UpdateDiscussion(message string) error {
-	if !r.config.Greetings.Enabled && !r.config.Greetings.Resolvable {
-		return FeatureDisabled
-	}
-
-	greetings, err := r.getGreetingsText()
-	if err != nil {
-		return err
-	}
-
-	if err := r.provider.UpdateDiscussion(
-		r.info.ProjectId,
-		r.info.Id,
-		fmt.Sprintf("%s\n---\n%s", greetings, message)); err != nil {
-		return err
-	}
-	return nil
-}
-
 func (r Request) UnresolveDiscussion() error {
 	if !r.config.Greetings.Resolvable || !r.config.Greetings.Enabled {
 		return nil

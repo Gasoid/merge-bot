@@ -88,13 +88,7 @@ func CheckCmd(command *handlers.Request, args string) error {
 		text = success
 	}
 
-	if err := command.UpdateDiscussion(text); err != nil {
-		if errors.Is(err, handlers.FeatureDisabled) || errors.Is(err, handlers.DiscussionError) {
-			return command.LeaveComment(text)
-		}
-		return err
-	}
-	return nil
+	return command.LeaveComment(text)
 }
 
 func NewMR(command *handlers.Request, args string) error {
@@ -114,7 +108,7 @@ func MergeEvent(command *handlers.Request, args string) error {
 }
 
 func UpdateEvent(command *handlers.Request, args string) error {
-	ok, text, err := command.IsValid()
+	ok, _, err := command.IsValid()
 	if err != nil {
 		return fmt.Errorf("command.IsValid returns err: %w", err)
 	}
@@ -122,16 +116,6 @@ func UpdateEvent(command *handlers.Request, args string) error {
 	if !ok {
 		if err := command.UnresolveDiscussion(); err != nil {
 			return fmt.Errorf("command.UnresolveDiscussion returns err: %w", err)
-		}
-	} else {
-		text = success
-	}
-
-	if err := command.UpdateDiscussion(text); err != nil {
-		if errors.Is(err, handlers.FeatureDisabled) || errors.Is(err, handlers.DiscussionError) {
-			logger.Debug("UpdateDiscussion: Feature is disabled")
-		} else {
-			return fmt.Errorf("command.UpdateDiscussion returns err: %w", err)
 		}
 	}
 

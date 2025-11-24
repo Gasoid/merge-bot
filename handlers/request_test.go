@@ -112,10 +112,6 @@ func (p *testProvider) UnresolveDiscussion(projectId, mergeId int) error {
 	return p.err
 }
 
-func (p *testProvider) UpdateDiscussion(projectId, mergeId int, message string) error {
-	return p.err
-}
-
 func Test_Merge(t *testing.T) {
 	type args struct {
 		pr *Request
