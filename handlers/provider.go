@@ -13,10 +13,12 @@ var (
 	providers   = map[string]func() RequestProvider{}
 	providersMu sync.RWMutex
 
-	StatusError   = &Error{"Is it opened?"}
-	ValidError    = &Error{"Your request can't be merged, because either it has conflicts or state is not opened"}
-	RepoSizeError = &Error{"Repository size is greater than allowed size"}
-	NotFoundError = &Error{"Resource is not found"}
+	StatusError     = &Error{"Is it opened?"}
+	ValidError      = &Error{"Your request can't be merged, because either it has conflicts or state is not opened"}
+	RepoSizeError   = &Error{"Repository size is greater than allowed size"}
+	NotFoundError   = &Error{"Resource is not found"}
+	DiscussionError = &Error{"Could not find resolvable discussion for merge request"}
+	FeatureDisabled = &Error{"Feature is disabled"}
 )
 
 type Error struct {
@@ -58,6 +60,11 @@ type Comments interface {
 	LeaveComment(projectId, mergeId int, message string) error
 }
 
+type Discussions interface {
+	CreateDiscussion(projectId, mergeId int, message string) error
+	UnresolveDiscussion(projectId, mergeId int) error
+}
+
 type MergeRequest interface {
 	Merge(projectId, mergeId int, message string) error
 	GetMRInfo(projectId, mergeId int, path string) (*MrInfo, error)
@@ -79,6 +86,7 @@ type RequestProvider interface {
 	Comments
 	MergeRequest
 	Project
+	Discussions
 }
 
 type ResetApprovalsOnPush struct {
@@ -101,8 +109,9 @@ type Config struct {
 	Rules Rules `yaml:"rules"`
 
 	Greetings struct {
-		Enabled  bool   `yaml:"enabled"`
-		Template string `yaml:"template"`
+		Enabled    bool   `yaml:"enabled"`
+		Resolvable bool   `yaml:"resolvable"`
+		Template   string `yaml:"template"`
 	} `yaml:"greetings"`
 
 	AutoMasterMerge bool `yaml:"auto_master_merge"`

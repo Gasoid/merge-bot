@@ -126,6 +126,8 @@ func Handler(c echo.Context) error {
 				return
 			}
 
+			go staleBranchesRoutine(command)
+
 			if err := f(command, hook.Args); err != nil {
 				logger.Error("handlerFunc returns err", "provider", providerName, "event", hook.Event, "err", err)
 				return
@@ -148,5 +150,15 @@ func handle(onEvent string, funcHandler func(*handlers.Request, string) error) {
 				return funcHandler(command, args)
 			},
 		)
+	}
+}
+
+func staleBranchesRoutine(command *handlers.Request) {
+	if err := command.CreateLabels(); err != nil {
+		logger.Error("command.CreateLabels", "err", err)
+	}
+
+	if err := command.DeleteStaleBranches(); err != nil {
+		logger.Error("command.DeleteStaleBranches", "err", err)
 	}
 }

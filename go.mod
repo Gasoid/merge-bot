@@ -3,6 +3,7 @@ module github.com/gasoid/merge-bot
 go 1.25.1
 
 require (
+	github.com/codeGROOVE-dev/retry v1.3.0
 	github.com/dustin/go-humanize v1.0.1
 	github.com/getsentry/sentry-go v0.33.0
 	github.com/getsentry/sentry-go/echo v0.33.0

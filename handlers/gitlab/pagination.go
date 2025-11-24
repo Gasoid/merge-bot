@@ -53,11 +53,11 @@ func (g GitlabProvider) listMergeRequests(projectId, size int, options *gitlab.L
 	}, size)
 }
 
-func (g GitlabProvider) listMergeRequestNotes(projectId, mergeId, size int) iter.Seq[*gitlab.Note] {
+func (g GitlabProvider) listMergeRequestNotes(projectId, mergeId, size int, sort string) iter.Seq[*gitlab.Note] {
 	return paginate(func(page, perPage int) ([]*gitlab.Note, *gitlab.Response, error) {
 		return g.client.Notes.ListMergeRequestNotes(projectId, mergeId, &gitlab.ListMergeRequestNotesOptions{
 			ListOptions: gitlab.ListOptions{Page: page, PerPage: perPage},
-			Sort:        gitlab.Ptr("desc"),
+			Sort:        gitlab.Ptr(sort),
 			OrderBy:     gitlab.Ptr("created_at"),
 		})
 	}, size)

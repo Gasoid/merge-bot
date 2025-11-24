@@ -40,11 +40,14 @@ const (
 	maintainerLevel       = 40
 	lifetime              = 30
 	approvalsResetMessage = "✨ approvals were reset"
+	sortDesc              = "desc"
+	sortAsc               = "asc"
 )
 
 type GitlabProvider struct {
-	client *gitlab.Client
-	mr     *gitlab.MergeRequest
+	client        *gitlab.Client
+	mr            *gitlab.MergeRequest
+	currentUserId int
 }
 
 func (g GitlabProvider) loadMR(projectId, mergeId int) (*gitlab.MergeRequest, error) {
@@ -88,6 +91,95 @@ func (g GitlabProvider) UpdateFromMaster(projectId, mergeId int) error {
 	)
 }
 
+func (g GitlabProvider) findDiscussion(projectId, mergeId int) (string, string, int, error) {
+	discussions, _, err := g.client.Discussions.ListMergeRequestDiscussions(
+		projectId,
+		mergeId,
+		&gitlab.ListMergeRequestDiscussionsOptions{})
+	if err != nil {
+		return "", "", 0, err
+	}
+
+	for _, d := range discussions {
+		if len(d.Notes) == 0 {
+			continue
+		}
+
+		note := d.Notes[0]
+		if !note.Resolvable {
+			continue
+		}
+
+		if note.Author.ID != g.currentUserId {
+			continue
+		}
+
+		return d.ID, note.Body, note.ID, nil
+	}
+
+	logger.Info("could not find resolvable discussion", "merge request", mergeId, "project", projectId)
+
+	return "", "", 0, handlers.DiscussionError
+}
+
+func (g GitlabProvider) UpdateDiscussion(projectId, mergeId int, message string) error {
+	discussionId, body, noteId, err := g.findDiscussion(projectId, mergeId)
+	if err != nil {
+		return err
+	}
+
+	if body == message {
+		return nil
+	}
+
+	_, _, err = g.client.Discussions.UpdateMergeRequestDiscussionNote(
+		projectId,
+		mergeId,
+		discussionId,
+		noteId,
+		&gitlab.UpdateMergeRequestDiscussionNoteOptions{
+			Body: gitlab.Ptr(message),
+		})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (g GitlabProvider) UnresolveDiscussion(projectId, mergeId int) error {
+	discussionId, _, noteId, err := g.findDiscussion(projectId, mergeId)
+	if err != nil {
+		return err
+	}
+
+	_, _, err = g.client.Discussions.UpdateMergeRequestDiscussionNote(
+		projectId,
+		mergeId,
+		discussionId,
+		noteId,
+		&gitlab.UpdateMergeRequestDiscussionNoteOptions{
+			Resolved: gitlab.Ptr(false),
+		})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (g GitlabProvider) CreateDiscussion(projectId, mergeId int, message string) error {
+	logger.Debug("createDiscussion in gitlab", "message", message, "projectId", projectId)
+
+	_, _, err := g.client.Discussions.CreateMergeRequestDiscussion(
+		projectId,
+		mergeId,
+		&gitlab.CreateMergeRequestDiscussionOptions{
+			Body: &message,
+		},
+	)
+	return err
+}
+
 func (g *GitlabProvider) LeaveComment(projectId, mergeId int, message string) error {
 	logger.Debug("leaveComment in gitlab", "message", message, "projectId", projectId)
 
@@ -113,20 +205,21 @@ func (g *GitlabProvider) Merge(projectId, mergeId int, message string) error {
 func (g *GitlabProvider) GetApprovals(projectId, mergeId int) (map[string]struct{}, error) {
 	approvals := map[string]struct{}{}
 
-	for note := range g.listMergeRequestNotes(projectId, mergeId, getApprovalsSize) {
+	for note := range g.listMergeRequestNotes(projectId, mergeId, getApprovalsSize, sortAsc) {
 		if g.mr.Author.ID == note.Author.ID {
 			continue
 		}
 
 		if note.Body == approvalsResetMessage {
-			break
+			approvals = map[string]struct{}{}
+			continue
 		}
 
 		if note.System {
-			if note.Body == "approved this merge request" {
+			switch note.Body {
+			case "approved this merge request":
 				approvals[note.Author.Username] = struct{}{}
-			}
-			if note.Body == "unapproved this merge request" {
+			case "unapproved this merge request":
 				delete(approvals, note.Author.Username)
 			}
 		}
@@ -464,6 +557,8 @@ func (g GitlabProvider) getToken(projectId int, name string) (string, error) {
 }
 
 func (g GitlabProvider) ResetApprovals(projectId, mergeId int, updatedAt time.Time, config handlers.ResetApprovalsOnPush) error {
+	logger.Debug("gitlab resetApprovals", "mergeId", mergeId)
+
 	if config.IssueToken {
 		token, err := g.getToken(projectId, config.ProjectVarName)
 		if err != nil {
@@ -473,7 +568,7 @@ func (g GitlabProvider) ResetApprovals(projectId, mergeId int, updatedAt time.Ti
 		g.client = newGitlabClient(token, gitlabURL)
 	}
 
-	for note := range g.listMergeRequestNotes(projectId, mergeId, getApprovalsSize) {
+	for note := range g.listMergeRequestNotes(projectId, mergeId, getApprovalsSize, sortDesc) {
 		if !note.System {
 			continue
 		}
@@ -491,11 +586,12 @@ func (g GitlabProvider) ResetApprovals(projectId, mergeId int, updatedAt time.Ti
 			if err := g.LeaveComment(projectId, mergeId, approvalsResetMessage); err != nil {
 				return err
 			}
+
+			return nil
 		}
-		break
 	}
 
-	return nil
+	return fmt.Errorf("coudn't find commit message with updatedAt: %s", updatedAt)
 }
 
 func newGitlabClient(token, instanceUrl string) *gitlab.Client {
@@ -527,6 +623,13 @@ func New() handlers.RequestProvider {
 	var p GitlabProvider
 
 	p.client = newGitlabClient(gitlabToken, gitlabURL)
+	user, _, err := p.client.Users.CurrentUser()
+	if err != nil {
+		logger.Error("gitlab client could not get currentUser", "err", err)
+		return nil
+	}
+
+	p.currentUserId = user.ID
 	return &p
 }
 

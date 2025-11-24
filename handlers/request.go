@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/codeGROOVE-dev/retry"
 	"github.com/gasoid/merge-bot/logger"
 	"github.com/gasoid/merge-bot/metrics"
 	"github.com/gasoid/merge-bot/semaphore"
@@ -90,11 +91,13 @@ func (r *Request) ParseConfig(content string) (*Config, error) {
 			},
 		},
 		Greetings: struct {
-			Enabled  bool   `yaml:"enabled"`
-			Template string `yaml:"template"`
+			Enabled    bool   `yaml:"enabled"`
+			Resolvable bool   `yaml:"resolvable"`
+			Template   string `yaml:"template"`
 		}{
-			Enabled:  false,
-			Template: "Requirements:\n - Min approvals: {{ .MinApprovals }}\n - Title regex: {{ .TitleRegex }}\n\nOnce you've done, send **!merge** command and i will merge it!",
+			Enabled:    false,
+			Resolvable: false,
+			Template:   "Requirements:\n - Min approvals: {{ .MinApprovals }}\n - Title regex: {{ .TitleRegex }}\n\nOnce you're done, send **!merge** command and I will merge it!",
 		},
 		AutoMasterMerge: false,
 		StaleBranchesDeletion: struct {
@@ -122,22 +125,47 @@ func (r *Request) LeaveComment(message string) error {
 	return r.provider.LeaveComment(r.info.ProjectId, r.info.Id, message)
 }
 
+func (r Request) CreateDiscussion(message string) error {
+	return r.provider.CreateDiscussion(r.info.ProjectId, r.info.Id, message)
+}
+
+func (r Request) UnresolveDiscussion() error {
+	if !r.config.Greetings.Resolvable || !r.config.Greetings.Enabled {
+		return nil
+	}
+
+	return r.provider.UnresolveDiscussion(r.info.ProjectId, r.info.Id)
+}
+
+func (r Request) getGreetingsText() (string, error) {
+	tmpl, err := template.New("greetings").Parse(r.config.Greetings.Template)
+	if err != nil {
+		return "", err
+	}
+
+	buf := &bytes.Buffer{}
+	if err = tmpl.Execute(buf, r.config.Rules); err != nil {
+		return "", err
+	}
+
+	return buf.String(), nil
+}
+
 func (r *Request) Greetings() error {
 	if !r.config.Greetings.Enabled {
 		return nil
 	}
 
-	tmpl, err := template.New("greetings").Parse(r.config.Greetings.Template)
+	renderedMessage, err := r.getGreetingsText()
 	if err != nil {
 		return err
 	}
 
-	buf := &bytes.Buffer{}
-	if err = tmpl.Execute(buf, r.config.Rules); err != nil {
-		return err
+	if r.config.Greetings.Resolvable {
+		return r.CreateDiscussion(renderedMessage)
 	}
 
-	return r.LeaveComment(buf.String())
+	return r.LeaveComment(renderedMessage)
 }
 
 func (r *Request) DeleteStaleBranches() error {
@@ -223,6 +251,8 @@ func (r Request) RerunPipeline(pipelineId int) (string, error) {
 }
 
 func (r Request) ResetApprovals(updatedAt time.Time) error {
+	logger.Debug("resetApprovals", "updatedAt", updatedAt)
+
 	if !r.config.Rules.ResetApprovalsOnPush.Enabled {
 		return nil
 	}
@@ -231,7 +261,15 @@ func (r Request) ResetApprovals(updatedAt time.Time) error {
 		return nil
 	}
 
-	return r.provider.ResetApprovals(r.info.ProjectId, r.info.Id, updatedAt, r.config.Rules.ResetApprovalsOnPush)
+	return retry.Do(
+		func() error {
+			return r.provider.ResetApprovals(
+				r.info.ProjectId,
+				r.info.Id, updatedAt,
+				r.config.Rules.ResetApprovalsOnPush)
+		},
+		retry.Attempts(3),
+	)
 }
 
 func (r Request) ValidateSecret(secret string) bool {

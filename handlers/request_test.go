@@ -104,6 +104,14 @@ func (p *testProvider) ResetApprovals(projectId, mergeId int, updatedAt time.Tim
 	return p.err
 }
 
+func (p *testProvider) CreateDiscussion(projectId, mergeId int, message string) error {
+	return p.err
+}
+
+func (p *testProvider) UnresolveDiscussion(projectId, mergeId int) error {
+	return p.err
+}
+
 func Test_Merge(t *testing.T) {
 	type args struct {
 		pr *Request
@@ -200,7 +208,7 @@ func TestRequest_Greetings(t *testing.T) {
 			args:              args{projectId: 1, id: 1},
 			wantErr:           false,
 			wantCommentCalled: true,
-			expectedComment:   "Requirements:\n - Min approvals: 1\n - Title regex: .*\n\nOnce you've done, send **!merge** command and i will merge it!",
+			expectedComment:   "Requirements:\n - Min approvals: 1\n - Title regex: .*\n\nOnce you're done, send **!merge** command and I will merge it!",
 		},
 		{
 			name: "greetings enabled with custom template - should leave comment",
