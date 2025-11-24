@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"html/template"
 	"strings"
@@ -261,7 +262,7 @@ func (r Request) ResetApprovals(updatedAt time.Time) error {
 		return nil
 	}
 
-	return retry.Do(
+	err := retry.Do(
 		func() error {
 			return r.provider.ResetApprovals(
 				r.info.ProjectId,
@@ -270,6 +271,11 @@ func (r Request) ResetApprovals(updatedAt time.Time) error {
 		},
 		retry.Attempts(3),
 	)
+	if !errors.Is(err, CommitNotFoundError) {
+		return err
+	}
+
+	return nil
 }
 
 func (r Request) ValidateSecret(secret string) bool {
