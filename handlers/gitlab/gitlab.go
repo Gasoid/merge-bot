@@ -557,6 +557,8 @@ func (g GitlabProvider) getToken(projectId int, name string) (string, error) {
 }
 
 func (g GitlabProvider) ResetApprovals(projectId, mergeId int, updatedAt time.Time, config handlers.ResetApprovalsOnPush) error {
+	logger.Debug("gitlab resetApprovals", "mergeId", mergeId)
+
 	if config.IssueToken {
 		token, err := g.getToken(projectId, config.ProjectVarName)
 		if err != nil {
