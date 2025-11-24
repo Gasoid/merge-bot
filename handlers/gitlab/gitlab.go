@@ -586,11 +586,12 @@ func (g GitlabProvider) ResetApprovals(projectId, mergeId int, updatedAt time.Ti
 			if err := g.LeaveComment(projectId, mergeId, approvalsResetMessage); err != nil {
 				return err
 			}
+
+			return nil
 		}
-		break
 	}
 
-	return nil
+	return fmt.Errorf("coudn't find commit message with updatedAt: %s", updatedAt)
 }
 
 func newGitlabClient(token, instanceUrl string) *gitlab.Client {

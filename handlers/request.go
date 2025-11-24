@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/codeGROOVE-dev/retry"
 	"github.com/gasoid/merge-bot/logger"
 	"github.com/gasoid/merge-bot/metrics"
 	"github.com/gasoid/merge-bot/semaphore"
@@ -279,7 +280,15 @@ func (r Request) ResetApprovals(updatedAt time.Time) error {
 		return nil
 	}
 
-	return r.provider.ResetApprovals(r.info.ProjectId, r.info.Id, updatedAt, r.config.Rules.ResetApprovalsOnPush)
+	return retry.Do(
+		func() error {
+			return r.provider.ResetApprovals(
+				r.info.ProjectId,
+				r.info.Id, updatedAt,
+				r.config.Rules.ResetApprovalsOnPush)
+		},
+		retry.Attempts(3),
+	)
 }
 
 func (r Request) ValidateSecret(secret string) bool {
