@@ -105,23 +105,12 @@ func NewMR(command *handlers.Request, args string) error {
 	return nil
 }
 
-func staleBranchesRoutine(command *handlers.Request) error {
-	if err := command.CreateLabels(); err != nil {
-		return fmt.Errorf("command.CreateLabels returns err: %w", err)
-	}
-
-	if err := command.DeleteStaleBranches(); err != nil {
-		return fmt.Errorf("command.DeleteStaleBranches returns err: %w", err)
-	}
-	return nil
-}
-
 func MergeEvent(command *handlers.Request, args string) error {
 	if err := command.UpdateBranches(); err != nil {
 		return fmt.Errorf("command.UpdateBranchesWithLabel returns err: %w", err)
 	}
 
-	return staleBranchesRoutine(command)
+	return nil
 }
 
 func UpdateEvent(command *handlers.Request, args string) error {
@@ -155,7 +144,7 @@ func UpdateEvent(command *handlers.Request, args string) error {
 		return fmt.Errorf("command.ResetApprovals returns err: %w", err)
 	}
 
-	return staleBranchesRoutine(command)
+	return nil
 }
 
 func RerunPipeline(command *handlers.Request, args string) error {
