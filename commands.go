@@ -115,7 +115,11 @@ func UpdateEvent(command *handlers.Request, args string) error {
 
 	if !ok {
 		if err := command.UnresolveDiscussion(); err != nil {
-			return fmt.Errorf("command.UnresolveDiscussion returns err: %w", err)
+			if errors.Is(err, handlers.DiscussionError) {
+				logger.Info("It seems that discussion was not found, resolvable was enabled after MR")
+			} else {
+				return fmt.Errorf("command.UnresolveDiscussion returns err: %w", err)
+			}
 		}
 	}
 
