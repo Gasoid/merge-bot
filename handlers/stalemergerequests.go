@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"slices"
 	"time"
+
+	"github.com/dustin/go-humanize/english"
 )
 
 type MR struct {
@@ -40,7 +42,10 @@ func (r Request) cleanStaleMergeRequests() error {
 				return fmt.Errorf("AssignLabel returns error: %w", err)
 			}
 
-			message := fmt.Sprintf("This MR is stale because it has been open %d days with no activity. Remove stale label othewise this will be closed in %d days.", days, coolDays)
+			pluralDays := english.Plural(days, "day", "")
+			pluralCoolDays := english.Plural(coolDays, "day", "")
+
+			message := fmt.Sprintf("This MR is stale because it has been open %s with no activity. Remove stale label othewise this will be closed in %s.", pluralDays, pluralCoolDays)
 			if err := r.provider.LeaveComment(r.info.ProjectId, mr.Id, message); err != nil {
 				return fmt.Errorf("LeaveComment returns error: %w", err)
 			}
