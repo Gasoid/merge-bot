@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"slices"
-	"strings"
 	"sync"
 	"time"
 
@@ -556,7 +555,7 @@ func (g GitlabProvider) getToken(projectId int, name string) (string, error) {
 	return resultToken.Token, nil
 }
 
-func (g GitlabProvider) ResetApprovals(projectId, mergeId int, updatedAt time.Time, config handlers.ResetApprovalsOnPush) error {
+func (g GitlabProvider) ResetApprovals(projectId, mergeId int, config handlers.ResetApprovalsOnPush) error {
 	logger.Debug("gitlab resetApprovals", "mergeId", mergeId)
 
 	if config.IssueToken {
@@ -568,30 +567,16 @@ func (g GitlabProvider) ResetApprovals(projectId, mergeId int, updatedAt time.Ti
 		g.client = newGitlabClient(token, gitlabURL)
 	}
 
-	for note := range g.listMergeRequestNotes(projectId, mergeId, getApprovalsSize, sortDesc) {
-		if !note.System {
-			continue
-		}
-
-		if note.UpdatedAt.After(updatedAt) {
-			continue
-		}
-
-		if strings.Contains(note.Body, "commit") {
-			_, err := g.client.MergeRequestApprovals.ResetApprovalsOfMergeRequest(projectId, mergeId)
-			if err != nil {
-				return err
-			}
-
-			if err := g.LeaveComment(projectId, mergeId, approvalsResetMessage); err != nil {
-				return err
-			}
-
-			return nil
-		}
+	_, err := g.client.MergeRequestApprovals.ResetApprovalsOfMergeRequest(projectId, mergeId)
+	if err != nil {
+		return err
 	}
 
-	return handlers.CommitNotFoundError
+	if err := g.LeaveComment(projectId, mergeId, approvalsResetMessage); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func newGitlabClient(token, instanceUrl string) *gitlab.Client {

@@ -2,13 +2,10 @@ package handlers
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"html/template"
 	"strings"
-	"time"
 
-	"github.com/codeGROOVE-dev/retry"
 	"github.com/gasoid/merge-bot/logger"
 	"github.com/gasoid/merge-bot/metrics"
 	"github.com/gasoid/merge-bot/semaphore"
@@ -251,8 +248,8 @@ func (r Request) RerunPipeline(pipelineId int) (string, error) {
 	return r.provider.RerunPipeline(r.info.ProjectId, pipelineId, r.info.SourceBranch)
 }
 
-func (r Request) ResetApprovals(updatedAt time.Time) error {
-	logger.Debug("resetApprovals", "updatedAt", updatedAt)
+func (r Request) ResetApprovals() error {
+	logger.Debug("resetApprovals")
 
 	if !r.config.Rules.ResetApprovalsOnPush.Enabled {
 		return nil
@@ -262,20 +259,10 @@ func (r Request) ResetApprovals(updatedAt time.Time) error {
 		return nil
 	}
 
-	err := retry.Do(
-		func() error {
-			return r.provider.ResetApprovals(
-				r.info.ProjectId,
-				r.info.Id, updatedAt,
-				r.config.Rules.ResetApprovalsOnPush)
-		},
-		retry.Attempts(3),
-	)
-	if !errors.Is(err, CommitNotFoundError) {
-		return err
-	}
-
-	return nil
+	return r.provider.ResetApprovals(
+		r.info.ProjectId,
+		r.info.Id,
+		r.config.Rules.ResetApprovalsOnPush)
 }
 
 func (r Request) ValidateSecret(secret string) bool {
