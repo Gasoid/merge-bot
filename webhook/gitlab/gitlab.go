@@ -84,8 +84,14 @@ func (g *GitlabProvider) ParseRequest(request *http.Request) error {
 			return err
 		}
 
-		logger.Debug("ParseRequest", "changes", changes)
-		if len(changes) == 0 {
+		emptyMr := gitlab.MergeEvent{}
+		emptyChanges, err := json.Marshal(&emptyMr.Changes)
+		if err != nil {
+			return err
+		}
+
+		logger.Debug("ParseRequest", "changes", string(changes))
+		if string(changes) == string(emptyChanges) {
 			g.action = pushAction
 		} else {
 			g.action = mr.ObjectAttributes.Action
