@@ -10,6 +10,7 @@ const (
 	OnNewMR     = "\anewMREvent"
 	OnMerge     = "\amergeEvent"
 	OnUpdate    = "\aupdateEvent"
+	OnCommit    = "\acommitEvent"
 	spaceSymbol = " "
 )
 

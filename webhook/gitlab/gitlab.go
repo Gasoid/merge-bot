@@ -1,6 +1,7 @@
 package gitlab
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -15,6 +16,7 @@ const (
 	mergeAction  = "merge"
 	openAction   = "open"
 	updateAction = "update"
+	pushAction   = "push"
 )
 
 func init() {
@@ -76,7 +78,19 @@ func (g *GitlabProvider) ParseRequest(request *http.Request) error {
 	if mr, ok = event.(*gitlab.MergeEvent); ok {
 		g.projectId = mr.Project.ID
 		g.id = mr.ObjectAttributes.IID
-		g.action = mr.ObjectAttributes.Action
+
+		changes, err := json.Marshal(&mr.Changes)
+		if err != nil {
+			return err
+		}
+
+		logger.Debug("ParseRequest", "changes", changes)
+		if len(changes) == 0 {
+			g.action = pushAction
+		} else {
+			g.action = mr.ObjectAttributes.Action
+		}
+
 		g.updatedAt = mr.ObjectAttributes.UpdatedAt
 	}
 
@@ -86,16 +100,15 @@ func (g *GitlabProvider) ParseRequest(request *http.Request) error {
 func (g *GitlabProvider) GetCmd() string {
 	logger.Debug("getCmd", "action", g.action)
 
-	if g.action == mergeAction {
+	switch g.action {
+	case mergeAction:
 		return webhook.OnMerge
-	}
-
-	if g.action == openAction {
+	case openAction:
 		return webhook.OnNewMR
-	}
-
-	if g.action == updateAction {
-		return fmt.Sprintf("%s %s", webhook.OnUpdate, g.updatedAt)
+	case updateAction:
+		return webhook.OnUpdate
+	case pushAction:
+		return fmt.Sprintf("%s %s", webhook.OnCommit, g.updatedAt)
 	}
 
 	logger.Debug("getCmd", "note", g.note)

@@ -22,6 +22,7 @@ func init() {
 	handle(webhook.OnNewMR, NewMR)
 	handle(webhook.OnMerge, MergeEvent)
 	handle(webhook.OnUpdate, UpdateEvent)
+	handle(webhook.OnCommit, PushEvent)
 }
 
 const success = "You can merge, LGTM :D"
@@ -123,6 +124,10 @@ func UpdateEvent(command *handlers.Request, args string) error {
 		}
 	}
 
+	return nil
+}
+
+func PushEvent(command *handlers.Request, args string) error {
 	parsedTime, err := time.Parse("2006-01-02 15:04:05 UTC", args)
 	if err != nil {
 		return fmt.Errorf("time.Parse returns err: %w", err)
