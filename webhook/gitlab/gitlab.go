@@ -1,7 +1,6 @@
 package gitlab
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -79,19 +78,19 @@ func (g *GitlabProvider) ParseRequest(request *http.Request) error {
 		g.projectId = mr.Project.ID
 		g.id = mr.ObjectAttributes.IID
 
-		changes, err := json.Marshal(&mr.Changes)
-		if err != nil {
-			return err
-		}
+		// changes, err := json.Marshal(&mr.Changes)
+		// if err != nil {
+		// 	return err
+		// }
 
-		emptyMr := gitlab.MergeEvent{}
-		emptyChanges, err := json.Marshal(&emptyMr.Changes)
-		if err != nil {
-			return err
-		}
+		// emptyMr := gitlab.MergeEvent{}
+		// emptyChanges, err := json.Marshal(&emptyMr.Changes)
+		// if err != nil {
+		// 	return err
+		// }
 
-		logger.Debug("ParseRequest", "changes", string(changes))
-		if string(changes) == string(emptyChanges) {
+		logger.Debug("ParseRequest", "oldRev", mr.ObjectAttributes.OldRev)
+		if mr.ObjectAttributes.OldRev != "" {
 			g.action = pushAction
 		} else {
 			g.action = mr.ObjectAttributes.Action
