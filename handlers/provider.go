@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"sync"
-	"time"
 )
 
 const (
@@ -72,7 +71,7 @@ type MergeRequest interface {
 	FindMergeRequests(projectId int, targetBranch, label string) ([]MR, error)
 	UpdateFromMaster(projectId, mergeId int) error
 	AssignLabel(projectId, mergeId int, name, color string) error
-	ResetApprovals(projectId, mergeId int, updatedAt time.Time, config ResetApprovalsOnPush) error
+	ResetApprovals(projectId, mergeId int, config ResetApprovalsOnPush) error
 }
 
 type Project interface {

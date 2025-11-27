@@ -7,7 +7,6 @@ import (
 	"path"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/gasoid/merge-bot/handlers"
 	"github.com/gasoid/merge-bot/logger"
@@ -128,12 +127,7 @@ func UpdateEvent(command *handlers.Request, args string) error {
 }
 
 func PushEvent(command *handlers.Request, args string) error {
-	parsedTime, err := time.Parse("2006-01-02 15:04:05 UTC", args)
-	if err != nil {
-		return fmt.Errorf("time.Parse returns err: %w", err)
-	}
-
-	if err := command.ResetApprovals(parsedTime); err != nil {
+	if err := command.ResetApprovals(); err != nil {
 		return fmt.Errorf("command.ResetApprovals returns err: %w", err)
 	}
 

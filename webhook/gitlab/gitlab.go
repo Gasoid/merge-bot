@@ -1,7 +1,6 @@
 package gitlab
 
 import (
-	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -78,18 +77,6 @@ func (g *GitlabProvider) ParseRequest(request *http.Request) error {
 		g.projectId = mr.Project.ID
 		g.id = mr.ObjectAttributes.IID
 
-		// changes, err := json.Marshal(&mr.Changes)
-		// if err != nil {
-		// 	return err
-		// }
-
-		// emptyMr := gitlab.MergeEvent{}
-		// emptyChanges, err := json.Marshal(&emptyMr.Changes)
-		// if err != nil {
-		// 	return err
-		// }
-
-		logger.Debug("ParseRequest", "oldRev", mr.ObjectAttributes.OldRev)
 		if mr.ObjectAttributes.OldRev != "" {
 			g.action = pushAction
 		} else {
@@ -113,7 +100,7 @@ func (g *GitlabProvider) GetCmd() string {
 	case updateAction:
 		return webhook.OnUpdate
 	case pushAction:
-		return fmt.Sprintf("%s %s", webhook.OnCommit, g.updatedAt)
+		return webhook.OnCommit
 	}
 
 	logger.Debug("getCmd", "note", g.note)

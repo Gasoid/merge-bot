@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -100,7 +99,7 @@ func (p *testProvider) RerunPipeline(projectId, pipelineId int, ref string) (str
 	return "", p.err
 }
 
-func (p *testProvider) ResetApprovals(projectId, mergeId int, updatedAt time.Time, config ResetApprovalsOnPush) error {
+func (p *testProvider) ResetApprovals(projectId, mergeId int, config ResetApprovalsOnPush) error {
 	return p.err
 }
 
