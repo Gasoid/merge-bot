@@ -44,6 +44,7 @@ type PluginManifest struct {
 	Config  PluginConfig `json:"config"`
 }
 
+//nolint:errcheck
 func downloadFile(fileUrl string) ([]byte, error) {
 	resp, err := http.Get(fileUrl)
 	if err != nil {
