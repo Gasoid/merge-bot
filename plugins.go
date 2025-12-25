@@ -16,8 +16,8 @@ import (
 )
 
 const (
-	githubUrl = "https://github.com/"
-	gitlabUrl = "https://gitlab.com/"
+	githubURL = "https://github.com/"
+	gitlabURL = "https://gitlab.com/"
 )
 
 var (
@@ -72,12 +72,11 @@ func getManifest(filePath string) (PluginManifest, error) {
 	manifest := PluginManifest{}
 
 	switch {
-
-	case strings.HasPrefix(filePath, githubUrl):
-		filePath = strings.Replace(filePath, githubUrl, "https://raw.githubusercontent.com", 1)
+	case strings.HasPrefix(filePath, githubURL):
+		filePath = strings.Replace(filePath, githubURL, "https://raw.githubusercontent.com", 1)
 		filePath = strings.Replace(filePath, "blob", "refs/heads", 1)
 
-	case strings.HasPrefix(filePath, gitlabUrl):
+	case strings.HasPrefix(filePath, gitlabURL):
 		filePath = strings.Replace(filePath, "-/blob/", "-/raw/", 1)
 
 	}
@@ -108,13 +107,17 @@ func loadPlugins() {
 
 		manifest, err := getManifest(pluginUrl)
 		if err != nil {
-			logger.Error("getManifest", "err", err)
+			logger.Error("getManifest", "plugin_url", pluginUrl, "err", err)
 			continue
 		}
 
 		handler, err := buildWasmPlugin(manifest)
 		if err != nil {
-			logger.Error("buildWasmPlugin", "err", err)
+			logger.Error("buildWasmPlugin",
+				"plugin_url", pluginUrl,
+				"plugin_name", manifest.Name,
+				"command", manifest.Command,
+				"err", err)
 			continue
 		}
 
@@ -150,7 +153,7 @@ func buildWasmPlugin(manifest PluginManifest) (handlerFunc, error) {
 	}
 
 	//nolint:errcheck
-	return func(command *handlers.Request, args string) error {
+	return func(command *handlers.Request, _ string) error {
 		plugin, err := compiledPlugin.Instance(ctx, extism.PluginInstanceConfig{})
 		if err != nil {
 			return fmt.Errorf("can't create instance of plugin %s, error %w", manifest.Name, err)
