@@ -154,14 +154,17 @@ func buildWasmPlugin(manifest PluginManifest) (handlerFunc, error) {
 		}
 		defer plugin.Close(ctx)
 
-		exit, out, err := plugin.Call(manifest.Config.ExportedFunction, []byte{})
-		if err != nil {
-			return fmt.Errorf("plugin %s returns error: %w", manifest.Name, err)
-		}
+		return command.RunWithContext(func(ctx []byte) error {
+			exit, out, err := plugin.Call(manifest.Config.ExportedFunction, ctx)
+			if err != nil {
+				return fmt.Errorf("plugin %s returns error: %w", manifest.Name, err)
+			}
 
-		if exit != 0 {
-			return fmt.Errorf("plugin %s returns exit code: %d", manifest.Name, exit)
-		}
-		return command.LeaveComment(string(out))
+			if exit != 0 {
+				return fmt.Errorf("plugin %s returns exit code: %d", manifest.Name, exit)
+			}
+			return command.LeaveComment(string(out))
+		})
+
 	}, nil
 }

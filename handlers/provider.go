@@ -72,6 +72,7 @@ type MergeRequest interface {
 	UpdateFromMaster(projectId, mergeId int) error
 	AssignLabel(projectId, mergeId int, name, color string) error
 	ResetApprovals(projectId, mergeId int, config ResetApprovalsOnPush) error
+	GetRawDiffs(projectId, mergeId int) ([]byte, error)
 }
 
 type Project interface {
