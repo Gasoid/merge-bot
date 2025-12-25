@@ -73,8 +73,8 @@ func getManifest(filePath string) (PluginManifest, error) {
 
 	switch {
 	case strings.HasPrefix(filePath, githubURL):
-		filePath = strings.Replace(filePath, githubURL, "https://raw.githubusercontent.com", 1)
-		filePath = strings.Replace(filePath, "blob", "refs/heads", 1)
+		filePath = strings.Replace(filePath, githubURL, "https://raw.githubusercontent.com/", 1)
+		filePath = strings.Replace(filePath, "blob/", "", 1)
 
 	case strings.HasPrefix(filePath, gitlabURL):
 		filePath = strings.Replace(filePath, "-/blob/", "-/raw/", 1)
