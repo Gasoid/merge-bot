@@ -115,6 +115,7 @@ func loadPlugins() {
 			continue
 		}
 
+		logger.Info("plugin loaded", "plugin name", manifest.Name)
 		handle(manifest.Command, handler)
 	}
 }
