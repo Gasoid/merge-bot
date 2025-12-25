@@ -579,6 +579,15 @@ func (g GitlabProvider) ResetApprovals(projectId, mergeId int, config handlers.R
 	return nil
 }
 
+func (g GitlabProvider) GetRawDiffs(projectId, mergeId int) ([]byte, error) {
+	result, _, err := g.client.MergeRequests.ShowMergeRequestRawDiffs(projectId, mergeId, &gitlab.ShowMergeRequestRawDiffsOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
 func newGitlabClient(token, instanceUrl string) *gitlab.Client {
 	var (
 		err error
