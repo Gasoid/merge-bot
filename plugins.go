@@ -95,6 +95,10 @@ func getManifest(filePath string) (PluginManifest, error) {
 }
 
 func loadPlugins() {
+	if plugins == "" {
+		return
+	}
+
 	for pluginUrl := range strings.SplitSeq(plugins, ",") {
 		pluginUrl = strings.TrimSpace(pluginUrl)
 		if pluginUrl == "" {
