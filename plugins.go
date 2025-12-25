@@ -28,7 +28,6 @@ type handlerFunc func(command *handlers.Request, args string) error
 
 func init() {
 	config.StringVar(&plugins, "plugins", "", "comma list of plugin urls (also via PLUGINS)")
-	loadPlugins()
 }
 
 type PluginConfig struct {

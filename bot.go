@@ -79,6 +79,8 @@ func start() {
 		return
 	}
 
+	loadPlugins()
+
 	e.Logger.Fatal(e.Start(":8080"))
 }
 
