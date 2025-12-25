@@ -108,13 +108,13 @@ func loadPlugins() {
 
 		manifest, err := getManifest(pluginUrl)
 		if err != nil {
-			logger.Info("getManifest", "err", err)
+			logger.Error("getManifest", "err", err)
 			continue
 		}
 
 		handler, err := buildWasmPlugin(manifest)
 		if err != nil {
-			logger.Info("buildWasmPlugin", "err", err)
+			logger.Error("buildWasmPlugin", "err", err)
 			continue
 		}
 
