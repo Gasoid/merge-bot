@@ -99,7 +99,7 @@ func loadPlugins() {
 	for pluginUrl := range strings.SplitSeq(plugins, ",") {
 		pluginUrl = strings.TrimSpace(pluginUrl)
 		if pluginUrl == "" {
-			logger.Info("LoadPlugins", "err", "url is empty")
+			logger.Info("loadPlugins", "err", "url is empty")
 			continue
 		}
 
@@ -145,20 +145,21 @@ func buildWasmPlugin(manifest PluginManifest) (handlerFunc, error) {
 		return nil, err
 	}
 
+	//nolint:errcheck
 	return func(command *handlers.Request, args string) error {
 		plugin, err := compiledPlugin.Instance(ctx, extism.PluginInstanceConfig{})
 		if err != nil {
-			return fmt.Errorf("Can't create instance of plugin %s, error %w", manifest.Name, err)
+			return fmt.Errorf("can't create instance of plugin %s, error %w", manifest.Name, err)
 		}
 		defer plugin.Close(ctx)
 
 		exit, out, err := plugin.Call(manifest.Config.ExportedFunction, []byte{})
 		if err != nil {
-			return fmt.Errorf("Plugin %s returns error: %w", manifest.Name, err)
+			return fmt.Errorf("plugin %s returns error: %w", manifest.Name, err)
 		}
 
 		if exit != 0 {
-			return fmt.Errorf("Plugin %s returns exit code: %d", manifest.Name, exit)
+			return fmt.Errorf("plugin %s returns exit code: %d", manifest.Name, exit)
 		}
 		return command.LeaveComment(string(out))
 	}, nil
