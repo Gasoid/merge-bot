@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -13,6 +12,7 @@ import (
 	"github.com/gasoid/merge-bot/config"
 	"github.com/gasoid/merge-bot/handlers"
 	"github.com/gasoid/merge-bot/logger"
+	"github.com/stretchr/testify/assert/yaml"
 )
 
 const (
@@ -31,16 +31,16 @@ func init() {
 }
 
 type PluginConfig struct {
-	ExportedFunction string   `json:"exported_function"`
-	Path             string   `json:"path"`
-	EnvVars          []string `json:"env_vars"`
-	AllowedHosts     []string `json:"allowed_hosts"`
+	ExportedFunction string   `yaml:"exported_function"`
+	Path             string   `yaml:"path"`
+	EnvVars          []string `yaml:"env_vars"`
+	AllowedHosts     []string `yaml:"allowed_hosts"`
 }
 
 type PluginManifest struct {
-	Name    string       `json:"name"`
-	Command string       `json:"command"`
-	Config  PluginConfig `json:"config"`
+	Name    string       `yaml:"name"`
+	Command string       `yaml:"command"`
+	Config  PluginConfig `yaml:"config"`
 }
 
 //nolint:errcheck
@@ -87,7 +87,7 @@ func getManifest(filePath string) (PluginManifest, error) {
 		return manifest, err
 	}
 
-	if err := json.Unmarshal(body, &manifest); err != nil {
+	if err := yaml.Unmarshal(body, &manifest); err != nil {
 		return manifest, err
 	}
 
