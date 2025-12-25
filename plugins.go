@@ -167,6 +167,11 @@ func buildWasmPlugin(manifest PluginManifest) (handlerFunc, error) {
 				return fmt.Errorf("plugin %s returns exit code: %d", manifest.Name, exit)
 			}
 
+			errMessage := plugin.GetError()
+			if errMessage != "" {
+				return fmt.Errorf("plugin %s returns error: %s", manifest.Name, errMessage)
+			}
+
 			if len(out) == 0 {
 				return fmt.Errorf("plugin %s returns nothing", manifest.Name)
 			}
