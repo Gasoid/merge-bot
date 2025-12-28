@@ -47,7 +47,9 @@ func (r Request) RunWithContext(call PluginCall) error {
 	}
 
 	if output.Comment != "" {
-		r.LeaveComment(output.Comment)
+		if err := r.LeaveComment(output.Comment); err != nil {
+			return err
+		}
 	}
 
 	return nil
