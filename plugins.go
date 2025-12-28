@@ -160,25 +160,26 @@ func buildWasmPlugin(manifest PluginManifest) (handlerFunc, error) {
 		}
 		defer plugin.Close(ctx)
 
-		return command.RunWithContext(func(ctx []byte) error {
-			exit, out, err := plugin.Call(manifest.Config.ExportedFunction, ctx)
+		return command.RunWithContext(func(input []byte) ([]byte, error) {
+			exit, output, err := plugin.Call(manifest.Config.ExportedFunction, input)
 			if err != nil {
-				return fmt.Errorf("plugin %s returns error: %w", manifest.Name, err)
+				return nil, fmt.Errorf("plugin %s returns error: %w", manifest.Name, err)
 			}
 
 			if exit != 0 {
-				return fmt.Errorf("plugin %s returns exit code: %d", manifest.Name, exit)
+				return nil, fmt.Errorf("plugin %s returns exit code: %d", manifest.Name, exit)
 			}
 
 			errMessage := plugin.GetError()
 			if errMessage != "" {
-				return fmt.Errorf("plugin %s returns error: %s", manifest.Name, errMessage)
+				return nil, fmt.Errorf("plugin %s returns error: %s", manifest.Name, errMessage)
 			}
 
-			if len(out) == 0 {
-				return fmt.Errorf("plugin %s returns nothing", manifest.Name)
+			if len(output) == 0 {
+				return nil, fmt.Errorf("plugin %s returns nothing", manifest.Name)
 			}
-			return command.LeaveComment(string(out))
+
+			return output, nil
 		})
 
 	}, nil

@@ -1,33 +1,54 @@
 package handlers
 
-import "encoding/json"
+import (
+	"encoding/json"
+)
 
-type PluginCall func([]byte) error
+type PluginCall func([]byte) ([]byte, error)
 
-type PluginContext struct {
+type PluginInput struct {
 	Title       string `json:"title"`
 	Description string `json:"description"`
 	Author      string `json:"author"`
 	Diffs       []byte `json:"diffs"`
 }
 
-func (r *Request) RunWithContext(call PluginCall) error {
+type PluginOutput struct {
+	Comment string `json:"comment"`
+}
+
+func (r Request) RunWithContext(call PluginCall) error {
 	rawDiffs, err := r.provider.GetRawDiffs(r.info.ProjectId, r.info.Id)
 	if err != nil {
 		return err
 	}
 
-	ctx := PluginContext{
+	input := PluginInput{
 		Title:       r.info.Title,
 		Description: r.info.Description,
 		Author:      r.info.Author,
 		Diffs:       rawDiffs,
 	}
 
-	data, err := json.Marshal(ctx)
+	data, err := json.Marshal(input)
 	if err != nil {
 		return err
 	}
 
-	return call(data)
+	out, err := call(data)
+	if err != nil {
+		return err
+	}
+
+	output := PluginOutput{}
+
+	if err := json.Unmarshal(out, &output); err != nil {
+		return err
+	}
+
+	if output.Comment != "" {
+		r.LeaveComment(output.Comment)
+	}
+
+	return nil
 }
