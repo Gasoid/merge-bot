@@ -21,7 +21,7 @@ const (
 
 var (
 	plugins   string
-	engines   map[string]func([]byte) (HandlerFunc, error)
+	engines   = map[string]func([]byte) (HandlerFunc, error){}
 	enginesMu sync.RWMutex
 )
 
