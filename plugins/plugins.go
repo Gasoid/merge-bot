@@ -136,8 +136,6 @@ func Load() iter.Seq[PluginManifest] {
 					return
 				}
 			}
-
-			logger.Info("plugin loaded", "plugin url", pluginUrl, "plugin name", manifest.Name)
 		}
 	}
 }

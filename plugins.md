@@ -4,14 +4,14 @@ You can extend the functionality of the Merge-Bot by creating and using plugins.
 Please read extism documentation to learn how to create WASM plugins: https://extism.org/docs/getting-started/wasm-plugins
 
 
-## Plugin manifest
+## Plugin manifest for WASM
 
 ```yaml
 name: Plugin Name
 
 command: "!plugin-command" # Command to trigger the plugin, e.g. !review
 
-config:
+wasm_config:
   exported_function: "review"
   path: "plugin.wasm" # Path to the compiled WASM file
   env_vars:
