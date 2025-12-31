@@ -144,6 +144,11 @@ func handle(onEvent string, funcHandler func(*handlers.Request, string) error) {
 	handlerMu.Lock()
 	defer handlerMu.Unlock()
 
+	if _, ok := handlerFuncs[onEvent]; ok {
+		logger.Info("onEvent has been already registered", "onEvent", onEvent)
+		return
+	}
+
 	handlerFuncs[onEvent] = func(command *handlers.Request, args string) error {
 
 		return metrics.Handler(

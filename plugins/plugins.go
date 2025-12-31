@@ -72,6 +72,10 @@ func getFile(filePath string) ([]byte, error) {
 func GetRawLink(link string) string {
 	switch {
 	case strings.HasPrefix(link, githubURL):
+		if strings.Contains(link, "/releases/download/") {
+			return link
+		}
+
 		link = strings.Replace(link, githubURL, "https://raw.githubusercontent.com/", 1)
 		link = strings.Replace(link, "blob/", "", 1)
 
