@@ -13,7 +13,8 @@ runtime: "wasm"
 
 wasm_config:
   exported_function: "review"
-  path: "plugin.wasm" # Path to the compiled WASM file
+  url: "https://github.com/user/repo/plugin-file.yaml" # either url or path must be set
+  path: "/path/to/plugin.wasm" # Path to the compiled WASM file
   env_vars:
   - plugin_env_var_1 # Environment variables to pass to the plugin
   allowed_hosts:
