@@ -55,7 +55,7 @@ func BuildWasmPlugin(manifestFile []byte) (plugins.HandlerFunc, error) {
 		}
 	} else {
 		wasmPath = extism.WasmUrl{
-			Url: manifest.WasmConfig.Url,
+			Url: plugins.GetRawLink(manifest.WasmConfig.Url),
 		}
 	}
 
