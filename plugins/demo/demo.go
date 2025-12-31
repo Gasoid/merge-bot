@@ -32,7 +32,7 @@ func Hello() int32 {
 	}
 
 	output := PluginOutput{
-		Comment: "hello " + input.Author + "from " + name,
+		Comment: "hello " + input.Author + " from " + name,
 	}
 
 	pdk.OutputJSON(output)
