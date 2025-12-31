@@ -66,6 +66,8 @@ func start() {
 	e.GET(HealthyEndpoint, healthcheck)
 	e.POST("/mergebot/webhook/:provider/", Handler)
 
+	go loadPlugins()
+
 	if tlsEnabled {
 		tmpDir := path.Join(os.TempDir(), "tls", ".cache")
 
@@ -141,6 +143,11 @@ func Handler(c echo.Context) error {
 func handle(onEvent string, funcHandler func(*handlers.Request, string) error) {
 	handlerMu.Lock()
 	defer handlerMu.Unlock()
+
+	if _, ok := handlerFuncs[onEvent]; ok {
+		logger.Info("onEvent has been already registered", "onEvent", onEvent)
+		return
+	}
 
 	handlerFuncs[onEvent] = func(command *handlers.Request, args string) error {
 
