@@ -4,7 +4,7 @@ runtime: "wasm"
 
 wasm_config:
   exported_function: "hello"
-  path: "https://github.com/Gasoid/merge-bot/blob/wasm_plugin_support/plugins/demo/plugin.wasm"
+  url: "https://github.com/Gasoid/merge-bot/blob/wasm_plugin_support/plugins/demo/plugin.wasm"
   env_vars:
   - demo_name
   allowed_hosts:

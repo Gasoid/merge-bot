@@ -16,6 +16,7 @@ import (
 type PluginWasmConfig struct {
 	ExportedFunction string   `yaml:"exported_function"`
 	Path             string   `yaml:"path"`
+	Url              string   `yaml:"url"`
 	EnvVars          []string `yaml:"env_vars"`
 	AllowedHosts     []string `yaml:"allowed_hosts"`
 }
@@ -43,17 +44,24 @@ func BuildWasmPlugin(manifestFile []byte) (plugins.HandlerFunc, error) {
 		envMap[v] = os.Getenv(strings.ToUpper(v)) // TODO: config.StringVar
 	}
 
-	if manifest.WasmConfig.Path == "" {
-		return nil, errors.New("WasmConfig.Path is empty")
+	if manifest.WasmConfig.Path == "" && manifest.WasmConfig.Url == "" {
+		return nil, errors.New("either Path or Url must be set")
 	}
 
-	wasmPath := plugins.GetRawLink(manifest.WasmConfig.Path)
+	var wasmPath extism.Wasm
+	if manifest.WasmConfig.Path != "" {
+		wasmPath = extism.WasmFile{
+			Path: manifest.WasmConfig.Path,
+		}
+	} else {
+		wasmPath = extism.WasmUrl{
+			Url: manifest.WasmConfig.Url,
+		}
+	}
 
 	extismManifest := extism.Manifest{
 		Wasm: []extism.Wasm{
-			extism.WasmFile{
-				Path: wasmPath,
-			},
+			wasmPath,
 		},
 		AllowedHosts: manifest.WasmConfig.AllowedHosts,
 		Config:       envMap,
