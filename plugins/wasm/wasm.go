@@ -2,6 +2,7 @@ package wasm
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -42,10 +43,16 @@ func BuildWasmPlugin(manifestFile []byte) (plugins.HandlerFunc, error) {
 		envMap[v] = os.Getenv(strings.ToUpper(v)) // TODO: config.StringVar
 	}
 
+	if manifest.WasmConfig.Path == "" {
+		return nil, errors.New("WasmConfig.Path is empty")
+	}
+
+	wasmPath := plugins.GetRawLink(manifest.WasmConfig.Path)
+
 	extismManifest := extism.Manifest{
 		Wasm: []extism.Wasm{
 			extism.WasmFile{
-				Path: manifest.WasmConfig.Path,
+				Path: wasmPath,
 			},
 		},
 		AllowedHosts: manifest.WasmConfig.AllowedHosts,

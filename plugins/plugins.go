@@ -69,17 +69,21 @@ func getFile(filePath string) ([]byte, error) {
 	return os.ReadFile(filePath)
 }
 
-func getManifest(filePath string) ([]byte, error) {
-
+func GetRawLink(link string) string {
 	switch {
-	case strings.HasPrefix(filePath, githubURL):
-		filePath = strings.Replace(filePath, githubURL, "https://raw.githubusercontent.com/", 1)
-		filePath = strings.Replace(filePath, "blob/", "", 1)
+	case strings.HasPrefix(link, githubURL):
+		link = strings.Replace(link, githubURL, "https://raw.githubusercontent.com/", 1)
+		link = strings.Replace(link, "blob/", "", 1)
 
-	case strings.HasPrefix(filePath, gitlabURL):
-		filePath = strings.Replace(filePath, "-/blob/", "-/raw/", 1)
+	case strings.HasPrefix(link, gitlabURL):
+		link = strings.Replace(link, "-/blob/", "-/raw/", 1)
 
 	}
+	return link
+}
+
+func getManifest(filePath string) ([]byte, error) {
+	filePath = GetRawLink(filePath)
 
 	body, err := getFile(filePath)
 	if err != nil {
