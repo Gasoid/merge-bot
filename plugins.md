@@ -8,8 +8,8 @@ Please read extism documentation to learn how to create WASM plugins: https://ex
 
 ```yaml
 name: Plugin Name
-
 command: "!plugin-command" # Command to trigger the plugin, e.g. !review
+runtime: "wasm"
 
 wasm_config:
   exported_function: "review"
@@ -28,3 +28,19 @@ PLUGINS="plugin1.yaml,https://example.com/plugin2.yaml,https://github.com/user/r
 ```
 
 The bot will download and load the plugins at startup.
+
+## Demo plugin
+
+To compile plugin:
+
+```bash
+GOOS="wasip1" GOARCH="wasm" go build -o plugin.wasm -buildmode=c-shared demo.go
+```
+
+Set env variable:
+
+```bash
+export DEMO_NAME="hello-plugin"
+export PLUGINS=""
+```
+
