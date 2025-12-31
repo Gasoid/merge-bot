@@ -41,6 +41,5 @@ Set env variable:
 
 ```bash
 export DEMO_NAME="hello-plugin"
-export PLUGINS=""
+export PLUGINS="https://github.com/Gasoid/merge-bot/blob/wasm_plugin_support/plugins/demo/demo.yaml"
 ```
-
