@@ -39,8 +39,8 @@ const (
 	maintainerLevel       = 40
 	lifetime              = 30
 	approvalsResetMessage = "✨ approvals were reset"
-	sortDesc              = "desc"
 	sortAsc               = "asc"
+	// sortDesc              = "desc"
 )
 
 type GitlabProvider struct {
