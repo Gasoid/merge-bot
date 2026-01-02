@@ -44,3 +44,57 @@ Set env variable:
 export DEMO_NAME="hello-plugin"
 export PLUGINS="https://github.com/Gasoid/merge-bot/blob/wasm_plugin_support/plugins/demo/demo.yaml"
 ```
+
+### Helm chart configuration:
+
+Plugin config
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: plugin-config
+data:
+  demo-plugin.yaml: |
+    name: Hello plugin
+    command: "!hello"
+    runtime: "wasm"
+
+    wasm_config:
+      exported_function: "hello"
+      url: "https://github.com/Gasoid/merge-bot/blob/v3.8.0-alpha.1/plugins/demo/plugin.wasm"
+      env_vars:
+      - demo_name
+      allowed_hosts:
+      - "api.host.com"
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: plugins
+data:
+  PLUGINS: "/app/demo-plugin.yaml"
+
+```
+
+merge-bot values.yaml
+
+```yaml
+mergebot:
+  envFrom:
+  - configMapRef:
+      name: plugins
+
+volumes:
+  - name: demo-volume
+    configMap:
+      name: plugin-config
+
+
+volumeMounts:
+  - name: demo-volume
+    mountPath: /app/demo-plugin.yaml
+    subPath: demo-plugin.yaml
+
+```
