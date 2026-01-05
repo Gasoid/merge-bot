@@ -115,6 +115,10 @@ func (p *testProvider) GetRawDiffs(projectId, mergeId int) ([]byte, error) {
 	return nil, p.err
 }
 
+func (p *testProvider) CreateThreadInLine(projectId, mergeId int, thread Thread) error {
+	return p.err
+}
+
 func Test_Merge(t *testing.T) {
 	type args struct {
 		pr *Request

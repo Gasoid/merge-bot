@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 )
 
 type PluginCall func([]byte) ([]byte, error)
@@ -13,11 +14,24 @@ type PluginInput struct {
 	Diffs       []byte `json:"diffs"`
 }
 
+type Thread struct {
+	NewLine int    `json:"new_line"`
+	OldLine int    `json:"old_line"`
+	Body    string `json:"body"`
+	NewPath string `json:"new_path"`
+	OldPath string `json:"old_path"`
+}
+
 type PluginOutput struct {
-	Comment string `json:"comment"`
+	Comment string   `json:"comment"`
+	Threads []Thread `json:"threads"`
 }
 
 func (r Request) RunWithContext(call PluginCall) error {
+	if r.info == nil {
+		return errors.New("no MR info")
+	}
+
 	rawDiffs, err := r.provider.GetRawDiffs(r.info.ProjectId, r.info.Id)
 	if err != nil {
 		return err
@@ -48,6 +62,15 @@ func (r Request) RunWithContext(call PluginCall) error {
 
 	if output.Comment != "" {
 		if err := r.LeaveComment(output.Comment); err != nil {
+			return err
+		}
+	}
+
+	for _, t := range output.Threads {
+		if err := r.provider.CreateThreadInLine(
+			r.info.ProjectId,
+			r.info.Id,
+			t); err != nil {
 			return err
 		}
 	}

@@ -62,6 +62,7 @@ type Comments interface {
 type Discussions interface {
 	CreateDiscussion(projectId, mergeId int, message string) error
 	UnresolveDiscussion(projectId, mergeId int) error
+	CreateThreadInLine(projectId, mergeId int, thread Thread) error
 }
 
 type MergeRequest interface {

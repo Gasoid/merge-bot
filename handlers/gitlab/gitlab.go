@@ -588,6 +588,34 @@ func (g GitlabProvider) GetRawDiffs(projectId, mergeId int) ([]byte, error) {
 	return result, nil
 }
 
+func (g GitlabProvider) CreateThreadInLine(projectId, mergeId int, thread handlers.Thread) error {
+	if g.mr == nil {
+		return errors.New("no mr information")
+	}
+
+	_, _, err := g.client.Discussions.CreateMergeRequestDiscussion(
+		projectId, mergeId,
+		&gitlab.CreateMergeRequestDiscussionOptions{
+			Body: gitlab.Ptr(thread.Body),
+			Position: &gitlab.PositionOptions{
+				BaseSHA:      &g.mr.DiffRefs.BaseSha,
+				HeadSHA:      &g.mr.DiffRefs.HeadSha,
+				StartSHA:     &g.mr.DiffRefs.StartSha,
+				PositionType: gitlab.Ptr("text"),
+				NewPath:      &thread.NewPath,
+				OldPath:      &thread.OldPath,
+				NewLine:      &thread.NewLine,
+				OldLine:      &thread.OldLine,
+			},
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func newGitlabClient(token, instanceUrl string) *gitlab.Client {
 	var (
 		err error
