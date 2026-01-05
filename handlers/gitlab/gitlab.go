@@ -602,6 +602,10 @@ func (g GitlabProvider) CreateThreadInLine(projectId, mergeId int, thread handle
 		OldPath:      &thread.OldPath,
 	}
 
+	if thread.NewLine == 0 && thread.OldLine == 0 {
+		return errors.New("no lines included")
+	}
+
 	if thread.NewLine != 0 {
 		position.NewLine = &thread.NewLine
 	}

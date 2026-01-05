@@ -3,6 +3,8 @@ package handlers
 import (
 	"encoding/json"
 	"errors"
+
+	"github.com/gasoid/merge-bot/logger"
 )
 
 type PluginCall func([]byte) ([]byte, error)
@@ -71,7 +73,7 @@ func (r Request) RunWithContext(call PluginCall) error {
 			r.info.ProjectId,
 			r.info.Id,
 			t); err != nil {
-			return err
+			logger.Info("CreateThreadInLine returns error", "err", err, "thread", t)
 		}
 	}
 
