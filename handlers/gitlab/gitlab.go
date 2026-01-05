@@ -593,20 +593,28 @@ func (g GitlabProvider) CreateThreadInLine(projectId, mergeId int, thread handle
 		return errors.New("no mr information")
 	}
 
+	position := &gitlab.PositionOptions{
+		BaseSHA:      &g.mr.DiffRefs.BaseSha,
+		HeadSHA:      &g.mr.DiffRefs.HeadSha,
+		StartSHA:     &g.mr.DiffRefs.StartSha,
+		PositionType: gitlab.Ptr("text"),
+		NewPath:      &thread.NewPath,
+		OldPath:      &thread.OldPath,
+	}
+
+	if thread.NewLine != 0 {
+		position.NewLine = &thread.NewLine
+	}
+
+	if thread.OldLine != 0 {
+		position.OldLine = &thread.OldLine
+	}
+
 	_, _, err := g.client.Discussions.CreateMergeRequestDiscussion(
 		projectId, mergeId,
 		&gitlab.CreateMergeRequestDiscussionOptions{
-			Body: gitlab.Ptr(thread.Body),
-			Position: &gitlab.PositionOptions{
-				BaseSHA:      &g.mr.DiffRefs.BaseSha,
-				HeadSHA:      &g.mr.DiffRefs.HeadSha,
-				StartSHA:     &g.mr.DiffRefs.StartSha,
-				PositionType: gitlab.Ptr("text"),
-				NewPath:      &thread.NewPath,
-				OldPath:      &thread.OldPath,
-				NewLine:      &thread.NewLine,
-				OldLine:      &thread.OldLine,
-			},
+			Body:     gitlab.Ptr(thread.Body),
+			Position: position,
 		},
 	)
 	if err != nil {
