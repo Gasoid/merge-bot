@@ -169,6 +169,8 @@ stale_branches_deletion:
   days: 90  # Consider branches stale after N days
   batch_size: 5 # Number of branches can be deleted at once
   wait_days: 1 # Wait N days before MR/branch deletion, merge-bot:stale label is set
+
+plugin_vars: {}  # Custom variables for plugins
 ```
 
 #### Example Configuration
@@ -205,6 +207,9 @@ stale_branches_deletion:
   days: 30
   batch_size: 2
   wait_days: 1
+
+plugin_vars:
+  var_name: value  # Custom variables for plugins
 ```
 
 ## Features
