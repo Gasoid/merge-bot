@@ -24,7 +24,7 @@ wasm_config:
 
 ```
 
-Set up environement variable or config argument `PLUGINS` with a list of plugin urls.
+Set up environment variable or config argument `PLUGINS` with a list of plugin urls.
 
 ```bash
 PLUGINS="plugin1.yaml,https://example.com/plugin2.yaml,https://github.com/user/repo/main/plugin3.yaml"
