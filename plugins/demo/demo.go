@@ -7,10 +7,11 @@ import (
 )
 
 type Input struct {
-	Title       string `json:"title"`
-	Description string `json:"description"`
-	Author      string `json:"author"`
-	Diffs       []byte `json:"diffs"`
+	Title       string            `json:"title"`
+	Description string            `json:"description"`
+	Author      string            `json:"author"`
+	Diffs       []byte            `json:"diffs"`
+	Vars        map[string]string `json:"vars"`
 }
 
 type Output struct {
@@ -25,7 +26,7 @@ func Hello() int32 {
 		return 1
 	}
 
-	name, ok := pdk.GetConfig("demo_name")
+	name, ok := input.Vars["demo_name"]
 	if !ok {
 		pdk.SetError(errors.New("DEMO_NAME is not provided"))
 		return 1

@@ -2,10 +2,13 @@ name: Hello plugin
 command: "!hello"
 runtime: "wasm"
 
+vars:
+- name: demo_name
+  type: ["env"]
+
 wasm_config:
   exported_function: "hello"
   url: "https://github.com/Gasoid/merge-bot/blob/v3.8.0-alpha.1/plugins/demo/plugin.wasm"
-  env_vars:
-  - demo_name
+
   allowed_hosts:
   - "api.host.com"
