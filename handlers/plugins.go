@@ -52,22 +52,21 @@ func (r Request) RunWithContext(call PluginCall, vars map[string][]string) error
 
 	for k, v := range vars {
 		for _, t := range v {
-			if t == envType {
+			switch t {
+			case envType:
 				val := os.Getenv(strings.ToUpper(k))
 				if val == "" {
 					continue
 				}
 
 				pluginVars[k] = val
-			}
 
-			if t == configType {
+			case configType:
 				if _, ok := r.config.PluginVars[k]; ok && r.config.PluginVars[k] != "" {
 					pluginVars[k] = r.config.PluginVars[k]
 				}
-			}
 
-			if t == secretType {
+			case secretType:
 				val, err := r.provider.GetVar(r.info.ProjectId, strings.ToUpper(k))
 				if err != nil {
 					return err
