@@ -58,7 +58,7 @@ func (r Request) RunWithContext(call PluginCall, vars map[string][]string) error
 					continue
 				}
 
-				pluginVars[k] = os.Getenv(k)
+				pluginVars[k] = val
 			}
 
 			if t == configType {
