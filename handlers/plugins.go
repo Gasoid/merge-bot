@@ -3,17 +3,26 @@ package handlers
 import (
 	"encoding/json"
 	"errors"
+	"os"
+	"strings"
 
 	"github.com/gasoid/merge-bot/logger"
+)
+
+const (
+	envType    = "env"
+	configType = "config"
+	secretType = "secret"
 )
 
 type PluginCall func([]byte) ([]byte, error)
 
 type PluginInput struct {
-	Title       string `json:"title"`
-	Description string `json:"description"`
-	Author      string `json:"author"`
-	Diffs       []byte `json:"diffs"`
+	Title       string            `json:"title"`
+	Description string            `json:"description"`
+	Author      string            `json:"author"`
+	Diffs       []byte            `json:"diffs"`
+	Vars        map[string]string `json:"vars"`
 }
 
 type Thread struct {
@@ -29,7 +38,7 @@ type PluginOutput struct {
 	Threads []Thread `json:"threads"`
 }
 
-func (r Request) RunWithContext(call PluginCall) error {
+func (r Request) RunWithContext(call PluginCall, vars map[string][]string) error {
 	if r.info == nil {
 		return errors.New("no MR info")
 	}
@@ -39,11 +48,39 @@ func (r Request) RunWithContext(call PluginCall) error {
 		return err
 	}
 
+	pluginVars := map[string]string{}
+
+	for k, v := range vars {
+		for _, t := range v {
+			if t == envType {
+				pluginVars[k] = os.Getenv(k)
+			}
+
+			if t == configType {
+				if _, ok := r.config.PluginVars[k]; ok && r.config.PluginVars[k] != "" {
+					pluginVars[k] = r.config.PluginVars[k]
+				}
+			}
+
+			if t == secretType {
+				val, err := r.provider.GetVar(r.info.ProjectId, strings.ToUpper(k))
+				if err != nil {
+					return err
+				}
+
+				if val != "" {
+					pluginVars[k] = val
+				}
+			}
+		}
+	}
+
 	input := PluginInput{
 		Title:       r.info.Title,
 		Description: r.info.Description,
 		Author:      r.info.Author,
 		Diffs:       rawDiffs,
+		Vars:        pluginVars,
 	}
 
 	data, err := json.Marshal(input)

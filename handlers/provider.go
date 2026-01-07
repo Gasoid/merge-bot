@@ -124,6 +124,8 @@ type Config struct {
 		BatchSize int  `yaml:"batch_size"`
 		WaitDays  int  `yaml:"wait_days"`
 	} `yaml:"stale_branches_deletion"`
+
+	PluginVars map[string]string `yaml:"plugin_vars"`
 }
 
 func New(providerName string) (*Request, error) {
