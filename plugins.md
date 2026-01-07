@@ -11,12 +11,14 @@ name: Plugin Name
 command: "!plugin-command" # Command to trigger the plugin, e.g. !review
 runtime: "wasm"
 
+vars:
+- name: plugin_env_var_1 # Environment variables to pass to the plugin
+  type: ["env", "config", "secret"] # source types: env - from environment variable, config - from .mrbot.yaml config file, secret - from CI/CD secret
+
 wasm_config:
   exported_function: "review"
   url: "https://github.com/user/repo/plugin-file.yaml" # either url or path must be set
   path: "/path/to/plugin.wasm" # Path to the compiled WASM file
-  env_vars:
-  - plugin_env_var_1 # Environment variables to pass to the plugin
   allowed_hosts:
   - "host.com" # Hosts that the plugin is allowed to access
 
@@ -43,4 +45,59 @@ Set env variable:
 ```bash
 export DEMO_NAME="hello-plugin"
 export PLUGINS="https://github.com/Gasoid/merge-bot/blob/wasm_plugin_support/plugins/demo/demo.yaml"
+```
+
+### Helm chart configuration:
+
+Plugin config
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: plugin-config
+data:
+  demo-plugin.yaml: |
+    name: Hello plugin
+    command: "!hello"
+    runtime: "wasm"
+    vars:
+    - name: DEMO_NAME
+      type: ["env"]
+
+    wasm_config:
+      exported_function: "hello"
+      url: "https://github.com/Gasoid/merge-bot/blob/v3.8.0-alpha.1/plugins/demo/plugin.wasm"
+      allowed_hosts:
+      - "api.host.com"
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: plugins
+data:
+  PLUGINS: "/app/demo-plugin.yaml"
+
+```
+
+merge-bot values.yaml
+
+```yaml
+mergebot:
+  envFrom:
+  - configMapRef:
+      name: plugins
+
+volumes:
+  - name: demo-volume
+    configMap:
+      name: plugin-config
+
+
+volumeMounts:
+  - name: demo-volume
+    mountPath: /app/demo-plugin.yaml
+    subPath: demo-plugin.yaml
+
 ```

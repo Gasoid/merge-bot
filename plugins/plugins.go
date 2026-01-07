@@ -21,7 +21,7 @@ const (
 
 var (
 	plugins   string
-	engines   = map[string]func([]byte) (HandlerFunc, error){}
+	engines   = map[string]func([]byte, map[string][]string) (HandlerFunc, error){}
 	enginesMu sync.RWMutex
 )
 
@@ -31,14 +31,20 @@ func init() {
 	config.StringVar(&plugins, "plugins", "", "comma list of plugin urls (also via PLUGINS)")
 }
 
+type Var struct {
+	Name string   `yaml:"name"`
+	Type []string `yaml:"type"`
+}
+
 type PluginManifest struct {
 	Name    string      `yaml:"name"`
 	Command string      `yaml:"command"`
 	Runtime string      `yaml:"runtime"`
 	Handler HandlerFunc `yaml:"-"`
+	Vars    []Var       `yaml:"vars"`
 }
 
-func Register(name string, constructor func([]byte) (HandlerFunc, error)) {
+func Register(name string, constructor func([]byte, map[string][]string) (HandlerFunc, error)) {
 	enginesMu.Lock()
 	defer enginesMu.Unlock()
 	engines[name] = constructor
@@ -127,8 +133,13 @@ func Load() iter.Seq[PluginManifest] {
 			enginesMu.RLock()
 			defer enginesMu.RUnlock()
 
+			vars := map[string][]string{}
+			for _, v := range manifest.Vars {
+				vars[v.Name] = v.Type
+			}
+
 			if constructor, ok := engines[manifest.Runtime]; ok {
-				handler, err := constructor(manifestFile)
+				handler, err := constructor(manifestFile, vars)
 				if err != nil {
 					logger.Error("constructor failed",
 						"plugin_url", pluginUrl,

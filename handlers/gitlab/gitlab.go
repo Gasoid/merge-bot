@@ -39,8 +39,8 @@ const (
 	maintainerLevel       = 40
 	lifetime              = 30
 	approvalsResetMessage = "✨ approvals were reset"
-	sortDesc              = "desc"
 	sortAsc               = "asc"
+	// sortDesc              = "desc"
 )
 
 type GitlabProvider struct {
@@ -586,6 +586,46 @@ func (g GitlabProvider) GetRawDiffs(projectId, mergeId int) ([]byte, error) {
 	}
 
 	return result, nil
+}
+
+func (g GitlabProvider) CreateThreadInLine(projectId, mergeId int, thread handlers.Thread) error {
+	if g.mr == nil {
+		return errors.New("no mr information")
+	}
+
+	position := &gitlab.PositionOptions{
+		BaseSHA:      &g.mr.DiffRefs.BaseSha,
+		HeadSHA:      &g.mr.DiffRefs.HeadSha,
+		StartSHA:     &g.mr.DiffRefs.StartSha,
+		PositionType: gitlab.Ptr("text"),
+		NewPath:      &thread.NewPath,
+		OldPath:      &thread.OldPath,
+	}
+
+	if thread.NewLine == 0 && thread.OldLine == 0 {
+		return errors.New("no lines included")
+	}
+
+	if thread.NewLine != 0 {
+		position.NewLine = &thread.NewLine
+	}
+
+	if thread.OldLine != 0 {
+		position.OldLine = &thread.OldLine
+	}
+
+	_, _, err := g.client.Discussions.CreateMergeRequestDiscussion(
+		projectId, mergeId,
+		&gitlab.CreateMergeRequestDiscussionOptions{
+			Body:     gitlab.Ptr(thread.Body),
+			Position: position,
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func newGitlabClient(token, instanceUrl string) *gitlab.Client {

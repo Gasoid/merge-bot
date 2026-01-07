@@ -4,8 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
-	"strings"
 
 	extism "github.com/extism/go-sdk"
 	"github.com/gasoid/merge-bot/handlers"
@@ -17,7 +15,6 @@ type PluginWasmConfig struct {
 	ExportedFunction string   `yaml:"exported_function"`
 	Path             string   `yaml:"path"`
 	Url              string   `yaml:"url"`
-	EnvVars          []string `yaml:"env_vars"`
 	AllowedHosts     []string `yaml:"allowed_hosts"`
 }
 
@@ -31,7 +28,7 @@ func init() {
 	plugins.Register("wasm", BuildWasmPlugin)
 }
 
-func BuildWasmPlugin(manifestFile []byte) (plugins.HandlerFunc, error) {
+func BuildWasmPlugin(manifestFile []byte, vars map[string][]string) (plugins.HandlerFunc, error) {
 	manifest := PluginManifest{}
 
 	if err := yaml.Unmarshal(manifestFile, &manifest); err != nil {
@@ -39,10 +36,6 @@ func BuildWasmPlugin(manifestFile []byte) (plugins.HandlerFunc, error) {
 	}
 
 	ctx := context.Background()
-	envMap := map[string]string{}
-	for _, v := range manifest.WasmConfig.EnvVars {
-		envMap[v] = os.Getenv(strings.ToUpper(v)) // TODO: config.StringVar
-	}
 
 	if manifest.WasmConfig.Path == "" && manifest.WasmConfig.Url == "" {
 		return nil, errors.New("either Path or Url must be set")
@@ -64,7 +57,7 @@ func BuildWasmPlugin(manifestFile []byte) (plugins.HandlerFunc, error) {
 			wasmPath,
 		},
 		AllowedHosts: manifest.WasmConfig.AllowedHosts,
-		Config:       envMap,
+		//Config:       envMap,
 	}
 
 	config := extism.PluginConfig{
@@ -104,7 +97,7 @@ func BuildWasmPlugin(manifestFile []byte) (plugins.HandlerFunc, error) {
 			}
 
 			return output, nil
-		})
+		}, vars)
 
 	}, nil
 }
