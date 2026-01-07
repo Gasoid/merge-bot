@@ -53,7 +53,7 @@ func (r Request) RunWithContext(call PluginCall, vars map[string][]string) error
 	for k, v := range vars {
 		for _, t := range v {
 			if t == envType {
-				val := os.Getenv(k)
+				val := os.Getenv(strings.ToUpper(k))
 				if val == "" {
 					continue
 				}
