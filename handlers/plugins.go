@@ -53,6 +53,11 @@ func (r Request) RunWithContext(call PluginCall, vars map[string][]string) error
 	for k, v := range vars {
 		for _, t := range v {
 			if t == envType {
+				val := os.Getenv(k)
+				if val == "" {
+					continue
+				}
+
 				pluginVars[k] = os.Getenv(k)
 			}
 
@@ -68,9 +73,11 @@ func (r Request) RunWithContext(call PluginCall, vars map[string][]string) error
 					return err
 				}
 
-				if val != "" {
-					pluginVars[k] = val
+				if val == "" {
+					continue
 				}
+
+				pluginVars[k] = val
 			}
 		}
 	}
