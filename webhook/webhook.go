@@ -43,12 +43,14 @@ type Provider interface {
 	GetProjectID() int
 	ParseRequest(request *http.Request) error
 	GetSecret() string
+	GetNoteID() int
 }
 
 type Webhook struct {
 	provider Provider
 	Event    string
 	Args     string
+	NoteID   int
 }
 
 func (w Webhook) GetSecret() string {
@@ -81,9 +83,12 @@ func (w *Webhook) ParseRequest(request *http.Request) error {
 		if len(result) > 0 {
 			w.Event = result[0]
 		}
+
 		if len(result) > 1 {
 			w.Args = strings.TrimSpace(result[1])
 		}
+
+		w.NoteID = w.provider.GetNoteID()
 	}
 
 	return nil

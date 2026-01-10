@@ -30,6 +30,7 @@ func setupTestProviders() func() {
 type testWebhookProvider struct {
 	id        int
 	projectID int
+	noteID    int
 	cmd       string
 	secret    string
 	err       error
@@ -45,6 +46,10 @@ func (p *testWebhookProvider) GetID() int {
 
 func (p *testWebhookProvider) GetProjectID() int {
 	return p.projectID
+}
+
+func (p *testWebhookProvider) GetNoteID() int {
+	return p.noteID
 }
 
 func (p *testWebhookProvider) GetSecret() string {

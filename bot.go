@@ -26,6 +26,7 @@ var (
 
 const (
 	HealthyEndpoint = "/healthy"
+	emojiRobot      = "robot"
 )
 
 func init() {
@@ -129,6 +130,12 @@ func Handler(c echo.Context) error {
 			}
 
 			go staleBranchesRoutine(command)
+
+			if hook.NoteID > 0 {
+				if err := command.AwardEmoji(hook.NoteID, emojiRobot); err != nil {
+					logger.Error("can't add emoji", "err", err, "noteId", hook.NoteID)
+				}
+			}
 
 			if err := f(command, hook.Args); err != nil {
 				logger.Error("handlerFunc returns err", "provider", providerName, "event", hook.Event, "err", err)

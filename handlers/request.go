@@ -276,3 +276,7 @@ func (r Request) ValidateSecret(secret string) bool {
 
 	return secretVar == secret
 }
+
+func (r Request) AwardEmoji(noteId int, emoji string) error {
+	return r.provider.AwardEmoji(r.info.ProjectId, r.info.Id, noteId, emoji)
+}
