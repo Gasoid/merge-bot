@@ -119,6 +119,10 @@ func (p *testProvider) CreateThreadInLine(projectId, mergeId int, thread Thread)
 	return p.err
 }
 
+func (p *testProvider) AwardEmoji(projectId, mergeId, noteId int, emoji string) error {
+	return p.err
+}
+
 func Test_Merge(t *testing.T) {
 	type args struct {
 		pr *Request

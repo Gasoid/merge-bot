@@ -57,6 +57,7 @@ type Branches interface {
 
 type Comments interface {
 	LeaveComment(projectId, mergeId int, message string) error
+	AwardEmoji(projectId, mergeId, noteId int, emoji string) error
 }
 
 type Discussions interface {

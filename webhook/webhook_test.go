@@ -15,6 +15,7 @@ type testProvider struct {
 	isValid   bool
 	id        int
 	projectID int
+	noteID    int
 	cmd       string
 	secret    string
 	err       error
@@ -38,6 +39,10 @@ func (p *testProvider) GetID() int {
 
 func (p *testProvider) GetProjectID() int {
 	return p.projectID
+}
+
+func (p *testProvider) GetNoteID() int {
+	return p.noteID
 }
 
 func (p *testProvider) GetSecret() string {

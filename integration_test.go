@@ -17,6 +17,7 @@ import (
 type integrationTestProvider struct {
 	projectID int
 	id        int
+	noteID    int
 	secret    string
 	cmd       string
 	event     string
@@ -32,6 +33,10 @@ func (p *integrationTestProvider) GetID() int {
 
 func (p *integrationTestProvider) GetProjectID() int {
 	return p.projectID
+}
+
+func (p *integrationTestProvider) GetNoteID() int {
+	return p.noteID
 }
 
 func (p *integrationTestProvider) GetSecret() string {

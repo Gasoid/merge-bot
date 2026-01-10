@@ -24,6 +24,7 @@ func init() {
 type GitlabProvider struct {
 	payload   []byte
 	note      string
+	noteId    int
 	action    string
 	updatedAt string
 	projectId int
@@ -70,6 +71,7 @@ func (g *GitlabProvider) ParseRequest(request *http.Request) error {
 		g.projectId = comment.ProjectID
 		g.id = comment.MergeRequest.IID
 		g.note = comment.ObjectAttributes.Note
+		g.noteId = comment.ObjectAttributes.ID
 		return nil
 	}
 
@@ -116,6 +118,10 @@ func (g *GitlabProvider) GetID() int {
 
 func (g *GitlabProvider) GetProjectID() int {
 	return g.projectId
+}
+
+func (g *GitlabProvider) GetNoteID() int {
+	return g.noteId
 }
 
 var (

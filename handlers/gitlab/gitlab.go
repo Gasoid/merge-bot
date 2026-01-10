@@ -191,6 +191,16 @@ func (g *GitlabProvider) LeaveComment(projectId, mergeId int, message string) er
 	return err
 }
 
+func (g *GitlabProvider) AwardEmoji(projectId, mergeId, noteId int, emoji string) error {
+	_, _, err := g.client.AwardEmoji.CreateMergeRequestAwardEmojiOnNote(
+		projectId, mergeId, noteId,
+		&gitlab.CreateAwardEmojiOptions{
+			Name: emoji,
+		})
+
+	return err
+}
+
 func (g *GitlabProvider) Merge(projectId, mergeId int, message string) error {
 	t := true
 	_, _, err := g.client.MergeRequests.AcceptMergeRequest(projectId,
