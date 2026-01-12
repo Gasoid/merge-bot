@@ -214,6 +214,9 @@ plugin_vars:
 
 ## Features
 
+### Plugin support
+Please read [docs](plugins.md) for more information.
+
 ### Stale Branches
 
 When enabled, the bot automatically deletes stale branches after each successful merge/update. Branches are considered stale based on the configured number of days since their last activity.
