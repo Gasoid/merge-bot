@@ -43,8 +43,6 @@ func New() {
 	if debug {
 		slog.SetLogLoggerLevel(slog.LevelDebug)
 		fmt.Println("Debug mode is enabled")
-		// os.Setenv("GIT_CURL_VERBOSE", "True")
-		// os.Setenv("GIT_TRACE", "True")
 	}
 }
 
