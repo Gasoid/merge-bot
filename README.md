@@ -119,6 +119,8 @@ go run ./
         Enable TLS with Let's Encrypt (also via TLS_ENABLED)
   -sentry-enabled
         Enable Sentry error reporting (default: true, also via SENTRY_ENABLED)
+  -plugins string
+        Comma-separated list of plugin config URLs or paths (also via PLUGINS)
   -version
       	Shows version and build time
 ```
