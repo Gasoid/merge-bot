@@ -62,11 +62,3 @@ func (g GitlabProvider) listMergeRequestNotes(projectId, mergeId, size int, sort
 		})
 	}, size)
 }
-
-func (g GitlabProvider) listProjectAccessTokens(projectId, size int) iter.Seq[*gitlab.ProjectAccessToken] {
-	return paginate(func(page, perPage int) ([]*gitlab.ProjectAccessToken, *gitlab.Response, error) {
-		return g.client.ProjectAccessTokens.ListProjectAccessTokens(projectId, &gitlab.ListProjectAccessTokensOptions{
-			ListOptions: gitlab.ListOptions{Page: page, PerPage: perPage},
-		})
-	}, size)
-}
