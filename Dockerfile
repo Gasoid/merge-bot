@@ -1,11 +1,12 @@
-FROM golang:1.25.1-bookworm AS builder
+FROM golang:1.26.0-bookworm AS builder
 ARG MERGE_BOT_VERSION=dev
+ARG SENTRY_DSN
 WORKDIR /code
 ADD go.mod /code/
 ADD go.sum /code/
 RUN go mod download
 ADD ./ /code/
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-X 'main.Version=$MERGE_BOT_VERSION' -X 'main.BuildTime=$(date)'" -a -o /tmp/bot .
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-X 'main.Version=$MERGE_BOT_VERSION' -X 'main.BuildTime=$(date)' -X 'logger.sentryDsn=$SENTRY_DSN'" -a -o /tmp/bot .
 
 FROM alpine:3.21
 EXPOSE 8080 443
