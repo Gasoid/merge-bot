@@ -73,6 +73,7 @@ jobs:
           context: .
           build-args: |
             MERGE_BOT_VERSION=${{ github.ref_name }}
+            SENTRY_DSN=${{ secrets.SENTRY_DSN }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=local,src=/tmp/.buildx-cache

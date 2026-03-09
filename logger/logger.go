@@ -11,13 +11,13 @@ import (
 )
 
 var (
-	log           = slog.New(sentryslog.Option{Level: slog.LevelError}.NewSentryHandler())
+	log           = slog.Default()
 	sentryEnabled = true
 	debug         bool
 )
 
 const (
-	sentryDsn = "https://11a97d0fb2804c34db705b2c2088f298@o4509393813897216.ingest.de.sentry.io/4509393818288208"
+	sentryDsn = ""
 )
 
 func init() {
@@ -26,6 +26,10 @@ func init() {
 }
 
 func New() {
+	if sentryDsn == "" {
+		sentryEnabled = false
+	}
+
 	if sentryEnabled {
 		if err := sentry.Init(sentry.ClientOptions{
 			Dsn:           sentryDsn,
@@ -34,6 +38,9 @@ func New() {
 			Error("Sentry initialization failed", "err", err)
 			return
 		}
+
+		handler := slog.NewMultiHandler(sentryslog.Option{Level: slog.LevelError}.NewSentryHandler(), slog.Default().Handler())
+		log = slog.New(handler)
 
 		sentry.CaptureMessage("merge-bot started")
 		fmt.Println("Sentry is enabled")
@@ -47,19 +54,15 @@ func New() {
 }
 
 func Error(msg string, args ...any) {
-	if sentryEnabled {
-		log.Error(msg, args...)
-	}
-
-	slog.Error(msg, args...)
+	log.Error(msg, args...)
 }
 
 func Debug(msg string, args ...any) {
-	slog.Debug(msg, args...)
+	log.Debug(msg, args...)
 }
 
 func Info(msg string, args ...any) {
-	slog.Info(msg, args...)
+	log.Info(msg, args...)
 }
 
 func IsSentryEnabled() bool {
