@@ -73,7 +73,6 @@ type MergeRequest interface {
 	FindMergeRequests(projectId int, targetBranch, label string) ([]MR, error)
 	UpdateFromMaster(projectId, mergeId int) error
 	AssignLabel(projectId, mergeId int, name, color string) error
-	ResetApprovals(projectId, mergeId int, config ResetApprovalsOnPush) error
 	GetRawDiffs(projectId, mergeId int) ([]byte, error)
 }
 
@@ -91,20 +90,13 @@ type RequestProvider interface {
 	Discussions
 }
 
-type ResetApprovalsOnPush struct {
-	Enabled        bool   `yaml:"enabled"`
-	IssueToken     bool   `yaml:"issue_token"`
-	ProjectVarName string `yaml:"project_var_name"`
-}
-
 type Rules struct {
-	MinApprovals          int                  `yaml:"min_approvals"`
-	Approvers             []string             `yaml:"approvers"`
-	AllowFailingPipelines bool                 `yaml:"allow_failing_pipelines"`
-	AllowFailingTests     bool                 `yaml:"allow_failing_tests"`
-	TitleRegex            string               `yaml:"title_regex"`
-	AllowEmptyDescription bool                 `yaml:"allow_empty_description"`
-	ResetApprovalsOnPush  ResetApprovalsOnPush `yaml:"reset_approvals_on_push"`
+	MinApprovals          int      `yaml:"min_approvals"`
+	Approvers             []string `yaml:"approvers"`
+	AllowFailingPipelines bool     `yaml:"allow_failing_pipelines"`
+	AllowFailingTests     bool     `yaml:"allow_failing_tests"`
+	TitleRegex            string   `yaml:"title_regex"`
+	AllowEmptyDescription bool     `yaml:"allow_empty_description"`
 }
 
 type Config struct {
@@ -119,11 +111,12 @@ type Config struct {
 	AutoMasterMerge bool `yaml:"auto_master_merge"`
 
 	StaleBranchesDeletion struct {
-		Enabled   bool `yaml:"enabled"`
-		Protected bool `yaml:"protected"`
-		Days      int  `yaml:"days"`
-		BatchSize int  `yaml:"batch_size"`
-		WaitDays  int  `yaml:"wait_days"`
+		Enabled         bool     `yaml:"enabled"`
+		ExcludeBranches []string `yaml:"exclude_branches"`
+		Protected       bool     `yaml:"protected"`
+		Days            int      `yaml:"days"`
+		BatchSize       int      `yaml:"batch_size"`
+		WaitDays        int      `yaml:"wait_days"`
 	} `yaml:"stale_branches_deletion"`
 
 	PluginVars map[string]string `yaml:"plugin_vars"`

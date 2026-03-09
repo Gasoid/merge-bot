@@ -82,11 +82,6 @@ func (r *Request) ParseConfig(content string) (*Config, error) {
 			AllowFailingTests:     true,
 			TitleRegex:            ".*",
 			AllowEmptyDescription: true,
-			ResetApprovalsOnPush: ResetApprovalsOnPush{
-				Enabled:        false,
-				IssueToken:     true,
-				ProjectVarName: "MergeBot",
-			},
 		},
 		Greetings: struct {
 			Enabled    bool   `yaml:"enabled"`
@@ -99,17 +94,19 @@ func (r *Request) ParseConfig(content string) (*Config, error) {
 		},
 		AutoMasterMerge: false,
 		StaleBranchesDeletion: struct {
-			Enabled   bool `yaml:"enabled"`
-			Protected bool `yaml:"protected"`
-			Days      int  `yaml:"days"`
-			BatchSize int  `yaml:"batch_size"`
-			WaitDays  int  `yaml:"wait_days"`
+			Enabled         bool     `yaml:"enabled"`
+			ExcludeBranches []string `yaml:"exclude_branches"`
+			Protected       bool     `yaml:"protected"`
+			Days            int      `yaml:"days"`
+			BatchSize       int      `yaml:"batch_size"`
+			WaitDays        int      `yaml:"wait_days"`
 		}{
-			Enabled:   false,
-			Protected: false,
-			Days:      90,
-			BatchSize: 5,
-			WaitDays:  1,
+			Enabled:         false,
+			ExcludeBranches: []string{},
+			Protected:       false,
+			Days:            90,
+			BatchSize:       5,
+			WaitDays:        1,
 		},
 	}
 
@@ -246,23 +243,6 @@ func (r Request) CreateLabels() error {
 func (r Request) RerunPipeline(pipelineId int) (string, error) {
 	logger.Debug("rerun", "pipelineId", pipelineId)
 	return r.provider.RerunPipeline(r.info.ProjectId, pipelineId, r.info.SourceBranch)
-}
-
-func (r Request) ResetApprovals() error {
-	logger.Debug("resetApprovals")
-
-	if !r.config.Rules.ResetApprovalsOnPush.Enabled {
-		return nil
-	}
-
-	if len(r.info.Approvals) == 0 {
-		return nil
-	}
-
-	return r.provider.ResetApprovals(
-		r.info.ProjectId,
-		r.info.Id,
-		r.config.Rules.ResetApprovalsOnPush)
 }
 
 func (r Request) ValidateSecret(secret string) bool {

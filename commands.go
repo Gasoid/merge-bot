@@ -127,10 +127,7 @@ func UpdateEvent(command *handlers.Request, args string) error {
 }
 
 func PushEvent(command *handlers.Request, args string) error {
-	if err := command.ResetApprovals(); err != nil {
-		return fmt.Errorf("command.ResetApprovals returns err: %w", err)
-	}
-
+	//Reset Approval is available in gitlab CE
 	return nil
 }
 

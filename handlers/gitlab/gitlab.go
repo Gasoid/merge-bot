@@ -565,30 +565,6 @@ func (g GitlabProvider) getToken(projectId int, name string) (string, error) {
 	return resultToken.Token, nil
 }
 
-func (g GitlabProvider) ResetApprovals(projectId, mergeId int, config handlers.ResetApprovalsOnPush) error {
-	logger.Debug("gitlab resetApprovals", "mergeId", mergeId)
-
-	if config.IssueToken {
-		token, err := g.getToken(projectId, config.ProjectVarName)
-		if err != nil {
-			return err
-		}
-
-		g.client = newGitlabClient(token, gitlabURL)
-	}
-
-	_, err := g.client.MergeRequestApprovals.ResetApprovalsOfMergeRequest(projectId, mergeId)
-	if err != nil {
-		return err
-	}
-
-	if err := g.LeaveComment(projectId, mergeId, approvalsResetMessage); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (g GitlabProvider) GetRawDiffs(projectId, mergeId int) ([]byte, error) {
 	result, _, err := g.client.MergeRequests.ShowMergeRequestRawDiffs(projectId, mergeId, &gitlab.ShowMergeRequestRawDiffsOptions{})
 	if err != nil {
