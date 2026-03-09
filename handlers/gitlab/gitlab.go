@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"slices"
-	"sync"
-	"time"
 
 	"github.com/gasoid/merge-bot/config"
 	"github.com/gasoid/merge-bot/handlers"
@@ -26,10 +24,9 @@ func init() {
 }
 
 var (
-	gitlabToken    string
-	gitlabURL      string
-	maxRepoSize    string
-	projectVarLock sync.Mutex
+	gitlabToken string
+	gitlabURL   string
+	maxRepoSize string
 )
 
 const (
@@ -485,84 +482,6 @@ func (g GitlabProvider) RerunPipeline(projectId, pipelineId int, ref string) (st
 	}
 
 	return pipeline.WebURL, nil
-}
-
-func validateToken(token string) error {
-	tempClient := newGitlabClient(token, gitlabURL)
-	if tempClient == nil {
-		return errors.New("auth failed")
-	}
-
-	_, resp, err := tempClient.Users.CurrentUser()
-	if err != nil {
-		return err
-	}
-
-	if resp.StatusCode == http.StatusUnauthorized {
-		return errors.New("token is invalid")
-	}
-	return err
-}
-
-func (g GitlabProvider) deleteToken(projectId int, name string) error {
-	for token := range g.listProjectAccessTokens(projectId, 20) {
-		if token.Name == name {
-			if _, err := g.client.ProjectAccessTokens.RevokeProjectAccessToken(projectId, token.ID); err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
-func (g GitlabProvider) getToken(projectId int, name string) (string, error) {
-	if name == "" {
-		return "", errors.New("name can't be empty string")
-	}
-	val, err := g.GetVar(projectId, name)
-	if err != nil {
-		return "", err
-	}
-
-	if val != "" {
-		if err := validateToken(val); err == nil {
-			return val, nil
-		}
-	}
-
-	scopes := []string{"api", "self_rotate"}
-	expiresAt := time.Now().AddDate(0, 0, lifetime)
-
-	projectVarLock.Lock()
-	defer projectVarLock.Unlock()
-
-	if err := g.deleteToken(projectId, name); err != nil {
-		logger.Debug("could not revoke token, error was ignored", "err", err)
-	}
-
-	resultToken, _, err := g.client.ProjectAccessTokens.CreateProjectAccessToken(projectId, &gitlab.CreateProjectAccessTokenOptions{
-		Name:        gitlab.Ptr(name),
-		Scopes:      gitlab.Ptr(scopes),
-		AccessLevel: gitlab.Ptr(gitlab.AccessLevelValue(maintainerLevel)),
-		ExpiresAt:   gitlab.Ptr(gitlab.ISOTime(expiresAt)),
-	})
-	if err != nil {
-		return "", err
-	}
-
-	if _, err := g.client.ProjectVariables.RemoveVariable(projectId, name, &gitlab.RemoveProjectVariableOptions{}); err != nil {
-		logger.Debug("could not remove CI/CD variable, error was ignored", "err", err)
-	}
-
-	if _, _, err := g.client.ProjectVariables.CreateVariable(projectId, &gitlab.CreateProjectVariableOptions{
-		Key:    gitlab.Ptr(name),
-		Value:  gitlab.Ptr(resultToken.Token),
-		Masked: gitlab.Ptr(true),
-	}); err != nil {
-		return "", err
-	}
-
-	return resultToken.Token, nil
 }
 
 func (g GitlabProvider) GetRawDiffs(projectId, mergeId int) ([]byte, error) {
