@@ -25,6 +25,11 @@ func (r Request) cleanStaleMergeRequests() error {
 		return fmt.Errorf("ListMergeRequests returns error: %w", err)
 	}
 
+	excludeBranches := make(map[string]struct{}, len(r.config.StaleBranchesDeletion.ExcludeBranches))
+	for _, s := range r.config.StaleBranchesDeletion.ExcludeBranches {
+		excludeBranches[s] = struct{}{}
+	}
+
 	for _, mr := range candidates {
 		span := now.Sub(mr.LastUpdated)
 		if slices.Contains(mr.Labels, staleLabel) {
@@ -34,6 +39,10 @@ func (r Request) cleanStaleMergeRequests() error {
 				}
 				continue
 			}
+		}
+
+		if _, ok := excludeBranches[mr.Branch]; ok {
+			continue
 		}
 
 		if span > time.Duration(time.Duration(days)*24*time.Hour) {

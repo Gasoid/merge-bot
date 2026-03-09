@@ -11,7 +11,6 @@ MergeBot is an automated merge request bot for GitLab that enforces repository-s
 ## Features
 
 - ✅ **Title validation** - Enforce naming conventions with regex patterns
-- ✅ **Approval rules** - Set minimum approvals and specific approvers
 - ✅ **Automated merging** - Merge on command when rules are met
 - ✅ **Branch updates** - Automatically pull changes from target branch
 - ✅ **Stale branch cleanup** - Remove outdated branches automatically
@@ -153,10 +152,6 @@ rules:
   allow_empty_description: true  # Allow empty MR descriptions
   allow_failing_pipelines: true  # Allow merging with failed pipelines
   title_regex: ".*"  # Title validation regex pattern
-  reset_approvals_on_push:
-    enabled: false  # Reset approvals on new commits
-    issue_token: true # Whether token will be created or current GITLAB_TOKEN will be used
-    project_var_name: MergeBot
 
 greetings:
   enabled: false  # Send welcome message on new MRs
@@ -167,6 +162,7 @@ auto_master_merge: false  # Auto-update branch from target branch
 
 stale_branches_deletion:
   enabled: false  # Clean up stale branches after merge
+  exclude_branches: [] # List of branch names to exclude from deletion
   protected: false # Whether to consider protected branches for deletion
   days: 90  # Consider branches stale after N days
   batch_size: 5 # Number of branches can be deleted at once
@@ -186,8 +182,6 @@ rules:
   allow_empty_description: false
   allow_failing_pipelines: false
   title_regex: "^(feat|fix|docs|style|refactor|test|chore):"  # Conventional commits
-  reset_approvals_on_push:
-    enabled: true  # Reset approvals on new commits
 
 greetings:
   enabled: true
@@ -205,6 +199,9 @@ auto_master_merge: true
 
 stale_branches_deletion:
   enabled: true
+  exclude_branches:
+    - main
+    - develop
   protected: true
   days: 30
   batch_size: 2
@@ -244,12 +241,6 @@ Use `merge-bot:auto-update` label if you need to update merge request when targe
 
 Test the bot on our public demo repository: [https://gitlab.com/Gasoid/sugar-test](https://gitlab.com/Gasoid/sugar-test)
 
-## Use Cases
-
-- **Multi-repository management**: Configure different rules per repository without running multiple bot instances
-- **Open-source alternative**: Get premium GitLab features without the cost
-- **Automated compliance**: Enforce consistent review processes across teams
-- **Branch hygiene**: Automatically clean up stale branches
 
 ## Contributing
 

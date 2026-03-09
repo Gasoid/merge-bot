@@ -99,10 +99,6 @@ func (p *testProvider) RerunPipeline(projectId, pipelineId int, ref string) (str
 	return "", p.err
 }
 
-func (p *testProvider) ResetApprovals(projectId, mergeId int, config ResetApprovalsOnPush) error {
-	return p.err
-}
-
 func (p *testProvider) CreateDiscussion(projectId, mergeId int, message string) error {
 	return p.err
 }

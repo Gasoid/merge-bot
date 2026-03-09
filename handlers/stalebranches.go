@@ -21,10 +21,19 @@ func (r Request) cleanStaleBranches() error {
 		return fmt.Errorf("ListBranches returns error: %w", err)
 	}
 
+	excludeBranches := make(map[string]struct{}, len(r.config.StaleBranchesDeletion.ExcludeBranches))
+	for _, s := range r.config.StaleBranchesDeletion.ExcludeBranches {
+		excludeBranches[s] = struct{}{}
+	}
+
 	days := r.config.StaleBranchesDeletion.Days
 	now := time.Now()
 	for _, b := range candidates {
 		if b.Protected && !r.config.StaleBranchesDeletion.Protected {
+			continue
+		}
+
+		if _, ok := excludeBranches[b.Name]; ok {
 			continue
 		}
 
