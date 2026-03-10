@@ -14,10 +14,7 @@ var (
 	log           = slog.Default()
 	sentryEnabled = true
 	debug         bool
-)
-
-const (
-	sentryDsn = ""
+	sentryDsn     = ""
 )
 
 func init() {

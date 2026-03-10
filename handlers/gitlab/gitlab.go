@@ -30,13 +30,8 @@ var (
 )
 
 const (
-	tokenUsername         = "oauth2"
-	findMRSize            = 10
-	getApprovalsSize      = 10
-	maintainerLevel       = 40
-	lifetime              = 30
-	approvalsResetMessage = "✨ approvals were reset"
-	sortAsc               = "asc"
+	tokenUsername = "oauth2"
+	findMRSize    = 10
 	// sortDesc              = "desc"
 )
 
@@ -209,27 +204,21 @@ func (g *GitlabProvider) Merge(projectId, mergeId int, message string) error {
 }
 
 func (g *GitlabProvider) GetApprovals(projectId, mergeId int) (map[string]struct{}, error) {
+
 	approvals := map[string]struct{}{}
-
-	for note := range g.listMergeRequestNotes(projectId, mergeId, getApprovalsSize, sortAsc) {
-		if g.mr.Author.ID == note.Author.ID {
-			continue
-		}
-
-		if note.Body == approvalsResetMessage {
-			approvals = map[string]struct{}{}
-			continue
-		}
-
-		if note.System {
-			switch note.Body {
-			case "approved this merge request":
-				approvals[note.Author.Username] = struct{}{}
-			case "unapproved this merge request":
-				delete(approvals, note.Author.Username)
-			}
-		}
+	approvalsState, _, err := g.client.MergeRequests.GetMergeRequestApprovals(projectId, mergeId)
+	if err != nil {
+		return nil, err
 	}
+
+	for _, user := range approvalsState.ApprovedBy {
+		if g.mr.Author.ID == user.User.ID {
+			continue
+		}
+
+		approvals[user.User.Username] = struct{}{}
+	}
+
 	return approvals, nil
 }
 
