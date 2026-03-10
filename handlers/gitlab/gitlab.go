@@ -30,13 +30,8 @@ var (
 )
 
 const (
-	tokenUsername         = "oauth2"
-	findMRSize            = 10
-	getApprovalsSize      = 10
-	maintainerLevel       = 40
-	lifetime              = 30
-	approvalsResetMessage = "✨ approvals were reset"
-	sortAsc               = "asc"
+	tokenUsername = "oauth2"
+	findMRSize    = 10
 	// sortDesc              = "desc"
 )
 
