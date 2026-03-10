@@ -6,7 +6,7 @@ ADD go.mod /code/
 ADD go.sum /code/
 RUN go mod download
 ADD ./ /code/
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-X 'main.Version=$MERGE_BOT_VERSION' -X 'main.BuildTime=$(date)' -X 'logger.sentryDsn=$SENTRY_DSN'" -a -o /tmp/bot .
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-X 'main.Version=$MERGE_BOT_VERSION' -X 'main.BuildTime=$(date)' -X 'github.com/gasoid/merge-bot/logger.sentryDsn=$SENTRY_DSN'" -a -o /tmp/bot .
 
 FROM alpine:3.21
 EXPOSE 8080 443
