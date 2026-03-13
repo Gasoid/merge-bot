@@ -1,5 +1,11 @@
 {{ range .Versions }}
 
+MergeBot is an automated merge request bot for GitLab.
+
+![screen](screen.webp)
+
+## Installation
+
 ### Docker Compose
 
 1. **Create environment file** (`bot.env`):
@@ -30,12 +36,18 @@ helm install my-merge-bot merge-bot/merge-bot
 ```
 
 
-### Available Commands
+## Available Commands
 
 - `!merge` - Merges MR if all repository rules are satisfied
 - `!check` - Validates whether the MR meets all rules
 - `!update` - Updates the branch from the target branch (e.g., main/master)
 - `!rerun` - Re-run pipeline, e.g. `!rerun #123123333` or `!rerun 123123333`, command will run pipeline against the branch of the merge request with variables of provided pipeline (e.g. 123123333)
+
+## Plugin support
+You can extend the functionality of the Merge-Bot by creating and using plugins. Plugins are WebAssembly (WASM) modules that can be loaded at runtime to provide additional features.
+
+See [docs](plugins.md)
+
 
 {{ range .CommitGroups -}}
 ### {{ .Title }}
