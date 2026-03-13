@@ -1,0 +1,31 @@
+name: Update release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+jobs:
+  build:
+    permissions:
+      contents: write
+
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v6
+        with:
+          go-version: ^1.26
+        id: go
+
+      - run: go install github.com/git-chglog/git-chglog/cmd/git-chglog@latest
+      - run: git-chglog -o release.txt ${{ github.ref_name }}
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        if: github.ref_type == 'tag'
+        with:
+          body_path: release.txt
