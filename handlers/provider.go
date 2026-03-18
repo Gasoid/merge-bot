@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"iter"
 	"sync"
 )
 
@@ -51,7 +52,7 @@ type MrInfo struct {
 }
 
 type Branches interface {
-	ListBranches(projectId, size int, protected bool) ([]StaleBranch, error)
+	ListBranches(projectId, size int, protected bool) iter.Seq[StaleBranch]
 	DeleteBranch(projectId int, name string) error
 }
 
@@ -69,7 +70,7 @@ type Discussions interface {
 type MergeRequest interface {
 	Merge(projectId, mergeId int, message string) error
 	GetMRInfo(projectId, mergeId int, path string) (*MrInfo, error)
-	ListMergeRequests(projectId, size int, protected bool) ([]MR, error)
+	ListMergeRequests(projectId, size int, protected bool) iter.Seq[MR]
 	FindMergeRequests(projectId int, targetBranch, label string) ([]MR, error)
 	UpdateFromMaster(projectId, mergeId int) error
 	AssignLabel(projectId, mergeId int, name, color string) error

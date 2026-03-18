@@ -4,6 +4,7 @@ import (
 	b64 "encoding/base64"
 	"errors"
 	"fmt"
+	"iter"
 	"net/http"
 	"slices"
 
@@ -322,41 +323,39 @@ func (g GitlabProvider) GetVar(projectId int, varName string) (string, error) {
 	return secretVar.Value, nil
 }
 
-func (g GitlabProvider) ListBranches(projectId, size int, protected bool) ([]handlers.StaleBranch, error) {
-	staleBranches := make([]handlers.StaleBranch, 0, size)
+func (g GitlabProvider) ListBranches(projectId, size int, protected bool) iter.Seq[handlers.StaleBranch] {
 
-	for b := range g.listBranches(projectId, size) {
-		if b.Default {
-			continue
-		}
-
-		listMr, _, err := g.client.MergeRequests.ListProjectMergeRequests(projectId,
-			&gitlab.ListProjectMergeRequestsOptions{
-				SourceBranch: &b.Name,
-			})
-		if err != nil {
-			return nil, err
-		}
-
-		if len(listMr) > 0 {
-			continue
-		}
-
-		if !protected {
-			if b.Protected {
+	return func(yield func(handlers.StaleBranch) bool) {
+		for b := range g.listBranches(projectId, size) {
+			if b.Default {
 				continue
 			}
-		}
 
-		staleBranches = append(staleBranches, handlers.StaleBranch{Name: b.Name, LastUpdated: *b.Commit.CreatedAt, Protected: b.Protected})
-		if len(staleBranches) == size {
-			break
+			listMr, _, err := g.client.MergeRequests.ListProjectMergeRequests(projectId,
+				&gitlab.ListProjectMergeRequestsOptions{
+					SourceBranch: &b.Name,
+					State:        new("opened"),
+				})
+			if err != nil {
+				logger.Error("ListProjectMergeRequests", "err", err)
+				continue
+			}
+
+			if len(listMr) > 0 {
+				continue
+			}
+
+			if !protected {
+				if b.Protected {
+					continue
+				}
+			}
+
+			if !yield(handlers.StaleBranch{Name: b.Name, LastUpdated: *b.Commit.CreatedAt, Protected: b.Protected}) {
+				return
+			}
 		}
 	}
-
-	logger.Debug("listBranches", "staleBranches", staleBranches)
-
-	return staleBranches, nil
 }
 
 func (g *GitlabProvider) DeleteBranch(projectId int, name string) error {
@@ -364,40 +363,38 @@ func (g *GitlabProvider) DeleteBranch(projectId int, name string) error {
 	return err
 }
 
-func (g GitlabProvider) ListMergeRequests(projectId, size int, protected bool) ([]handlers.MR, error) {
-	staleMRS := make([]handlers.MR, 0, size)
-
+func (g GitlabProvider) ListMergeRequests(projectId, size int, protected bool) iter.Seq[handlers.MR] {
 	listMr := g.listMergeRequests(projectId, size,
 		&gitlab.ListProjectMergeRequestsOptions{
-			State: new("opened"),
+			State:   new("opened"),
+			OrderBy: new("updated_at"),
+			Sort:    new("asc"),
 		})
 
-	for mr := range listMr {
-		b, _, err := g.client.Branches.GetBranch(projectId, mr.SourceBranch)
-		if err != nil {
-			return nil, err
-		}
-
-		if !protected {
-			if b.Protected {
+	return func(yield func(handlers.MR) bool) {
+		for mr := range listMr {
+			b, _, err := g.client.Branches.GetBranch(projectId, mr.SourceBranch)
+			if err != nil {
+				logger.Error("GetBranch fails", "err", err)
 				continue
 			}
-		}
 
-		staleMRS = append(staleMRS, handlers.MR{
-			Id:          mr.IID,
-			Labels:      mr.Labels,
-			Branch:      mr.SourceBranch,
-			Protected:   b.Protected,
-			LastUpdated: *mr.UpdatedAt})
-		if len(staleMRS) == size {
-			break
+			if !protected {
+				if b.Protected {
+					continue
+				}
+			}
+
+			if !yield(handlers.MR{
+				Id:          mr.IID,
+				Labels:      mr.Labels,
+				Branch:      mr.SourceBranch,
+				Protected:   b.Protected,
+				LastUpdated: *mr.UpdatedAt}) {
+				return
+			}
 		}
 	}
-
-	logger.Debug("listMRs", "mrs", staleMRS)
-
-	return staleMRS, nil
 }
 
 func (g GitlabProvider) FindMergeRequests(projectId int, targetBranch, label string) ([]handlers.MR, error) {
