@@ -142,7 +142,7 @@ func TestRequest_ListMergeRequests(t *testing.T) {
 			r := &Request{
 				provider: tt.fields.provider,
 			}
-			got, err := r.provider.ListMergeRequests(tt.args.projectId, tt.args.size)
+			got, err := r.provider.ListMergeRequests(tt.args.projectId, tt.args.size, false)
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {
