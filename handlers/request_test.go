@@ -41,7 +41,7 @@ func (p *testProvider) Merge(projectId, id int, message string) error {
 	return p.err
 }
 
-func (p *testProvider) ListBranches(projectId, size int) ([]StaleBranch, error) {
+func (p *testProvider) ListBranches(projectId, size int, protected bool) ([]StaleBranch, error) {
 	return nil, nil
 }
 
@@ -79,7 +79,7 @@ func (p *testProvider) UpdateFromMaster(projectId, mergeId int) error {
 	return nil
 }
 
-func (p *testProvider) ListMergeRequests(projectId, size int) ([]MR, error) {
+func (p *testProvider) ListMergeRequests(projectId, size int, protected bool) ([]MR, error) {
 	return nil, p.err
 }
 

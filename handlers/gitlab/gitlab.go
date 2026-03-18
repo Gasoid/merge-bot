@@ -58,7 +58,7 @@ func (g GitlabProvider) UpdateFromMaster(projectId, mergeId int) error {
 
 	project, _, err := g.client.Projects.GetProject(
 		projectId,
-		&gitlab.GetProjectOptions{Statistics: gitlab.Ptr(true)},
+		&gitlab.GetProjectOptions{Statistics: new(true)},
 	)
 	if err != nil {
 		return err
@@ -129,7 +129,7 @@ func (g GitlabProvider) UpdateDiscussion(projectId, mergeId int, message string)
 		discussionId,
 		noteId,
 		&gitlab.UpdateMergeRequestDiscussionNoteOptions{
-			Body: gitlab.Ptr(message),
+			Body: new(message),
 		})
 	if err != nil {
 		return err
@@ -150,7 +150,7 @@ func (g GitlabProvider) UnresolveDiscussion(projectId, mergeId int) error {
 		discussionId,
 		noteId,
 		&gitlab.UpdateMergeRequestDiscussionNoteOptions{
-			Resolved: gitlab.Ptr(false),
+			Resolved: new(false),
 		})
 	if err != nil {
 		return err
@@ -322,7 +322,7 @@ func (g GitlabProvider) GetVar(projectId int, varName string) (string, error) {
 	return secretVar.Value, nil
 }
 
-func (g GitlabProvider) ListBranches(projectId, size int) ([]handlers.StaleBranch, error) {
+func (g GitlabProvider) ListBranches(projectId, size int, protected bool) ([]handlers.StaleBranch, error) {
 	staleBranches := make([]handlers.StaleBranch, 0, size)
 
 	for b := range g.listBranches(projectId, size) {
@@ -342,6 +342,12 @@ func (g GitlabProvider) ListBranches(projectId, size int) ([]handlers.StaleBranc
 			continue
 		}
 
+		if !protected {
+			if b.Protected {
+				continue
+			}
+		}
+
 		staleBranches = append(staleBranches, handlers.StaleBranch{Name: b.Name, LastUpdated: *b.Commit.CreatedAt, Protected: b.Protected})
 		if len(staleBranches) == size {
 			break
@@ -358,19 +364,31 @@ func (g *GitlabProvider) DeleteBranch(projectId int, name string) error {
 	return err
 }
 
-func (g GitlabProvider) ListMergeRequests(projectId, size int) ([]handlers.MR, error) {
+func (g GitlabProvider) ListMergeRequests(projectId, size int, protected bool) ([]handlers.MR, error) {
 	staleMRS := make([]handlers.MR, 0, size)
 
 	listMr := g.listMergeRequests(projectId, size,
 		&gitlab.ListProjectMergeRequestsOptions{
-			State: gitlab.Ptr("opened"),
+			State: new("opened"),
 		})
 
 	for mr := range listMr {
+		b, _, err := g.client.Branches.GetBranch(projectId, mr.SourceBranch)
+		if err != nil {
+			return nil, err
+		}
+
+		if !protected {
+			if b.Protected {
+				continue
+			}
+		}
+
 		staleMRS = append(staleMRS, handlers.MR{
 			Id:          mr.IID,
 			Labels:      mr.Labels,
 			Branch:      mr.SourceBranch,
+			Protected:   b.Protected,
 			LastUpdated: *mr.UpdatedAt})
 		if len(staleMRS) == size {
 			break
@@ -387,7 +405,7 @@ func (g GitlabProvider) FindMergeRequests(projectId int, targetBranch, label str
 
 	listMr := g.listMergeRequests(projectId, findMRSize,
 		&gitlab.ListProjectMergeRequestsOptions{
-			State:        gitlab.Ptr("opened"),
+			State:        new("opened"),
 			Labels:       &gitlab.LabelOptions{label},
 			TargetBranch: &targetBranch,
 		})
@@ -406,7 +424,7 @@ func (g GitlabProvider) FindMergeRequests(projectId int, targetBranch, label str
 }
 
 func (g GitlabProvider) CreateLabel(projectId int, name, color string) error {
-	labels, _, err := g.client.Labels.ListLabels(projectId, &gitlab.ListLabelsOptions{Search: gitlab.Ptr(name)})
+	labels, _, err := g.client.Labels.ListLabels(projectId, &gitlab.ListLabelsOptions{Search: new(name)})
 	if err != nil {
 		return fmt.Errorf("listLabels failed to search: %w", err)
 	}
@@ -421,7 +439,7 @@ func (g GitlabProvider) CreateLabel(projectId int, name, color string) error {
 	if !labelFound {
 		if _, _, err := g.client.Labels.CreateLabel(
 			projectId,
-			&gitlab.CreateLabelOptions{Name: gitlab.Ptr(name), Color: gitlab.Ptr(color)}); err != nil {
+			&gitlab.CreateLabelOptions{Name: new(name), Color: new(color)}); err != nil {
 			return fmt.Errorf("could't create label: %w", err)
 		}
 	}
@@ -491,7 +509,7 @@ func (g GitlabProvider) CreateThreadInLine(projectId, mergeId int, thread handle
 		BaseSHA:      &g.mr.DiffRefs.BaseSha,
 		HeadSHA:      &g.mr.DiffRefs.HeadSha,
 		StartSHA:     &g.mr.DiffRefs.StartSha,
-		PositionType: gitlab.Ptr("text"),
+		PositionType: new("text"),
 		NewPath:      &thread.NewPath,
 		OldPath:      &thread.OldPath,
 	}
@@ -511,7 +529,7 @@ func (g GitlabProvider) CreateThreadInLine(projectId, mergeId int, thread handle
 	_, _, err := g.client.Discussions.CreateMergeRequestDiscussion(
 		projectId, mergeId,
 		&gitlab.CreateMergeRequestDiscussionOptions{
-			Body:     gitlab.Ptr(thread.Body),
+			Body:     new(thread.Body),
 			Position: position,
 		},
 	)

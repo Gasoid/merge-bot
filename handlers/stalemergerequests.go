@@ -11,6 +11,7 @@ import (
 type MR struct {
 	Id          int
 	Branch      string
+	Protected   bool
 	Labels      []string
 	LastUpdated time.Time
 }
@@ -20,7 +21,7 @@ func (r Request) cleanStaleMergeRequests() error {
 	coolDays := r.config.StaleBranchesDeletion.WaitDays
 	now := time.Now()
 
-	candidates, err := r.provider.ListMergeRequests(r.info.ProjectId, r.config.StaleBranchesDeletion.BatchSize)
+	candidates, err := r.provider.ListMergeRequests(r.info.ProjectId, r.config.StaleBranchesDeletion.BatchSize, r.config.StaleBranchesDeletion.Protected)
 	if err != nil {
 		return fmt.Errorf("ListMergeRequests returns error: %w", err)
 	}
