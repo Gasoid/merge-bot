@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/dustin/go-humanize/english"
+	"github.com/gasoid/merge-bot/logger"
 )
 
 type MR struct {
@@ -43,8 +44,11 @@ func (r Request) cleanStaleMergeRequests() error {
 		}
 
 		if _, ok := excludeBranches[mr.Branch]; ok {
+			logger.Debug("excludeBranch", "branch", mr.Branch)
 			continue
 		}
+
+		logger.Debug("notExcludeBranch", "branch", mr.Branch)
 
 		if span > time.Duration(time.Duration(days)*24*time.Hour) {
 			// mr is stale
