@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"iter"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -41,8 +42,8 @@ func (p *testProvider) Merge(projectId, id int, message string) error {
 	return p.err
 }
 
-func (p *testProvider) ListBranches(projectId, size int, protected bool) ([]StaleBranch, error) {
-	return nil, nil
+func (p *testProvider) ListBranches(projectId, size int, protected bool) iter.Seq[StaleBranch] {
+	return nil
 }
 
 func (p *testProvider) DeleteBranch(projectId int, name string) error {
@@ -79,8 +80,8 @@ func (p *testProvider) UpdateFromMaster(projectId, mergeId int) error {
 	return nil
 }
 
-func (p *testProvider) ListMergeRequests(projectId, size int, protected bool) ([]MR, error) {
-	return nil, p.err
+func (p *testProvider) ListMergeRequests(projectId, size int, protected bool) iter.Seq[MR] {
+	return nil
 }
 
 func (p *testProvider) FindMergeRequests(projectId int, targetBranch, label string) ([]MR, error) {

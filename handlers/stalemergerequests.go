@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/dustin/go-humanize/english"
-	"github.com/gasoid/merge-bot/logger"
 )
 
 type MR struct {
@@ -21,34 +20,32 @@ func (r Request) cleanStaleMergeRequests() error {
 	days := r.config.StaleBranchesDeletion.Days
 	coolDays := r.config.StaleBranchesDeletion.WaitDays
 	now := time.Now()
-
-	candidates, err := r.provider.ListMergeRequests(r.info.ProjectId, r.config.StaleBranchesDeletion.BatchSize, r.config.StaleBranchesDeletion.Protected)
-	if err != nil {
-		return fmt.Errorf("ListMergeRequests returns error: %w", err)
-	}
+	branchesDeleted := 0
 
 	excludeBranches := make(map[string]struct{}, len(r.config.StaleBranchesDeletion.ExcludeBranches))
 	for _, s := range r.config.StaleBranchesDeletion.ExcludeBranches {
 		excludeBranches[s] = struct{}{}
 	}
 
-	for _, mr := range candidates {
+	for mr := range r.provider.ListMergeRequests(r.info.ProjectId, r.config.StaleBranchesDeletion.BatchSize, r.config.StaleBranchesDeletion.Protected) {
+		if branchesDeleted >= r.config.StaleBranchesDeletion.BatchSize {
+			break
+		}
+
 		span := now.Sub(mr.LastUpdated)
 		if slices.Contains(mr.Labels, staleLabel) {
 			if span > time.Duration(time.Duration(coolDays)*24*time.Hour) {
 				if err := r.provider.DeleteBranch(r.info.ProjectId, mr.Branch); err != nil {
 					return fmt.Errorf("DeleteBranch returns error: %w", err)
 				}
+				branchesDeleted++
 				continue
 			}
 		}
 
 		if _, ok := excludeBranches[mr.Branch]; ok {
-			logger.Debug("excludeBranch", "branch", mr.Branch)
 			continue
 		}
-
-		logger.Debug("notExcludeBranch", "branch", mr.Branch)
 
 		if span > time.Duration(time.Duration(days)*24*time.Hour) {
 			// mr is stale

@@ -15,11 +15,7 @@ type StaleBranch struct {
 
 func (r Request) cleanStaleBranches() error {
 	logger.Debug("deletion of stale branches has been run")
-
-	candidates, err := r.provider.ListBranches(r.info.ProjectId, r.config.StaleBranchesDeletion.BatchSize, r.config.StaleBranchesDeletion.Protected)
-	if err != nil {
-		return fmt.Errorf("ListBranches returns error: %w", err)
-	}
+	branchesDeleted := 0
 
 	excludeBranches := make(map[string]struct{}, len(r.config.StaleBranchesDeletion.ExcludeBranches))
 	for _, s := range r.config.StaleBranchesDeletion.ExcludeBranches {
@@ -28,7 +24,10 @@ func (r Request) cleanStaleBranches() error {
 
 	days := r.config.StaleBranchesDeletion.Days
 	now := time.Now()
-	for _, b := range candidates {
+	for b := range r.provider.ListBranches(r.info.ProjectId, r.config.StaleBranchesDeletion.BatchSize, r.config.StaleBranchesDeletion.Protected) {
+		if branchesDeleted >= r.config.StaleBranchesDeletion.BatchSize {
+			break
+		}
 
 		if _, ok := excludeBranches[b.Name]; ok {
 			continue
@@ -42,6 +41,7 @@ func (r Request) cleanStaleBranches() error {
 			if err := r.provider.DeleteBranch(r.info.ProjectId, b.Name); err != nil {
 				return fmt.Errorf("DeleteBranch returns error: %w", err)
 			}
+			branchesDeleted++
 		}
 	}
 
