@@ -334,6 +334,7 @@ func (g GitlabProvider) ListBranches(projectId, size int, protected bool) iter.S
 			listMr, _, err := g.client.MergeRequests.ListProjectMergeRequests(projectId,
 				&gitlab.ListProjectMergeRequestsOptions{
 					SourceBranch: &b.Name,
+					State:        new("opened"),
 				})
 			if err != nil {
 				logger.Error("ListProjectMergeRequests", "err", err)
