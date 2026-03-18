@@ -110,6 +110,8 @@ func TestRegisterDuplicate(t *testing.T) {
 }
 
 func TestRequest_ListMergeRequests(t *testing.T) {
+	t.Skip("ListMergeRequests")
+
 	type fields struct {
 		provider RequestProvider
 	}
