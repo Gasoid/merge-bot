@@ -9,6 +9,7 @@ import (
 	"github.com/gasoid/merge-bot/logger"
 	"github.com/gasoid/merge-bot/metrics"
 	"github.com/gasoid/merge-bot/semaphore"
+	"github.com/hairyhenderson/go-codeowners"
 
 	"gopkg.in/yaml.v3"
 )
@@ -93,6 +94,10 @@ func (r *Request) ParseConfig(content string) (*Config, error) {
 			Template:   "Requirements:\n - Min approvals: {{ .MinApprovals }}\n - Title regex: {{ .TitleRegex }}\n\nOnce you're done, send **!merge** command and I will merge it!",
 		},
 		AutoMasterMerge: false,
+		AssignReviewers: AssignReviewers{
+			UseCodeowners: true,
+			Reviewers:     []string{},
+		},
 		StaleBranchesDeletion: struct {
 			Enabled         bool     `yaml:"enabled"`
 			ExcludeBranches []string `yaml:"exclude_branches"`
@@ -259,4 +264,42 @@ func (r Request) ValidateSecret(secret string) bool {
 
 func (r Request) AwardEmoji(noteId int, emoji string) error {
 	return r.provider.AwardEmoji(r.info.ProjectId, r.info.Id, noteId, emoji)
+}
+
+func (r Request) AssignReviewers() error {
+	var (
+		listUsers []string
+		reviewers = map[string]struct{}{}
+	)
+
+	if !r.config.AssignReviewers.UseCodeowners {
+		return r.provider.AssignReviewers(r.info.ProjectId, r.info.Id, r.config.AssignReviewers.Reviewers)
+	}
+
+	b, err := r.provider.GetFile(r.info.ProjectId, "CODEOWNERS")
+	if err != nil {
+		return err
+	}
+
+	changedFiles, err := r.provider.GetChangedFiles(r.info.ProjectId, r.info.Id)
+	if err != nil {
+		return err
+	}
+
+	for _, f := range changedFiles {
+		owners, err := codeowners.FromReader(bytes.NewReader(b), "")
+		if err != nil {
+			return err
+		}
+
+		for _, o := range owners.Owners(f) {
+			reviewers[o] = struct{}{}
+		}
+	}
+	listUsers = make([]string, 0, len(reviewers))
+	for k := range reviewers {
+		listUsers = append(listUsers, k)
+	}
+
+	return r.provider.AssignReviewers(r.info.ProjectId, r.info.Id, listUsers)
 }

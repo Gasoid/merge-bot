@@ -120,6 +120,18 @@ func (p *testProvider) AwardEmoji(projectId, mergeId, noteId int, emoji string) 
 	return p.err
 }
 
+func (p *testProvider) GetFile(projectId int, path string) ([]byte, error) {
+	return nil, p.err
+}
+
+func (p *testProvider) GetChangedFiles(projectId, mergeId int) ([]string, error) {
+	return nil, p.err
+}
+
+func (p *testProvider) AssignReviewers(projectId, mergeId int, users []string) error {
+	return p.err
+}
+
 func Test_Merge(t *testing.T) {
 	type args struct {
 		pr *Request

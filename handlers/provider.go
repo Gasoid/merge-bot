@@ -75,12 +75,15 @@ type MergeRequest interface {
 	UpdateFromMaster(projectId, mergeId int) error
 	AssignLabel(projectId, mergeId int, name, color string) error
 	GetRawDiffs(projectId, mergeId int) ([]byte, error)
+	GetChangedFiles(projectId, mergeId int) ([]string, error)
+	AssignReviewers(projectId, mergeId int, users []string) error
 }
 
 type Project interface {
 	CreateLabel(projectId int, name, color string) error
 	GetVar(projectId int, varName string) (string, error)
 	RerunPipeline(projectId, pipelineId int, ref string) (string, error)
+	GetFile(projectId int, path string) ([]byte, error)
 }
 
 type RequestProvider interface {
@@ -100,6 +103,11 @@ type Rules struct {
 	AllowEmptyDescription bool     `yaml:"allow_empty_description"`
 }
 
+type AssignReviewers struct {
+	UseCodeowners bool     `yaml:"use_codeowners"`
+	Reviewers     []string `yaml:"reviewers"`
+}
+
 type Config struct {
 	Rules Rules `yaml:"rules"`
 
@@ -109,7 +117,8 @@ type Config struct {
 		Template   string `yaml:"template"`
 	} `yaml:"greetings"`
 
-	AutoMasterMerge bool `yaml:"auto_master_merge"`
+	AutoMasterMerge bool            `yaml:"auto_master_merge"`
+	AssignReviewers AssignReviewers `yaml:"assign_reviewers"`
 
 	StaleBranchesDeletion struct {
 		Enabled         bool     `yaml:"enabled"`

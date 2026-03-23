@@ -8,6 +8,7 @@ require (
 	github.com/getsentry/sentry-go v0.33.0
 	github.com/getsentry/sentry-go/echo v0.33.0
 	github.com/getsentry/sentry-go/slog v0.33.0
+	github.com/hairyhenderson/go-codeowners v0.7.0
 	github.com/labstack/echo-contrib v0.17.4
 	github.com/labstack/echo/v4 v4.13.3
 	github.com/ldez/go-git-cmd-wrapper/v2 v2.9.1

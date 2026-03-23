@@ -246,19 +246,23 @@ func (g *GitlabProvider) IsValid(projectId, mergeId int) (bool, error) {
 	return !g.mr.HasConflicts, nil
 }
 
-func (g *GitlabProvider) GetFile(projectId int, path string) (string, error) {
+func (g *GitlabProvider) GetFile(projectId int, path string) ([]byte, error) {
 	project, _, err := g.client.Projects.GetProject(projectId, &gitlab.GetProjectOptions{})
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	gitlabFile, _, err := g.client.RepositoryFiles.GetFile(projectId, path, &gitlab.GetFileOptions{Ref: &project.DefaultBranch})
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	content, _ := b64.StdEncoding.DecodeString(gitlabFile.Content)
-	return string(content), nil
+	content, err := b64.StdEncoding.DecodeString(gitlabFile.Content)
+	if err != nil {
+		return nil, err
+	}
+
+	return content, nil
 }
 
 func (g *GitlabProvider) GetMRInfo(projectId, mergeId int, configPath string) (*handlers.MrInfo, error) {
@@ -278,9 +282,12 @@ func (g *GitlabProvider) GetMRInfo(projectId, mergeId int, configPath string) (*
 	info.SourceBranch = g.mr.SourceBranch
 	info.Author = g.mr.Author.Username
 
-	info.ConfigContent, err = g.GetFile(projectId, configPath)
+	b, err := g.GetFile(projectId, configPath)
 	if err != nil {
 		logger.Debug("i am using default config to validate a request")
+		info.ConfigContent = ""
+	} else {
+		info.ConfigContent = string(b)
 	}
 
 	info.Title = g.mr.Title
@@ -495,6 +502,52 @@ func (g GitlabProvider) GetRawDiffs(projectId, mergeId int) ([]byte, error) {
 	}
 
 	return result, nil
+}
+
+func (g GitlabProvider) GetChangedFiles(projectId, mergeId int) ([]string, error) {
+	result, _, err := g.client.MergeRequests.ListMergeRequestDiffs(projectId, mergeId, &gitlab.ListMergeRequestDiffsOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	changedFiles := make([]string, 0, len(result))
+	for _, l := range result {
+		if l.NewPath == l.OldPath {
+			changedFiles = append(changedFiles, l.NewPath)
+			continue
+		}
+
+		if l.NewPath != "" {
+			changedFiles = append(changedFiles, l.NewPath)
+		}
+
+		if l.OldPath != "" {
+			changedFiles = append(changedFiles, l.OldPath)
+		}
+	}
+
+	return changedFiles, nil
+}
+
+func (g GitlabProvider) AssignReviewers(projectId, mergeId int, users []string) error {
+	usersIds := []int{}
+
+	for _, u := range users {
+		listUsers, _, err := g.client.Users.ListUsers(&gitlab.ListUsersOptions{Username: &u})
+		if err != nil {
+			return err
+		}
+
+		if len(listUsers) == 1 {
+			usersIds = append(usersIds, listUsers[0].ID)
+		}
+	}
+
+	_, _, err := g.client.MergeRequests.UpdateMergeRequest(projectId, mergeId, &gitlab.UpdateMergeRequestOptions{
+		ReviewerIDs: &usersIds,
+	})
+
+	return err
 }
 
 func (g GitlabProvider) CreateThreadInLine(projectId, mergeId int, thread handlers.Thread) error {
