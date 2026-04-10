@@ -104,6 +104,7 @@ type Rules struct {
 }
 
 type AssignReviewers struct {
+	Enabled       bool     `yaml:"enabled"`
 	UseCodeowners bool     `yaml:"use_codeowners"`
 	Reviewers     []string `yaml:"reviewers"`
 }
