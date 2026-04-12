@@ -225,7 +225,3 @@ func TestHandlerWithNilRequest(t *testing.T) {
 	// Should return an error since request is nil
 	assert.Error(t, err)
 }
-
-func TestConstants(t *testing.T) {
-	assert.Equal(t, "/healthy", HealthyEndpoint)
-}

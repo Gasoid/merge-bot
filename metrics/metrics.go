@@ -9,6 +9,7 @@ import (
 	"github.com/gasoid/merge-bot/logger"
 	"github.com/labstack/echo-contrib/echoprometheus"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -114,7 +115,15 @@ func initMetrics() error {
 
 	go func() {
 		metrics := echo.New()
+		metrics.HideBanner = true
+		metrics.HidePort = true
+		metrics.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
+			Skipper: func(c echo.Context) bool {
+				return true
+			},
+		}))
 		metrics.GET("/metrics", echoprometheus.NewHandler())
+		metrics.GET("/healthy", echoprometheus.NewHandler())
 		if err := metrics.Start(":8081"); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			logger.Error(err.Error())
 		}

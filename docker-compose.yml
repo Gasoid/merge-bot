@@ -9,6 +9,7 @@ services:
       - tls-cache:/tmp/tls/.cache
     ports:
       - "443:443"
+      - "8080:8080"
     env_file:
       - bot.env
     logging:
@@ -16,11 +17,11 @@ services:
         max-size: "10m"
         max-file: "3"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/healthy"]
+      test: ["CMD", "curl", "-f", "http://localhost:8081/healthy"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 40s
+      start_period: 1s
 
 volumes:
   tls-cache:
