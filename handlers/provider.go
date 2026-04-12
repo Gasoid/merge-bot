@@ -81,6 +81,7 @@ type Project interface {
 	CreateLabel(projectId int, name, color string) error
 	GetVar(projectId int, varName string) (string, error)
 	RerunPipeline(projectId, pipelineId int, ref string) (string, error)
+	IsHealthy() bool
 }
 
 type RequestProvider interface {

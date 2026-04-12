@@ -1,21 +1,26 @@
-version: '2.3'
-
 services:
   bot:
     # github registry
     # image: ghcr.io/gasoid/merge-bot:latest
     # dockerhub registry
-    image: gasoid/merge-bot:3.8
+    image: gasoid/merge-bot:latest
     restart: always
     volumes:
       - tls-cache:/tmp/tls/.cache
     ports:
       - "443:443"
-      - "8080:8080"
     env_file:
       - bot.env
     logging:
-      driver: syslog
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
 volumes:
   tls-cache:
