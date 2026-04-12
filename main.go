@@ -17,5 +17,6 @@ func main() {
 
 	logger.New()
 
+	metricsEndpoint()
 	start()
 }

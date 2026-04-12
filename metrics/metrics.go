@@ -1,16 +1,10 @@
 package metrics
 
 import (
-	"errors"
-	"net/http"
 	"strings"
 	"time"
 
-	"github.com/labstack/echo/v4"
-
 	"github.com/gasoid/merge-bot/logger"
-	"github.com/labstack/echo-contrib/echoprometheus"
-	"github.com/labstack/echo/v4/middleware"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -114,31 +108,6 @@ func initMetrics() error {
 		return err
 	}
 
-	go func() {
-		metrics := echo.New()
-		metrics.HideBanner = true
-		metrics.HidePort = true
-		metrics.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
-			Skipper: func(c echo.Context) bool {
-				return true
-			},
-		}))
-		metrics.GET("/metrics", echoprometheus.NewHandler())
-		metrics.GET("/healthy", healthcheck)
-		if err := metrics.Start(":8081"); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			logger.Error(err.Error())
-		}
-	}()
-	return nil
-}
-
-//nolint:errcheck
-func healthcheck(c echo.Context) error {
-	// if handlers.IsHealthy() {
-	// 	c.String(http.StatusOK, "ok")
-	// } else {
-	// 	c.String(http.StatusServiceUnavailable, "not healthy")
-	// }
 	return nil
 }
 
