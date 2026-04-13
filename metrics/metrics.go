@@ -112,6 +112,34 @@ func initMetrics() error {
 		Buckets: prometheus.LinearBuckets(5, 4, 10),
 	})
 
+	branchesDeletionCounter = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "mergebot_deleted_branches_total",
+			Help: "How many branches has been deleted",
+		},
+		[]string{},
+	)
+
+	mrDeletionCounter = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "mergebot_deleted_mr_total",
+			Help: "How many MRs has been deleted",
+		},
+		[]string{},
+	)
+
+	branchesDeletionDuration = prometheus.NewHistogram(prometheus.HistogramOpts{
+		Name:    "mergebot_branch_deletion_duration",
+		Help:    "Time it has taken to delete branches",
+		Buckets: prometheus.LinearBuckets(5, 4, 10),
+	})
+
+	mrDeletionDuration = prometheus.NewHistogram(prometheus.HistogramOpts{
+		Name:    "mergebot_mr_deletion_duration",
+		Help:    "Time it has taken to delete MRs",
+		Buckets: prometheus.LinearBuckets(5, 4, 10),
+	})
+
 	if err := prometheus.Register(backgroundTaskCounter); err != nil {
 		return err
 	}
@@ -125,6 +153,22 @@ func initMetrics() error {
 	}
 
 	if err := prometheus.Register(commandsCounter); err != nil {
+		return err
+	}
+
+	if err := prometheus.Register(branchesDeletionCounter); err != nil {
+		return err
+	}
+
+	if err := prometheus.Register(mrDeletionCounter); err != nil {
+		return err
+	}
+
+	if err := prometheus.Register(branchesDeletionDuration); err != nil {
+		return err
+	}
+
+	if err := prometheus.Register(mrDeletionDuration); err != nil {
 		return err
 	}
 
