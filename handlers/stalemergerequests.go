@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/dustin/go-humanize/english"
+	"github.com/gasoid/merge-bot/metrics"
 )
 
 type MR struct {
@@ -17,12 +18,19 @@ type MR struct {
 }
 
 func (r Request) cleanStaleMergeRequests() error {
-	days := r.config.StaleBranchesDeletion.Days
-	coolDays := r.config.StaleBranchesDeletion.WaitDays
-	now := time.Now()
-	branchesDeleted := 0
+	var (
+		days            = r.config.StaleBranchesDeletion.Days
+		coolDays        = r.config.StaleBranchesDeletion.WaitDays
+		now             = time.Now()
+		branchesDeleted = 0
+		excludeBranches = make(map[string]struct{}, len(r.config.StaleBranchesDeletion.ExcludeBranches))
+	)
 
-	excludeBranches := make(map[string]struct{}, len(r.config.StaleBranchesDeletion.ExcludeBranches))
+	defer func() {
+		duration := time.Since(now)
+		metrics.MrDeletionDuration(duration)
+	}()
+
 	for _, s := range r.config.StaleBranchesDeletion.ExcludeBranches {
 		excludeBranches[s] = struct{}{}
 	}
@@ -39,6 +47,7 @@ func (r Request) cleanStaleMergeRequests() error {
 					return fmt.Errorf("DeleteBranch returns error: %w", err)
 				}
 				branchesDeleted++
+				metrics.MrDeletionInc()
 				continue
 			}
 		}

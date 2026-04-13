@@ -22,7 +22,7 @@ func healthcheck(c echo.Context) error {
 	return nil
 }
 
-func metricsEndpoint() {
+func startMetricsEndpoint() {
 	go func() {
 		metrics := echo.New()
 		metrics.HideBanner = true

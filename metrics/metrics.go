@@ -13,6 +13,10 @@ var (
 	updateDuration                prometheus.Histogram
 	backgroundTaskEnqueuedCounter *prometheus.CounterVec
 	backgroundTaskCounter         *prometheus.CounterVec
+	branchesDeletionCounter       *prometheus.CounterVec
+	mrDeletionCounter             *prometheus.CounterVec
+	branchesDeletionDuration      prometheus.Histogram
+	mrDeletionDuration            prometheus.Histogram
 )
 
 const (
@@ -59,6 +63,22 @@ func CommandFailedInc(command string) {
 
 func UpdateDuration(duration time.Duration) {
 	updateDuration.Observe(duration.Seconds())
+}
+
+func BranchDeletionInc() {
+	branchesDeletionCounter.WithLabelValues().Inc()
+}
+
+func MrDeletionInc() {
+	mrDeletionCounter.WithLabelValues().Inc()
+}
+
+func BranchDeletionDuration(duration time.Duration) {
+	branchesDeletionDuration.Observe(duration.Seconds())
+}
+
+func MrDeletionDuration(duration time.Duration) {
+	mrDeletionDuration.Observe(duration.Seconds())
 }
 
 func initMetrics() error {
