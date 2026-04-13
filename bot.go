@@ -25,8 +25,7 @@ var (
 )
 
 const (
-	HealthyEndpoint = "/healthy"
-	emojiRobot      = "robot"
+	emojiRobot = "robot"
 )
 
 func init() {
@@ -36,35 +35,12 @@ func init() {
 
 func start() {
 	e := echo.New()
-
-	// Custom request logger middleware that skips /healthy endpoint
-	e.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
-		Skipper: func(c echo.Context) bool {
-			return c.Request().URL.Path == HealthyEndpoint
-		},
-		LogURI:      true,
-		LogStatus:   true,
-		LogMethod:   true,
-		LogRemoteIP: true,
-		LogLatency:  true,
-		LogValuesFunc: func(c echo.Context, values middleware.RequestLoggerValues) error {
-			logger.Info("request",
-				"method", values.Method,
-				"uri", values.URI,
-				"status", values.Status,
-				"remote_ip", values.RemoteIP,
-				"latency", values.Latency,
-			)
-			return nil
-		},
-	}))
 	e.Use(middleware.Recover())
 
 	if logger.IsSentryEnabled() {
 		e.Use(sentryecho.New(sentryecho.Options{Repanic: true, WaitForDelivery: false}))
 	}
 
-	e.GET(HealthyEndpoint, healthcheck)
 	e.POST("/mergebot/webhook/:provider/", Handler)
 
 	go loadPlugins()

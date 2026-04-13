@@ -84,6 +84,7 @@ type Project interface {
 	GetVar(projectId int, varName string) (string, error)
 	RerunPipeline(projectId, pipelineId int, ref string) (string, error)
 	GetFile(projectId int, path string) ([]byte, error)
+	IsHealthy() bool
 }
 
 type RequestProvider interface {

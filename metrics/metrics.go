@@ -1,14 +1,10 @@
 package metrics
 
 import (
-	"errors"
-	"net/http"
 	"strings"
 	"time"
 
 	"github.com/gasoid/merge-bot/logger"
-	"github.com/labstack/echo-contrib/echoprometheus"
-	"github.com/labstack/echo/v4"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -17,6 +13,10 @@ var (
 	updateDuration                prometheus.Histogram
 	backgroundTaskEnqueuedCounter *prometheus.CounterVec
 	backgroundTaskCounter         *prometheus.CounterVec
+	branchesDeletionCounter       *prometheus.CounterVec
+	mrDeletionCounter             *prometheus.CounterVec
+	branchesDeletionDuration      prometheus.Histogram
+	mrDeletionDuration            prometheus.Histogram
 )
 
 const (
@@ -65,6 +65,22 @@ func UpdateDuration(duration time.Duration) {
 	updateDuration.Observe(duration.Seconds())
 }
 
+func BranchDeletionInc() {
+	branchesDeletionCounter.WithLabelValues().Inc()
+}
+
+func MrDeletionInc() {
+	mrDeletionCounter.WithLabelValues().Inc()
+}
+
+func BranchDeletionDuration(duration time.Duration) {
+	branchesDeletionDuration.Observe(duration.Seconds())
+}
+
+func MrDeletionDuration(duration time.Duration) {
+	mrDeletionDuration.Observe(duration.Seconds())
+}
+
 func initMetrics() error {
 	commandsCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
@@ -96,6 +112,34 @@ func initMetrics() error {
 		Buckets: prometheus.LinearBuckets(5, 4, 10),
 	})
 
+	branchesDeletionCounter = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "mergebot_deleted_branches_total",
+			Help: "How many branches has been deleted",
+		},
+		[]string{},
+	)
+
+	mrDeletionCounter = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "mergebot_deleted_mr_total",
+			Help: "How many MRs has been deleted",
+		},
+		[]string{},
+	)
+
+	branchesDeletionDuration = prometheus.NewHistogram(prometheus.HistogramOpts{
+		Name:    "mergebot_branch_deletion_duration",
+		Help:    "Time it has taken to delete branches",
+		Buckets: prometheus.LinearBuckets(5, 4, 10),
+	})
+
+	mrDeletionDuration = prometheus.NewHistogram(prometheus.HistogramOpts{
+		Name:    "mergebot_mr_deletion_duration",
+		Help:    "Time it has taken to delete MRs",
+		Buckets: prometheus.LinearBuckets(5, 4, 10),
+	})
+
 	if err := prometheus.Register(backgroundTaskCounter); err != nil {
 		return err
 	}
@@ -112,13 +156,22 @@ func initMetrics() error {
 		return err
 	}
 
-	go func() {
-		metrics := echo.New()
-		metrics.GET("/metrics", echoprometheus.NewHandler())
-		if err := metrics.Start(":8081"); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			logger.Error(err.Error())
-		}
-	}()
+	if err := prometheus.Register(branchesDeletionCounter); err != nil {
+		return err
+	}
+
+	if err := prometheus.Register(mrDeletionCounter); err != nil {
+		return err
+	}
+
+	if err := prometheus.Register(branchesDeletionDuration); err != nil {
+		return err
+	}
+
+	if err := prometheus.Register(mrDeletionDuration); err != nil {
+		return err
+	}
+
 	return nil
 }
 

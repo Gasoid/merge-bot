@@ -590,6 +590,15 @@ func (g GitlabProvider) CreateThreadInLine(projectId, mergeId int, thread handle
 	return nil
 }
 
+func (g GitlabProvider) IsHealthy() bool {
+	version, _, err := g.client.Version.GetVersion()
+	if version == nil || err != nil {
+		return false
+	}
+
+	return true
+}
+
 func newGitlabClient(token, instanceUrl string) *gitlab.Client {
 	var (
 		err error
