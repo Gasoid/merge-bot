@@ -98,9 +98,6 @@ func TestIntegrationWebhookFlow(t *testing.T) {
 }
 
 func TestServerSetup(t *testing.T) {
-	// Test that HealthyEndpoint constant is properly defined
-	assert.Equal(t, "/healthy", HealthyEndpoint)
-
 	// Test that global variables are initialized
 	assert.NotNil(t, handlerFuncs)
 

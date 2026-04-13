@@ -1,14 +1,10 @@
 package metrics
 
 import (
-	"errors"
-	"net/http"
 	"strings"
 	"time"
 
 	"github.com/gasoid/merge-bot/logger"
-	"github.com/labstack/echo-contrib/echoprometheus"
-	"github.com/labstack/echo/v4"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -17,6 +13,10 @@ var (
 	updateDuration                prometheus.Histogram
 	backgroundTaskEnqueuedCounter *prometheus.CounterVec
 	backgroundTaskCounter         *prometheus.CounterVec
+	branchesDeletionCounter       *prometheus.CounterVec
+	mrDeletionCounter             *prometheus.CounterVec
+	branchesDeletionDuration      prometheus.Histogram
+	mrDeletionDuration            prometheus.Histogram
 )
 
 const (
@@ -63,6 +63,22 @@ func CommandFailedInc(command string) {
 
 func UpdateDuration(duration time.Duration) {
 	updateDuration.Observe(duration.Seconds())
+}
+
+func BranchDeletionInc() {
+	branchesDeletionCounter.WithLabelValues().Inc()
+}
+
+func MrDeletionInc() {
+	mrDeletionCounter.WithLabelValues().Inc()
+}
+
+func BranchDeletionDuration(duration time.Duration) {
+	branchesDeletionDuration.Observe(duration.Seconds())
+}
+
+func MrDeletionDuration(duration time.Duration) {
+	mrDeletionDuration.Observe(duration.Seconds())
 }
 
 func initMetrics() error {
@@ -112,13 +128,6 @@ func initMetrics() error {
 		return err
 	}
 
-	go func() {
-		metrics := echo.New()
-		metrics.GET("/metrics", echoprometheus.NewHandler())
-		if err := metrics.Start(":8081"); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			logger.Error(err.Error())
-		}
-	}()
 	return nil
 }
 
