@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"html/template"
+	"math/rand/v2"
 	"strings"
 
 	"github.com/gasoid/merge-bot/logger"
@@ -271,6 +272,10 @@ func (r Request) GetContributors() ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	rand.Shuffle(len(usernames), func(i, j int) {
+		usernames[i], usernames[j] = usernames[j], usernames[i]
+	})
 
 	if r.config.AssignReviewers.ReviewerNumber == 0 {
 		return usernames[:1], nil
