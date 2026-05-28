@@ -136,6 +136,10 @@ func (p testProvider) IsHealthy() bool {
 	return true
 }
 
+func (p testProvider) GetContributors(projectId int) ([]string, error) {
+	return nil, p.err
+}
+
 func Test_Merge(t *testing.T) {
 	type args struct {
 		pr *Request

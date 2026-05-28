@@ -85,6 +85,7 @@ type Project interface {
 	RerunPipeline(projectId, pipelineId int, ref string) (string, error)
 	GetFile(projectId int, path string) ([]byte, error)
 	IsHealthy() bool
+	GetContributors(projectId int) ([]string, error)
 }
 
 type RequestProvider interface {
@@ -105,9 +106,9 @@ type Rules struct {
 }
 
 type AssignReviewers struct {
-	Enabled       bool     `yaml:"enabled"`
-	UseCodeowners bool     `yaml:"use_codeowners"`
-	Reviewers     []string `yaml:"reviewers"`
+	Enabled        bool `yaml:"enabled"`
+	UseCodeowners  bool `yaml:"use_codeowners"`
+	ReviewerNumber int  `yaml:"reviewer_number"`
 }
 
 type Config struct {

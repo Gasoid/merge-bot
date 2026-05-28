@@ -7,6 +7,7 @@ import (
 	"iter"
 	"net/http"
 	"slices"
+	"time"
 
 	"github.com/gasoid/merge-bot/config"
 	"github.com/gasoid/merge-bot/handlers"
@@ -548,6 +549,45 @@ func (g GitlabProvider) AssignReviewers(projectId, mergeId int, users []string) 
 	})
 
 	return err
+}
+
+func (g GitlabProvider) GetContributors(projectId int) ([]string, error) {
+	now := time.Now()
+	months3back := now.Add(-1 * time.Hour * 24 * 30 * 3)
+
+	commits, _, err := g.client.Commits.ListCommits(projectId, &gitlab.ListCommitsOptions{
+		Since: &months3back,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	emails := make(map[string]struct{}, 10)
+
+	for _, c := range commits {
+		emails[c.AuthorEmail] = struct{}{}
+	}
+
+	usernames := make([]string, 0, len(emails))
+
+	for e := range emails {
+		members, _, err := g.client.ProjectMembers.ListAllProjectMembers(projectId, &gitlab.ListProjectMembersOptions{
+			Query: &e,
+		})
+		if err != nil {
+			continue
+		}
+
+		if len(members) != 1 {
+			continue
+		}
+
+		if members[0].AccessLevel >= gitlab.MaintainerPermissions {
+			usernames = append(usernames, members[0].Username)
+		}
+	}
+
+	return usernames, nil
 }
 
 func (g GitlabProvider) CreateThreadInLine(projectId, mergeId int, thread handlers.Thread) error {

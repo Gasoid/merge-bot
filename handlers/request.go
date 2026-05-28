@@ -95,8 +95,8 @@ func (r *Request) ParseConfig(content string) (*Config, error) {
 		},
 		AutoMasterMerge: false,
 		AssignReviewers: AssignReviewers{
-			UseCodeowners: true,
-			Reviewers:     []string{},
+			UseCodeowners:  true,
+			ReviewerNumber: 1,
 		},
 		StaleBranchesDeletion: struct {
 			Enabled         bool     `yaml:"enabled"`
@@ -266,14 +266,32 @@ func (r Request) AwardEmoji(noteId int, emoji string) error {
 	return r.provider.AwardEmoji(r.info.ProjectId, r.info.Id, noteId, emoji)
 }
 
+func (r Request) GetContributors() ([]string, error) {
+	usernames, err := r.provider.GetContributors(r.info.ProjectId)
+	if err != nil {
+		return nil, err
+	}
+
+	if r.config.AssignReviewers.ReviewerNumber == 0 {
+		return usernames[:1], nil
+	}
+
+	return usernames[:r.config.AssignReviewers.ReviewerNumber], nil
+}
+
 func (r Request) AssignReviewers() error {
 	var (
 		listUsers []string
 		reviewers = map[string]struct{}{}
 	)
 
+	usernames, err := r.GetContributors()
+	if err != nil {
+		return err
+	}
+
 	if !r.config.AssignReviewers.UseCodeowners {
-		return r.provider.AssignReviewers(r.info.ProjectId, r.info.Id, r.config.AssignReviewers.Reviewers)
+		return r.provider.AssignReviewers(r.info.ProjectId, r.info.Id, usernames)
 	}
 
 	b, err := r.provider.GetFile(r.info.ProjectId, "CODEOWNERS")
@@ -296,9 +314,14 @@ func (r Request) AssignReviewers() error {
 			reviewers[o] = struct{}{}
 		}
 	}
+
 	listUsers = make([]string, 0, len(reviewers))
 	for k := range reviewers {
 		listUsers = append(listUsers, k)
+	}
+
+	if len(listUsers) < r.config.AssignReviewers.ReviewerNumber {
+		listUsers = append(listUsers, usernames[:r.config.AssignReviewers.ReviewerNumber-len(listUsers)]...)
 	}
 
 	return r.provider.AssignReviewers(r.info.ProjectId, r.info.Id, listUsers)
