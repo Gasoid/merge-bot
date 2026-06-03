@@ -9,6 +9,7 @@ import (
 	"slices"
 	"time"
 
+	cache "github.com/gasoid/merge-bot/cache/contributors"
 	"github.com/gasoid/merge-bot/config"
 	"github.com/gasoid/merge-bot/handlers"
 	"github.com/gasoid/merge-bot/logger"
@@ -552,25 +553,40 @@ func (g GitlabProvider) AssignReviewers(projectId, mergeId int, users []string) 
 }
 
 func (g GitlabProvider) GetContributors(projectId int) ([]string, error) {
-	now := time.Now()
-	months3back := now.Add(-1 * time.Hour * 24 * 30 * 3)
-
-	commits, _, err := g.client.Commits.ListCommits(projectId, &gitlab.ListCommitsOptions{
-		Since: &months3back,
-	})
+	candidates := []string{}
+	emails, err := cache.Get(fmt.Sprint(projectId))
 	if err != nil {
 		return nil, err
 	}
 
-	emails := make(map[string]struct{}, 10)
+	if len(emails) == 0 {
+		now := time.Now()
+		months3back := now.Add(-1 * time.Hour * 24 * 30 * 3)
 
-	for _, c := range commits {
-		emails[c.AuthorEmail] = struct{}{}
+		commits, _, err := g.client.Commits.ListCommits(projectId, &gitlab.ListCommitsOptions{
+			Since: &months3back,
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		seen := make(map[string]struct{}, 10)
+
+		for _, c := range commits {
+			seen[c.AuthorEmail] = struct{}{}
+		}
+
+		emails := make([]string, 0, len(seen))
+		for k := range seen {
+			emails = append(emails, k)
+		}
+
+		if err := cache.Set(fmt.Sprint(projectId), emails); err != nil {
+			return nil, err
+		}
 	}
 
-	usernames := make([]string, 0, len(emails))
-
-	for e := range emails {
+	for _, e := range emails {
 		members, _, err := g.client.ProjectMembers.ListAllProjectMembers(projectId, &gitlab.ListProjectMembersOptions{
 			Query: &e,
 		})
@@ -583,11 +599,14 @@ func (g GitlabProvider) GetContributors(projectId int) ([]string, error) {
 		}
 
 		if members[0].AccessLevel >= gitlab.MaintainerPermissions {
-			usernames = append(usernames, members[0].Username)
+			candidates = append(candidates, members[0].Username)
 		}
 	}
 
-	return usernames, nil
+	// reviews number, status
+	//
+
+	return candidates, nil
 }
 
 func (g GitlabProvider) CreateThreadInLine(projectId, mergeId int, thread handlers.Thread) error {

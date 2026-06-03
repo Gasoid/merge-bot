@@ -268,6 +268,12 @@ func (r Request) AwardEmoji(noteId int, emoji string) error {
 }
 
 func (r Request) GetContributors() ([]string, error) {
+	if r.config.AssignReviewers.ReviewerNumber < 1 {
+		r.config.AssignReviewers.ReviewerNumber = 1
+	}
+
+	usernames := make([]string, 0, r.config.AssignReviewers.ReviewerNumber)
+
 	usernames, err := r.provider.GetContributors(r.info.ProjectId)
 	if err != nil {
 		return nil, err
@@ -276,10 +282,6 @@ func (r Request) GetContributors() ([]string, error) {
 	rand.Shuffle(len(usernames), func(i, j int) {
 		usernames[i], usernames[j] = usernames[j], usernames[i]
 	})
-
-	if r.config.AssignReviewers.ReviewerNumber == 0 {
-		return usernames[:1], nil
-	}
 
 	return usernames[:r.config.AssignReviewers.ReviewerNumber], nil
 }
