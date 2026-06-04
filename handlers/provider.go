@@ -77,7 +77,6 @@ type MergeRequest interface {
 	UpdateFromMaster(projectId, mergeId int) error
 	AssignLabel(projectId, mergeId int, name, color string) error
 	GetRawDiffs(projectId, mergeId int) ([]byte, error)
-	GetChangedFiles(projectId, mergeId int) ([]string, error)
 	AssignReviewers(projectId, mergeId int, users []string) error
 }
 
@@ -87,7 +86,7 @@ type Project interface {
 	RerunPipeline(projectId, pipelineId int, ref string) (string, error)
 	GetFile(projectId int, path string) ([]byte, error)
 	IsHealthy() bool
-	GetContributors(projectId int) ([]string, error)
+	GetContributors(projectId, mergeId int) ([]Candidate, error)
 }
 
 type RequestProvider interface {

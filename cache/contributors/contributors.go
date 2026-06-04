@@ -19,15 +19,15 @@ func candidatesKey(repo string) string {
 	return fmt.Sprintf("%s:%s:candidates", keyPrefix, repo)
 }
 
-func Push(repo, username string) error {
+func Add(repo, candidate string, count int) error {
 	key := fmt.Sprintf("%s:%s", keyPrefix, repo)
-	return contributors.Push(key, username)
+	return contributors.Add(key, candidate, float64(count))
 }
 
-func Pop(repo string) (string, error) {
-	key := fmt.Sprintf("%s:%s", keyPrefix, repo)
-	return contributors.Pop(key)
-}
+// func Pop(repo string) (string, error) {
+// 	key := fmt.Sprintf("%s:%s", keyPrefix, repo)
+// 	return contributors.Pop(key)
+// }
 
 func Get(repo string) ([]string, error) {
 	val, err := contributors.Get(candidatesKey(repo))

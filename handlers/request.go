@@ -4,13 +4,12 @@ import (
 	"bytes"
 	"fmt"
 	"html/template"
-	"math/rand/v2"
+	"sort"
 	"strings"
 
 	"github.com/gasoid/merge-bot/logger"
 	"github.com/gasoid/merge-bot/metrics"
 	"github.com/gasoid/merge-bot/semaphore"
-	"github.com/hairyhenderson/go-codeowners"
 
 	"gopkg.in/yaml.v3"
 )
@@ -267,69 +266,70 @@ func (r Request) AwardEmoji(noteId int, emoji string) error {
 	return r.provider.AwardEmoji(r.info.ProjectId, r.info.Id, noteId, emoji)
 }
 
-func (r Request) GetContributors() ([]string, error) {
-	if r.config.AssignReviewers.ReviewerNumber < 1 {
-		r.config.AssignReviewers.ReviewerNumber = 1
+type Candidate struct {
+	Username    string
+	Count       int
+	StatusEmoji string
+	Status      string
+	Timezone    string
+	IsCodeOwner bool
+}
+
+func (c Candidate) IsAvailable() bool {
+	for _, s := range []string{"OOO", "vacation", "🏖️"} {
+		if strings.Contains(c.Status, s) || c.StatusEmoji == s {
+			return false
+		}
 	}
 
-	usernames := make([]string, 0, r.config.AssignReviewers.ReviewerNumber)
+	return true
+}
 
-	usernames, err := r.provider.GetContributors(r.info.ProjectId)
+func (r Request) SpinRoulette() ([]string, error) {
+	candidates, err := r.provider.GetContributors(r.info.ProjectId, r.info.Id)
 	if err != nil {
 		return nil, err
 	}
 
-	rand.Shuffle(len(usernames), func(i, j int) {
-		usernames[i], usernames[j] = usernames[j], usernames[i]
+	if r.config.AssignReviewers.ReviewerNumber < 1 {
+		r.config.AssignReviewers.ReviewerNumber = 1
+	}
+
+	sort.Slice(candidates, func(i, j int) bool {
+		if r.config.AssignReviewers.UseCodeowners {
+			if candidates[i].IsCodeOwner && !candidates[j].IsCodeOwner {
+				return true
+			}
+
+			if candidates[j].IsCodeOwner && !candidates[i].IsCodeOwner {
+				return false
+			}
+		}
+
+		return candidates[i].Count < candidates[j].Count
 	})
 
-	return usernames[:r.config.AssignReviewers.ReviewerNumber], nil
+	usernames := make([]string, 0, r.config.AssignReviewers.ReviewerNumber)
+
+	for _, c := range candidates {
+		if !c.IsAvailable() {
+			continue
+		}
+
+		usernames = append(usernames, c.Username)
+		if len(usernames) == r.config.AssignReviewers.ReviewerNumber {
+			break
+		}
+	}
+
+	return usernames, nil
 }
 
 func (r Request) AssignReviewers() error {
-	var (
-		listUsers []string
-		reviewers = map[string]struct{}{}
-	)
-
-	usernames, err := r.GetContributors()
+	usernames, err := r.SpinRoulette()
 	if err != nil {
 		return err
 	}
 
-	if !r.config.AssignReviewers.UseCodeowners {
-		return r.provider.AssignReviewers(r.info.ProjectId, r.info.Id, usernames)
-	}
-
-	b, err := r.provider.GetFile(r.info.ProjectId, "CODEOWNERS")
-	if err != nil {
-		return err
-	}
-
-	changedFiles, err := r.provider.GetChangedFiles(r.info.ProjectId, r.info.Id)
-	if err != nil {
-		return err
-	}
-
-	for _, f := range changedFiles {
-		owners, err := codeowners.FromReader(bytes.NewReader(b), "")
-		if err != nil {
-			return err
-		}
-
-		for _, o := range owners.Owners(f) {
-			reviewers[o] = struct{}{}
-		}
-	}
-
-	listUsers = make([]string, 0, len(reviewers))
-	for k := range reviewers {
-		listUsers = append(listUsers, k)
-	}
-
-	if len(listUsers) < r.config.AssignReviewers.ReviewerNumber {
-		listUsers = append(listUsers, usernames[:r.config.AssignReviewers.ReviewerNumber-len(listUsers)]...)
-	}
-
-	return r.provider.AssignReviewers(r.info.ProjectId, r.info.Id, listUsers)
+	return r.provider.AssignReviewers(r.info.ProjectId, r.info.Id, usernames)
 }

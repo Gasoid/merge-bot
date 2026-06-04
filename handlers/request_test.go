@@ -136,7 +136,7 @@ func (p testProvider) IsHealthy() bool {
 	return true
 }
 
-func (p testProvider) GetContributors(projectId int) ([]string, error) {
+func (p testProvider) GetContributors(projectId, mergeId int) ([]Candidate, error) {
 	return nil, p.err
 }
 

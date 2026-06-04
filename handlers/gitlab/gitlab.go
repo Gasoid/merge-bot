@@ -1,6 +1,7 @@
 package gitlab
 
 import (
+	"bytes"
 	b64 "encoding/base64"
 	"errors"
 	"fmt"
@@ -13,6 +14,7 @@ import (
 	"github.com/gasoid/merge-bot/config"
 	"github.com/gasoid/merge-bot/handlers"
 	"github.com/gasoid/merge-bot/logger"
+	"github.com/hairyhenderson/go-codeowners"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
 
 	"github.com/dustin/go-humanize"
@@ -506,7 +508,7 @@ func (g GitlabProvider) GetRawDiffs(projectId, mergeId int) ([]byte, error) {
 	return result, nil
 }
 
-func (g GitlabProvider) GetChangedFiles(projectId, mergeId int) ([]string, error) {
+func (g GitlabProvider) getChangedFiles(projectId, mergeId int) ([]string, error) {
 	result, _, err := g.client.MergeRequests.ListMergeRequestDiffs(projectId, mergeId, &gitlab.ListMergeRequestDiffsOptions{})
 	if err != nil {
 		return nil, err
@@ -531,6 +533,33 @@ func (g GitlabProvider) GetChangedFiles(projectId, mergeId int) ([]string, error
 	return changedFiles, nil
 }
 
+func (g GitlabProvider) codeOwners(projectId, mergeId int) (map[string]struct{}, error) {
+	candidates := map[string]struct{}{}
+
+	b, err := g.GetFile(projectId, "CODEOWNERS")
+	if err != nil {
+		return nil, err
+	}
+
+	changedFiles, err := g.getChangedFiles(projectId, mergeId)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, f := range changedFiles {
+		owners, err := codeowners.FromReader(bytes.NewReader(b), "")
+		if err != nil {
+			return nil, err
+		}
+
+		for _, o := range owners.Owners(f) {
+			candidates[o] = struct{}{}
+		}
+	}
+
+	return candidates, nil
+}
+
 func (g GitlabProvider) AssignReviewers(projectId, mergeId int, users []string) error {
 	usersIds := []int{}
 
@@ -552,8 +581,8 @@ func (g GitlabProvider) AssignReviewers(projectId, mergeId int, users []string) 
 	return err
 }
 
-func (g GitlabProvider) GetContributors(projectId int) ([]string, error) {
-	candidates := []string{}
+func (g GitlabProvider) GetContributors(projectId, mergeId int) ([]handlers.Candidate, error) {
+	candidates := []handlers.Candidate{}
 	emails, err := cache.Get(fmt.Sprint(projectId))
 	if err != nil {
 		return nil, err
@@ -599,12 +628,35 @@ func (g GitlabProvider) GetContributors(projectId int) ([]string, error) {
 		}
 
 		if members[0].AccessLevel >= gitlab.MaintainerPermissions {
-			candidates = append(candidates, members[0].Username)
+			// g.client.MergeRequests.ListProjectMergeRequests(projectId, &gitlab.ListProjectMergeRequestsOptions{
+			// 	ReviewerID: ,
+			// })
+			status, _, err := g.client.Users.GetUserStatus(members[0].ID)
+			if err != nil {
+				continue
+			}
+
+			user, _, err := g.client.Users.GetUser(members[0].ID, gitlab.GetUsersOptions{})
+			if err != nil {
+				continue
+			}
+
+			codeowners, err := g.codeOwners(projectId, mergeId)
+			if err != nil {
+				continue
+			}
+
+			_, isCodeOwner := codeowners[members[0].Username]
+
+			candidates = append(candidates, handlers.Candidate{
+				Username:    members[0].Username,
+				StatusEmoji: status.Emoji,
+				Status:      status.Message,
+				Timezone:    user.Location,
+				IsCodeOwner: isCodeOwner,
+				Count:       0})
 		}
 	}
-
-	// reviews number, status
-	//
 
 	return candidates, nil
 }

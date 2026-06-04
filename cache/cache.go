@@ -24,65 +24,52 @@ func init() {
 }
 
 type Cache interface {
-	Push(string, string) error
-	Pop(string) (string, error)
+	Lock(key string) error
+	Unlock(key string) error
 	Set(key, val string) error
 	Get(key string) (string, error)
+	Add(key, candidate string, score float64) error
 	Connect() error
 }
 
 type MemCache struct {
 	items        []string
-	keys         map[string]struct{}
+	keys         map[string]string
 	memcacheLock sync.RWMutex
 }
 
-func (r *MemCache) Set(key, val string) error {
-
+func (m *MemCache) Add(key, item string, score float64) error {
 	return nil
 }
 
-func (r *MemCache) Get(key string) (string, error) {
-	// val, err := r.client.Get(context.TODO(), key).Result()
-	// if err != nil {
-	// 	if err == redis.Nil {
-	// 		return "", nil
-	// 	}
+func (m *MemCache) Set(key, val string) error {
+	m.keys[key] = val
+	return nil
+}
 
-	// 	return "", &CacheError{Operation: "Set", Err: err}
-	// }
+func (m *MemCache) Get(key string) (string, error) {
+	if val, ok := m.keys[key]; ok {
+		return val, nil
+	}
 
 	return "", nil
 }
 
-func (m *MemCache) Push(key, val string) error {
+func (m *MemCache) Lock(key string) error {
 	m.memcacheLock.Lock()
-	defer m.memcacheLock.Unlock()
-
-	if _, ok := m.keys[val]; ok {
-		return nil
-	}
-
-	m.keys[val] = struct{}{}
-	m.items = append(m.items, val)
 	return nil
 }
 
-func (m *MemCache) Pop(key string) (string, error) {
-	m.memcacheLock.Lock()
-	defer m.memcacheLock.Unlock()
-
-	if len(m.items) == 0 {
-		return "", nil
-	}
-
-	item := m.items[0]
-	m.items = m.items[1:]
-	m.items = append(m.items, item)
-	return item, nil
+func (m *MemCache) Unlock(key string) error {
+	m.memcacheLock.Unlock()
+	return nil
 }
 
 func (m *MemCache) Connect() error {
+	if m.keys == nil {
+		m.keys = make(map[string]string)
+	}
+
 	return nil
 }
 
@@ -114,7 +101,7 @@ func (r *RedisCache) Connect() error {
 }
 
 func (r *RedisCache) Set(key, val string) error {
-	if _, err := r.client.Set(context.TODO(), key, val, ttl).Result(); err != nil {
+	if _, err := r.client.SetNX(context.TODO(), key, val, ttl).Result(); err != nil {
 		return &CacheError{Operation: "Set", Err: err}
 	}
 
@@ -134,12 +121,10 @@ func (r *RedisCache) Get(key string) (string, error) {
 	return val, nil
 }
 
-func (r *RedisCache) Push(key, item string) error {
-	if err := r.Lock(key); err != nil {
-		return &CacheError{Operation: "Lock", Err: err}
+func (r *RedisCache) Add(key, item string, score float64) error {
+	if _, err := r.client.ZAdd(context.TODO(), key, redis.Z{Member: item, Score: score}).Result(); err != nil {
+		return &CacheError{Operation: "ZAdd", Err: err}
 	}
-
-	defer r.Unlock(key)
 
 	exists, err := r.client.SIsMember(context.TODO(), r.hashName(key), item).Result()
 	if err != nil {
