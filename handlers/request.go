@@ -372,6 +372,10 @@ func (r Request) ReviewRoulette() error {
 }
 
 func (r Request) UpdateReviewRouletteCounts(event string) error {
+	if !r.config.AssignReviewers.Enabled {
+		return nil
+	}
+
 	counts, err := cache.JsonGet(r.info.ProjectId)
 	if err != nil {
 		return err
