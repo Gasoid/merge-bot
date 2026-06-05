@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"sync"
 	"time"
 
 	"github.com/gasoid/merge-bot/config"
@@ -46,9 +45,7 @@ type Cache interface {
 }
 
 type RedisCache struct {
-	client  *redis.Client
-	lockVal int
-	lock    sync.RWMutex
+	client *redis.Client
 }
 
 func (r *RedisCache) Connect() error {
