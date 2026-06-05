@@ -1,9 +1,11 @@
 package handlers
 
 import (
+	"errors"
 	"iter"
 	"sync"
 
+	"github.com/gasoid/merge-bot/cache"
 	"github.com/gasoid/merge-bot/cache/contributors"
 )
 
@@ -151,7 +153,9 @@ func New(providerName string) (*Request, error) {
 	}
 
 	if err := contributors.Connect(); err != nil {
-		return nil, err
+		if !errors.Is(err, cache.ErrRedisUrlEmpty) {
+			return nil, err
+		}
 	}
 
 	return &Request{provider: provider}, nil

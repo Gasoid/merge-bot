@@ -350,13 +350,25 @@ func (r Request) SpinRoulette() ([]string, error) {
 	return usernames, nil
 }
 
-func (r Request) AssignReviewers() error {
+func (r Request) reviewRoulette() error {
 	usernames, err := r.SpinRoulette()
 	if err != nil {
 		return err
 	}
 
 	return r.provider.AssignReviewers(r.info.ProjectId, r.info.Id, usernames)
+}
+
+func (r Request) AssignReviewers() error {
+	if !r.config.AssignReviewers.Enabled {
+		return nil
+	}
+
+	return r.reviewRoulette()
+}
+
+func (r Request) ReviewRoulette() error {
+	return r.reviewRoulette()
 }
 
 func (r Request) UpdateReviewRouletteCounts(event string) error {
@@ -381,18 +393,12 @@ func (r Request) UpdateReviewRouletteCounts(event string) error {
 	}
 
 	for a := range r.info.Approvals {
-		if val, ok := counts[a]; ok {
-			switch event {
-			case DecrCount:
-				if val-1 >= 0 {
-					counts[a] = val - 1
-				}
-			case IncrCount:
-				counts[a] = val + 1
-			}
+		switch event {
+		case DecrCount:
+			cache.JsonDecr(r.info.ProjectId, a)
+		case IncrCount:
+			cache.JsonIncr(r.info.ProjectId, a)
 		}
 	}
-
-	cache.JsonSet(r.info.ProjectId, counts)
 	return nil
 }

@@ -18,6 +18,7 @@ func init() {
 	handle("!check", CheckCmd)
 	handle("!update", UpdateBranchCmd)
 	handle("!rerun", RerunPipeline)
+	handle("!rr", RR)
 	handle(webhook.OnNewMR, NewMR)
 	handle(webhook.OnMerge, MergeEvent)
 	handle(webhook.OnUpdate, UpdateEvent)
@@ -91,9 +92,21 @@ func CheckCmd(command *handlers.Request, args string) error {
 	return command.LeaveComment(text)
 }
 
+func RR(command *handlers.Request, args string) error {
+	if err := command.ReviewRoulette(); err != nil {
+		return fmt.Errorf("command.ReviewRoulette returns err: %w", err)
+	}
+
+	return nil
+}
+
 func NewMR(command *handlers.Request, args string) error {
 	if err := command.Greetings(); err != nil {
 		return fmt.Errorf("command.Greetings returns err: %w", err)
+	}
+
+	if err := command.AssignReviewers(); err != nil {
+		return fmt.Errorf("command.AssignReviewers returns err: %w", err)
 	}
 
 	return nil
@@ -104,10 +117,18 @@ func MergeEvent(command *handlers.Request, args string) error {
 		return fmt.Errorf("command.UpdateBranchesWithLabel returns err: %w", err)
 	}
 
+	if err := command.UpdateReviewRouletteCounts(handlers.DecrCount); err != nil {
+		return fmt.Errorf("command.UpdateReviewRouletteCounts returns err: %w", err)
+	}
+
 	return nil
 }
 
 func UpdateEvent(command *handlers.Request, args string) error {
+	if err := command.UpdateReviewRouletteCounts(handlers.IncrCount); err != nil {
+		return fmt.Errorf("command.UpdateReviewRouletteCounts returns err: %w", err)
+	}
+
 	ok, _, err := command.IsValid()
 	if err != nil {
 		return fmt.Errorf("command.IsValid returns err: %w", err)

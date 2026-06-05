@@ -30,10 +30,32 @@ func JsonSet(id int, counts map[string]int) error {
 	return contributors.JsonSet(key, string(data))
 }
 
-func JsonIncr(id int, item string) error {
+func JsonIncr(id int, item string) (bool, error) {
+	key := fmt.Sprintf("%s:%d", keyPrefix, id)
+	ok, err := contributors.JsonExists(key, item)
+	if err != nil {
+		return false, err
+	}
 
-	contributors.JsonASet(fmt.Sprintf("%s:%d", keyPrefix, id), item, 0, 0)
-	return nil
+	if ok {
+		return contributors.JsonIncr(key, item, 1)
+	} else {
+		return true, contributors.JsonAdd(key, item, 1)
+	}
+}
+
+func JsonDecr(id int, item string) (bool, error) {
+	key := fmt.Sprintf("%s:%d", keyPrefix, id)
+	ok, err := contributors.JsonExists(key, item)
+	if err != nil {
+		return false, err
+	}
+
+	if ok {
+		return contributors.JsonIncr(key, item, -1)
+	}
+
+	return false, nil
 }
 
 func JsonGet(id int) (map[string]int, error) {
@@ -42,6 +64,10 @@ func JsonGet(id int) (map[string]int, error) {
 	val, err := contributors.JsonGet(key)
 	if err != nil {
 		return nil, err
+	}
+
+	if val == "" {
+		return nil, nil
 	}
 
 	result := []any{}
