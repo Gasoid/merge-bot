@@ -24,11 +24,11 @@ func init() {
 }
 
 type Cache interface {
-	Lock(key string) error
-	Unlock(key string) error
 	Set(key, val string) error
 	Get(key string) (string, error)
-	Add(key, candidate string, score float64) error
+	JsonSet(key string, v string) error
+	JsonASet(key string, v string, oldVal, newVal int) (bool, error)
+	JsonGet(key string) (string, error)
 	Connect() error
 }
 
@@ -38,11 +38,22 @@ type MemCache struct {
 	memcacheLock sync.RWMutex
 }
 
-func (m *MemCache) Add(key, item string, score float64) error {
-	return nil
+func (m *MemCache) JsonSet(key string, v string) error {
+	return m.Set(key, v)
+}
+
+func (m *MemCache) JsonASet(key string, v string, oldVal, newVal int) (bool, error) {
+	return true, m.Set(key, v)
+}
+
+func (m *MemCache) JsonGet(key string) (string, error) {
+	return m.Get(key)
 }
 
 func (m *MemCache) Set(key, val string) error {
+	m.memcacheLock.Lock()
+	defer m.memcacheLock.Unlock()
+
 	m.keys[key] = val
 	return nil
 }
@@ -53,16 +64,6 @@ func (m *MemCache) Get(key string) (string, error) {
 	}
 
 	return "", nil
-}
-
-func (m *MemCache) Lock(key string) error {
-	m.memcacheLock.Lock()
-	return nil
-}
-
-func (m *MemCache) Unlock(key string) error {
-	m.memcacheLock.Unlock()
-	return nil
 }
 
 func (m *MemCache) Connect() error {
@@ -102,7 +103,7 @@ func (r *RedisCache) Connect() error {
 
 func (r *RedisCache) Set(key, val string) error {
 	if _, err := r.client.SetNX(context.TODO(), key, val, ttl).Result(); err != nil {
-		return &CacheError{Operation: "Set", Err: err}
+		return &CacheError{Operation: "SetNX", Err: err}
 	}
 
 	return nil
@@ -115,75 +116,86 @@ func (r *RedisCache) Get(key string) (string, error) {
 			return "", nil
 		}
 
-		return "", &CacheError{Operation: "Set", Err: err}
+		return "", &CacheError{Operation: "Get", Err: err}
 	}
 
 	return val, nil
 }
 
-func (r *RedisCache) Add(key, item string, score float64) error {
-	if _, err := r.client.ZAdd(context.TODO(), key, redis.Z{Member: item, Score: score}).Result(); err != nil {
-		return &CacheError{Operation: "ZAdd", Err: err}
+func (r *RedisCache) JsonSet(key, v string) error {
+	if _, err := r.client.JSONSetWithArgs(context.TODO(), key, "$", v, &redis.JSONSetArgsOptions{Mode: "NX"}).Result(); err != nil {
+		return &CacheError{Operation: "JSONSetWithArgs", Err: err}
 	}
 
-	exists, err := r.client.SIsMember(context.TODO(), r.hashName(key), item).Result()
-	if err != nil {
-		return &CacheError{Operation: "SIsMember", Err: err}
+	if _, err := r.client.Expire(context.TODO(), key, time.Duration(24)*time.Hour).Result(); err != nil {
+		return &CacheError{Operation: "Expire", Err: err}
 	}
-
-	if exists {
-		return nil
-	}
-
-	if _, err := r.client.SAdd(context.TODO(), r.hashName(key), item).Result(); err != nil {
-		return &CacheError{Operation: "SAdd", Err: err}
-	}
-
-	if _, err := r.client.RPush(context.TODO(), key, item).Result(); err != nil {
-		return &CacheError{Operation: "RPush", Err: err}
-	}
-
-	r.client.Expire(context.TODO(), key, time.Duration(24)*time.Hour)
-	r.client.Expire(context.TODO(), r.hashName(key), time.Duration(24)*time.Hour)
 
 	return nil
 }
 
-func (r *RedisCache) Pop(key string) (string, error) {
-	if err := r.Lock(key); err != nil {
-		return "", &CacheError{Operation: "Lock", Err: err}
-	}
-
-	defer r.Unlock(key)
-
-	item, err := r.client.LPop(context.TODO(), key).Result()
+func (r *RedisCache) JsonGet(key string) (string, error) {
+	val, err := r.client.JSONGet(context.TODO(), key, "$").Result()
 	if err != nil {
-		return "", &CacheError{Operation: "LPop", Err: err}
+		if err == redis.Nil {
+			return "", nil
+		}
+		return "", &CacheError{Operation: "JsonGet", Err: err}
 	}
 
-	if _, err := r.client.SRem(context.TODO(), r.hashName(key), item).Result(); err != nil {
-		return "", &CacheError{Operation: "SRem", Err: err}
+	return val, nil
+}
+
+func (r *RedisCache) JsonGetItem(key, item string) (string, error) {
+	val, err := r.client.JSONGet(context.TODO(), key, "$."+item).Result()
+	if err != nil {
+		if err == redis.Nil {
+			return "", nil
+		}
+		return "", &CacheError{Operation: "JsonGet", Err: err}
 	}
 
-	return item, nil
+	return val, nil
+}
+
+var casScript = redis.NewScript(`
+    local val = redis.call('JSON.GET', KEYS[1], '$.' .. ARGV[1])
+    local parsed = cjson.decode(val)
+    if parsed[1] == tonumber(ARGV[2]) then
+        redis.call('JSON.SET', KEYS[1], '$.' .. ARGV[1] , ARGV[3])
+        return 1
+    end
+    return 0
+`)
+
+// atomic CAS
+func (r *RedisCache) JsonASet(key, item string, oldVal, newVal int) (bool, error) {
+	result, err := casScript.Run(context.TODO(), r.client, []string{key}, item, oldVal, newVal).Int()
+	if err != nil {
+		return false, &CacheError{Operation: "casScript", Err: err}
+	}
+
+	if result == 0 {
+		return false, nil
+	}
+
+	return true, nil
 }
 
 func (r *RedisCache) lockName(key string) string {
 	return fmt.Sprintf("%s:lock", key)
 }
 
-func (r *RedisCache) hashName(key string) string {
-	return fmt.Sprintf("%s:unique", key)
-}
+// func (r *RedisCache) hashName(key string) string {
+// 	return fmt.Sprintf("%s:unique", key)
+// }
 
 func (r *RedisCache) Lock(key string) error {
 	key = r.lockName(key)
-	r.lock.Lock()
-	defer r.lock.Unlock()
 
-	r.lockVal = rand.Intn(1000)
+	lockVal := rand.Intn(1000)
 	for {
-		done, err := r.client.SetNX(context.TODO(), key, r.lockVal, time.Second*300).Result()
+		done, err := r.client.SetNX(context.TODO(), key, lockVal, time.Second*300).Result()
 		if err != nil {
 			return &CacheError{Operation: "SetNX", Err: err}
 		}

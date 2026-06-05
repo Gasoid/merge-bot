@@ -15,22 +15,54 @@ const (
 	keyPrefix = "mergebot:contributors"
 )
 
-func candidatesKey(repo string) string {
-	return fmt.Sprintf("%s:%s:candidates", keyPrefix, repo)
+func candidatesKey(id int) string {
+	return fmt.Sprintf("%s:%d:candidates", keyPrefix, id)
 }
 
-func Add(repo, candidate string, count int) error {
-	key := fmt.Sprintf("%s:%s", keyPrefix, repo)
-	return contributors.Add(key, candidate, float64(count))
+func JsonSet(id int, counts map[string]int) error {
+	key := fmt.Sprintf("%s:%d", keyPrefix, id)
+
+	data, err := json.Marshal(counts)
+	if err != nil {
+		return fmt.Errorf("can't serialize candidates %w", err)
+	}
+
+	return contributors.JsonSet(key, string(data))
 }
 
-// func Pop(repo string) (string, error) {
-// 	key := fmt.Sprintf("%s:%s", keyPrefix, repo)
-// 	return contributors.Pop(key)
-// }
+func JsonIncr(id int, item string) error {
 
-func Get(repo string) ([]string, error) {
-	val, err := contributors.Get(candidatesKey(repo))
+	contributors.JsonASet(fmt.Sprintf("%s:%d", keyPrefix, id), item, 0, 0)
+	return nil
+}
+
+func JsonGet(id int) (map[string]int, error) {
+	key := fmt.Sprintf("%s:%d", keyPrefix, id)
+
+	val, err := contributors.JsonGet(key)
+	if err != nil {
+		return nil, err
+	}
+
+	result := []any{}
+
+	if err := json.Unmarshal([]byte(val), &result); err != nil {
+		return nil, fmt.Errorf("json data is invalid %w", err)
+	}
+
+	if len(result) == 0 {
+		return nil, nil
+	}
+
+	if candidates, ok := result[0].(map[string]int); ok {
+		return candidates, nil
+	}
+
+	return nil, nil
+}
+
+func Get(id int) ([]string, error) {
+	val, err := contributors.Get(candidatesKey(id))
 	if err != nil {
 		return nil, err
 	}
@@ -43,13 +75,13 @@ func Get(repo string) ([]string, error) {
 	return candidates, nil
 }
 
-func Set(repo string, candidates []string) error {
+func Set(id int, candidates []string) error {
 	data, err := json.Marshal(candidates)
 	if err != nil {
 		return fmt.Errorf("can't serialize candidates %w", err)
 	}
 
-	return contributors.Set(candidatesKey(repo), string(data))
+	return contributors.Set(candidatesKey(id), string(data))
 }
 
 func Connect() error {

@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"fmt"
 	"html/template"
+	"math/rand"
 	"sort"
 	"strings"
 
+	cache "github.com/gasoid/merge-bot/cache/contributors"
 	"github.com/gasoid/merge-bot/logger"
 	"github.com/gasoid/merge-bot/metrics"
 	"github.com/gasoid/merge-bot/semaphore"
@@ -19,6 +21,8 @@ const (
 	autoUpdateLabelColor = "#6699cc"
 	staleLabel           = "merge-bot:stale"
 	staleLabelColor      = "#cccccc"
+	DecrCount            = "merge"
+	IncrCount            = "update"
 )
 
 var (
@@ -295,6 +299,23 @@ func (r Request) SpinRoulette() ([]string, error) {
 		r.config.AssignReviewers.ReviewerNumber = 1
 	}
 
+	counts, err := cache.JsonGet(r.info.ProjectId)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(counts) > 0 {
+		for i := range candidates {
+			if v, ok := counts[candidates[i].Username]; ok {
+				candidates[i].Count = v
+			}
+		}
+	}
+
+	rand.Shuffle(len(candidates)/2, func(i, j int) {
+		candidates[i], candidates[j] = candidates[j], candidates[i]
+	})
+
 	sort.Slice(candidates, func(i, j int) bool {
 		if r.config.AssignReviewers.UseCodeowners {
 			if candidates[i].IsCodeOwner && !candidates[j].IsCodeOwner {
@@ -316,6 +337,10 @@ func (r Request) SpinRoulette() ([]string, error) {
 			continue
 		}
 
+		if c.Username == r.info.Author {
+			continue
+		}
+
 		usernames = append(usernames, c.Username)
 		if len(usernames) == r.config.AssignReviewers.ReviewerNumber {
 			break
@@ -332,4 +357,42 @@ func (r Request) AssignReviewers() error {
 	}
 
 	return r.provider.AssignReviewers(r.info.ProjectId, r.info.Id, usernames)
+}
+
+func (r Request) UpdateReviewRouletteCounts(event string) error {
+	counts, err := cache.JsonGet(r.info.ProjectId)
+	if err != nil {
+		return err
+	}
+
+	if len(counts) == 0 {
+		candidates, err := r.provider.GetContributors(r.info.ProjectId, r.info.Id)
+		if err != nil {
+			return err
+		}
+
+		for _, c := range candidates {
+			counts[c.Username] = 0
+		}
+
+		if err := cache.JsonSet(r.info.ProjectId, counts); err != nil {
+			return err
+		}
+	}
+
+	for a := range r.info.Approvals {
+		if val, ok := counts[a]; ok {
+			switch event {
+			case DecrCount:
+				if val-1 >= 0 {
+					counts[a] = val - 1
+				}
+			case IncrCount:
+				counts[a] = val + 1
+			}
+		}
+	}
+
+	cache.JsonSet(r.info.ProjectId, counts)
+	return nil
 }

@@ -583,7 +583,8 @@ func (g GitlabProvider) AssignReviewers(projectId, mergeId int, users []string) 
 
 func (g GitlabProvider) GetContributors(projectId, mergeId int) ([]handlers.Candidate, error) {
 	candidates := []handlers.Candidate{}
-	emails, err := cache.Get(fmt.Sprint(projectId))
+
+	emails, err := cache.Get(projectId)
 	if err != nil {
 		return nil, err
 	}
@@ -610,7 +611,7 @@ func (g GitlabProvider) GetContributors(projectId, mergeId int) ([]handlers.Cand
 			emails = append(emails, k)
 		}
 
-		if err := cache.Set(fmt.Sprint(projectId), emails); err != nil {
+		if err := cache.Set(projectId, emails); err != nil {
 			return nil, err
 		}
 	}
@@ -653,8 +654,7 @@ func (g GitlabProvider) GetContributors(projectId, mergeId int) ([]handlers.Cand
 				StatusEmoji: status.Emoji,
 				Status:      status.Message,
 				Timezone:    user.Location,
-				IsCodeOwner: isCodeOwner,
-				Count:       0})
+				IsCodeOwner: isCodeOwner})
 		}
 	}
 
