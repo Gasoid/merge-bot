@@ -395,9 +395,11 @@ func (r Request) UpdateReviewRouletteCounts(event string) error {
 	for a := range r.info.Approvals {
 		switch event {
 		case DecrCount:
-			cache.JsonDecr(r.info.ProjectId, a)
+			_, err := cache.JsonDecr(r.info.ProjectId, a)
+			return err
 		case IncrCount:
-			cache.JsonIncr(r.info.ProjectId, a)
+			_, err := cache.JsonIncr(r.info.ProjectId, a)
+			return err
 		}
 	}
 	return nil
