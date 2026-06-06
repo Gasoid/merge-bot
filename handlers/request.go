@@ -9,10 +9,10 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/gasoid/merge-bot/cache"
-	"github.com/gasoid/merge-bot/logger"
-	"github.com/gasoid/merge-bot/metrics"
-	"github.com/gasoid/merge-bot/semaphore"
+	"github.com/gasoid/merge-bot/v3/cache"
+	"github.com/gasoid/merge-bot/v3/logger"
+	"github.com/gasoid/merge-bot/v3/metrics"
+	"github.com/gasoid/merge-bot/v3/semaphore"
 
 	"gopkg.in/yaml.v3"
 )

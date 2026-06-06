@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gasoid/merge-bot/webhook"
+	"github.com/gasoid/merge-bot/v3/webhook"
 
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"

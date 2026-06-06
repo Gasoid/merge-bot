@@ -1,6 +1,6 @@
 package handlers
 
-import "github.com/gasoid/merge-bot/logger"
+import "github.com/gasoid/merge-bot/v3/logger"
 
 func IsHealthy() bool {
 	for name := range providers {

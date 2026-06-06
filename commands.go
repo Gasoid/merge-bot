@@ -8,9 +8,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gasoid/merge-bot/handlers"
-	"github.com/gasoid/merge-bot/logger"
-	"github.com/gasoid/merge-bot/webhook"
+	"github.com/gasoid/merge-bot/v3/handlers"
+	"github.com/gasoid/merge-bot/v3/logger"
+	"github.com/gasoid/merge-bot/v3/webhook"
 )
 
 func init() {

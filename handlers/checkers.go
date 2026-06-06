@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/gasoid/merge-bot/logger"
+	"github.com/gasoid/merge-bot/v3/logger"
 )
 
 type CheckResult struct {

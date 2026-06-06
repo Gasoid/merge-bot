@@ -6,8 +6,8 @@ import (
 	"fmt"
 
 	extism "github.com/extism/go-sdk"
-	"github.com/gasoid/merge-bot/handlers"
-	"github.com/gasoid/merge-bot/plugins"
+	"github.com/gasoid/merge-bot/v3/handlers"
+	"github.com/gasoid/merge-bot/v3/plugins"
 	"github.com/stretchr/testify/assert/yaml"
 )
 

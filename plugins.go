@@ -1,9 +1,9 @@
 package main
 
 import (
-	"github.com/gasoid/merge-bot/logger"
-	"github.com/gasoid/merge-bot/plugins"
-	_ "github.com/gasoid/merge-bot/plugins/wasm"
+	"github.com/gasoid/merge-bot/v3/logger"
+	"github.com/gasoid/merge-bot/v3/plugins"
+	_ "github.com/gasoid/merge-bot/v3/plugins/wasm"
 )
 
 func loadPlugins() {

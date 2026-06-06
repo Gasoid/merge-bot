@@ -8,9 +8,9 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/gasoid/merge-bot/config"
-	"github.com/gasoid/merge-bot/handlers"
-	"github.com/gasoid/merge-bot/logger"
+	"github.com/gasoid/merge-bot/v3/config"
+	"github.com/gasoid/merge-bot/v3/handlers"
+	"github.com/gasoid/merge-bot/v3/logger"
 	"gopkg.in/yaml.v3"
 )
 

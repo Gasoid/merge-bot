@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/dustin/go-humanize/english"
-	"github.com/gasoid/merge-bot/metrics"
+	"github.com/gasoid/merge-bot/v3/metrics"
 )
 
 type MR struct {

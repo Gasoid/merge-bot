@@ -4,7 +4,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gasoid/merge-bot/logger"
+	"github.com/gasoid/merge-bot/v3/logger"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
