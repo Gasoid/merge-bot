@@ -1,12 +1,8 @@
 package handlers
 
 import (
-	"errors"
 	"iter"
 	"sync"
-
-	"github.com/gasoid/merge-bot/cache"
-	"github.com/gasoid/merge-bot/cache/contributors"
 )
 
 const (
@@ -150,12 +146,6 @@ func New(providerName string) (*Request, error) {
 	provider := constructor()
 	if provider == nil {
 		return nil, &Error{text: "Provider can't be nil"}
-	}
-
-	if err := contributors.Connect(); err != nil {
-		if !errors.Is(err, cache.ErrRedisUrlEmpty) {
-			return nil, err
-		}
 	}
 
 	return &Request{provider: provider}, nil

@@ -1,17 +1,15 @@
-package contributors
+package cache
 
 import (
 	"fmt"
-
-	"github.com/gasoid/merge-bot/cache"
 )
 
 var (
-	contributors cache.Cache = &cache.RedisCache{}
+	contributors Cache
 )
 
 const (
-	countsPrefix       = "mergebot:contributors"
+	countsPrefix       = "mergebot:counts"
 	contributorsPrefix = "mergebot:contributors"
 )
 

@@ -10,7 +10,7 @@ import (
 	"slices"
 	"time"
 
-	cache "github.com/gasoid/merge-bot/cache/contributors"
+	"github.com/gasoid/merge-bot/cache"
 	"github.com/gasoid/merge-bot/config"
 	"github.com/gasoid/merge-bot/handlers"
 	"github.com/gasoid/merge-bot/logger"

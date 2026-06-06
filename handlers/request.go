@@ -8,7 +8,7 @@ import (
 	"sort"
 	"strings"
 
-	cache "github.com/gasoid/merge-bot/cache/contributors"
+	"github.com/gasoid/merge-bot/cache"
 	"github.com/gasoid/merge-bot/logger"
 	"github.com/gasoid/merge-bot/metrics"
 	"github.com/gasoid/merge-bot/semaphore"
