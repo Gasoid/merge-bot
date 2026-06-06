@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/gasoid/merge-bot/config"
 	"github.com/redis/go-redis/v9"
@@ -26,9 +25,9 @@ var (
 `)
 )
 
-const (
-	ttl = 30 * 24 * time.Hour
-)
+// const (
+// 	ttl = 30 * 24 * time.Hour
+// )
 
 func init() {
 	config.StringVar(&redisUrl, "redis-url", "", "redis url redis://<user>:<pass>@localhost:6379/<db> (also via REDIS_URL)")
@@ -36,10 +35,10 @@ func init() {
 
 type Cache interface {
 	JsonSet(key string, v any) error
+	JsonGet(key string) (any, error)
 	JsonExists(key, item string) (bool, error)
 	JsonAdd(key, item string, v int) error
 	JsonIncr(key string, item string, v int) (bool, error)
-	JsonGet(key string) (any, error)
 	Connect() error
 }
 
