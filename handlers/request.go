@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"html/template"
 	"math/rand"
+	"slices"
 	"sort"
 	"strings"
 
@@ -28,6 +29,8 @@ const (
 var (
 	deleteStaleBranches = semaphore.NewKeyedSemaphore(1)
 	updateBranch        = semaphore.NewKeyedSemaphore(2)
+	vacationStatuses    = []string{"ooo", "vacation", "travel", "parental leave"}
+	emojiStatuses       = []string{"beach", "beach_umbrella", "palm_tree", "red_circle", "no_entry"}
 )
 
 type Request struct {
@@ -280,13 +283,15 @@ type Candidate struct {
 }
 
 func (c Candidate) IsAvailable() bool {
-	for _, s := range []string{"OOO", "vacation", "🏖️"} {
-		if strings.Contains(c.Status, s) || c.StatusEmoji == s {
+	status := strings.ToLower(c.Status)
+
+	for _, s := range vacationStatuses {
+		if strings.Contains(status, s) {
 			return false
 		}
 	}
 
-	return true
+	return slices.Contains(emojiStatuses, c.StatusEmoji)
 }
 
 func (r Request) SpinRoulette() ([]string, error) {
