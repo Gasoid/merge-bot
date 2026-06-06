@@ -1,7 +1,6 @@
 package contributors
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/gasoid/merge-bot/cache"
@@ -12,102 +11,84 @@ var (
 )
 
 const (
-	keyPrefix = "mergebot:contributors"
+	countsPrefix       = "mergebot:contributors"
+	contributorsPrefix = "mergebot:contributors"
 )
 
-func candidatesKey(id int) string {
-	return fmt.Sprintf("%s:%d:candidates", keyPrefix, id)
+func contributorsKey(id int) string {
+	return fmt.Sprintf("%s:%d", contributorsPrefix, id)
 }
 
-func JsonSet(id int, counts map[string]int) error {
-	key := fmt.Sprintf("%s:%d", keyPrefix, id)
-
-	data, err := json.Marshal(counts)
-	if err != nil {
-		return fmt.Errorf("can't serialize candidates %w", err)
-	}
-
-	return contributors.JsonSet(key, string(data))
+func countsKey(id int) string {
+	return fmt.Sprintf("%s:%d", countsPrefix, id)
 }
 
-func JsonIncr(id int, item string) (bool, error) {
-	key := fmt.Sprintf("%s:%d", keyPrefix, id)
-	ok, err := contributors.JsonExists(key, item)
-	if err != nil {
-		return false, err
-	}
-
-	if ok {
-		return contributors.JsonIncr(key, item, 1)
-	} else {
-		return true, contributors.JsonAdd(key, item, 1)
-	}
+func SetCounts(id int, counts map[string]int) error {
+	return contributors.JsonSet(countsKey(id), counts)
 }
 
-func JsonDecr(id int, item string) (bool, error) {
-	key := fmt.Sprintf("%s:%d", keyPrefix, id)
-	ok, err := contributors.JsonExists(key, item)
-	if err != nil {
-		return false, err
-	}
-
-	if ok {
-		return contributors.JsonIncr(key, item, -1)
-	}
-
-	return false, nil
-}
-
-func JsonGet(id int) (map[string]int, error) {
-	key := fmt.Sprintf("%s:%d", keyPrefix, id)
-
-	val, err := contributors.JsonGet(key)
+func GetCounts(id int) (map[string]int, error) {
+	val, err := contributors.JsonGet(countsKey(id))
 	if err != nil {
 		return nil, err
 	}
 
-	if val == "" {
+	if val == nil {
 		return nil, nil
 	}
 
-	result := []any{}
-
-	if err := json.Unmarshal([]byte(val), &result); err != nil {
-		return nil, fmt.Errorf("json data is invalid %w", err)
-	}
-
-	if len(result) == 0 {
-		return nil, nil
-	}
-
-	if candidates, ok := result[0].(map[string]int); ok {
+	if candidates, ok := val.(map[string]int); ok {
 		return candidates, nil
 	}
 
 	return nil, nil
 }
 
-func Get(id int) ([]string, error) {
-	val, err := contributors.Get(candidatesKey(id))
+func IncrCount(id int, item string) (bool, error) {
+	ok, err := contributors.JsonExists(countsKey(id), item)
+	if err != nil {
+		return false, err
+	}
+
+	if ok {
+		return contributors.JsonIncr(countsKey(id), item, 1)
+	} else {
+		return true, contributors.JsonAdd(countsKey(id), item, 1)
+	}
+}
+
+func DecrCount(id int, item string) (bool, error) {
+	ok, err := contributors.JsonExists(countsKey(id), item)
+	if err != nil {
+		return false, err
+	}
+
+	if ok {
+		return contributors.JsonIncr(countsKey(id), item, -1)
+	}
+
+	return false, nil
+}
+
+func GetContributors(id int) ([]string, error) {
+	val, err := contributors.JsonGet(contributorsKey(id))
 	if err != nil {
 		return nil, err
 	}
 
-	candidates := []string{}
-	if err := json.Unmarshal([]byte(val), &candidates); err != nil {
-		return nil, fmt.Errorf("json data is invalid %w", err)
+	if val == nil {
+		return nil, nil
 	}
 
-	return candidates, nil
+	if candidates, ok := val.([]string); ok {
+		return candidates, nil
+	}
+
+	return nil, nil
 }
 
-func Set(id int, candidates []string) error {
-	data, err := json.Marshal(candidates)
-	if err != nil {
-		return fmt.Errorf("can't serialize candidates %w", err)
-	}
-
-	return contributors.Set(candidatesKey(id), string(data))
+func SetContributors(id int, candidates []string) error {
+	return contributors.JsonSet(contributorsKey(id), candidates)
 }
 
 func Connect() error {

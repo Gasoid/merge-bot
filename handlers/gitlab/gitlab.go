@@ -584,7 +584,7 @@ func (g GitlabProvider) AssignReviewers(projectId, mergeId int, users []string) 
 func (g GitlabProvider) GetContributors(projectId, mergeId int) ([]handlers.Candidate, error) {
 	candidates := []handlers.Candidate{}
 
-	emails, err := cache.Get(projectId)
+	emails, err := cache.GetContributors(projectId)
 	if err != nil {
 		return nil, err
 	}
@@ -611,7 +611,7 @@ func (g GitlabProvider) GetContributors(projectId, mergeId int) ([]handlers.Cand
 			emails = append(emails, k)
 		}
 
-		if err := cache.Set(projectId, emails); err != nil {
+		if err := cache.SetContributors(projectId, emails); err != nil {
 			return nil, err
 		}
 	}

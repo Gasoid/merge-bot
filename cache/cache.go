@@ -2,6 +2,7 @@ package cache
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -34,13 +35,11 @@ func init() {
 }
 
 type Cache interface {
-	Set(key, val string) error
-	Get(key string) (string, error)
-	JsonSet(key string, v string) error
+	JsonSet(key string, v any) error
 	JsonExists(key, item string) (bool, error)
 	JsonAdd(key, item string, v int) error
 	JsonIncr(key string, item string, v int) (bool, error)
-	JsonGet(key string) (string, error)
+	JsonGet(key string) (any, error)
 	Connect() error
 }
 
@@ -66,28 +65,7 @@ func (r *RedisCache) Connect() error {
 	return nil
 }
 
-func (r *RedisCache) Set(key, val string) error {
-	if _, err := r.client.SetNX(context.TODO(), key, val, ttl).Result(); err != nil {
-		return &CacheError{Operation: "SetNX", Err: err}
-	}
-
-	return nil
-}
-
-func (r *RedisCache) Get(key string) (string, error) {
-	val, err := r.client.Get(context.TODO(), key).Result()
-	if err != nil {
-		if err == redis.Nil {
-			return "", nil
-		}
-
-		return "", &CacheError{Operation: "Get", Err: err}
-	}
-
-	return val, nil
-}
-
-func (r *RedisCache) JsonSet(key, v string) error {
+func (r *RedisCache) JsonSet(key string, v any) error {
 	if _, err := r.client.JSONSetWithArgs(context.TODO(), key, "$", v, &redis.JSONSetArgsOptions{Mode: "NX"}).Result(); err != nil {
 		return &CacheError{Operation: "JSONSetWithArgs", Err: err}
 	}
@@ -111,7 +89,7 @@ func (r *RedisCache) JsonAdd(key, item string, v int) error {
 	return nil
 }
 
-func (r *RedisCache) JsonGet(key string) (string, error) {
+func (r *RedisCache) JsonGet(key string) (any, error) {
 	val, err := r.client.JSONGet(context.TODO(), key, "$").Result()
 	if err != nil {
 		if err == redis.Nil {
@@ -120,7 +98,21 @@ func (r *RedisCache) JsonGet(key string) (string, error) {
 		return "", &CacheError{Operation: "JsonGet", Err: err}
 	}
 
-	return val, nil
+	if val == "[]" {
+		return nil, nil
+	}
+
+	result := []any{}
+
+	if err := json.Unmarshal([]byte(val), &result); err != nil {
+		return nil, fmt.Errorf("json data is invalid %w", err)
+	}
+
+	if len(result) == 0 {
+		return nil, nil
+	}
+
+	return result[0], nil
 }
 
 func (r *RedisCache) JsonExists(key, item string) (bool, error) {
