@@ -60,21 +60,17 @@ func (r *RedisCache) JsonSet(key string, v any) error {
 		return &CacheError{Operation: "JSONSetWithArgs", Err: err}
 	}
 
-	// if _, err := r.client.Expire(context.TODO(), key, ttl).Result(); err != nil {
-	// 	return &CacheError{Operation: "Expire", Err: err}
-	// }
-
 	return nil
 }
 
 func (r *RedisCache) JsonAdd(key, item string, v int) error {
+	if v < 0 {
+		v = 0
+	}
+
 	if _, err := r.client.JSONSetWithArgs(context.TODO(), key, "$."+item, v, &redis.JSONSetArgsOptions{Mode: "NX"}).Result(); err != nil {
 		return &CacheError{Operation: "JSONSetWithArgs", Err: err}
 	}
-
-	// if _, err := r.client.Expire(context.TODO(), key, ttl).Result(); err != nil {
-	// 	return &CacheError{Operation: "Expire", Err: err}
-	// }
 
 	return nil
 }

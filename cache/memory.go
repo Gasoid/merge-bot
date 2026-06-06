@@ -23,9 +23,11 @@ func (m *MemCache) JsonAdd(key string, item string, v int) error {
 	defer m.memcacheLock.Unlock()
 
 	val := data.(map[string]int)
-	val[item] = v
-	m.keys[key] = val
+	if v < 0 {
+		v = 0
+	}
 
+	val[item] = v
 	return nil
 }
 
@@ -44,14 +46,12 @@ func (m *MemCache) JsonIncr(key, item string, v int) (bool, error) {
 
 	data := val.(map[string]int)
 	if _, ok := data[item]; ok {
-		//old := data[item]
+		old := data[item]
 		data[item] += v
 		if data[item] < 0 {
-			//data[item] = old
+			data[item] = old
 			return false, nil
 		}
-
-		m.keys[key] = data
 	}
 
 	return true, nil
