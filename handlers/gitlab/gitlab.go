@@ -10,10 +10,10 @@ import (
 	"slices"
 	"time"
 
-	"github.com/gasoid/merge-bot/cache"
-	"github.com/gasoid/merge-bot/config"
-	"github.com/gasoid/merge-bot/handlers"
-	"github.com/gasoid/merge-bot/logger"
+	"github.com/gasoid/merge-bot/v3/cache"
+	"github.com/gasoid/merge-bot/v3/config"
+	"github.com/gasoid/merge-bot/v3/handlers"
+	"github.com/gasoid/merge-bot/v3/logger"
 	"github.com/hairyhenderson/go-codeowners"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
 

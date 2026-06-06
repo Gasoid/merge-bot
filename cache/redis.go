@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/gasoid/merge-bot/config"
+	"github.com/gasoid/merge-bot/v3/config"
 	"github.com/redis/go-redis/v9"
 )
 

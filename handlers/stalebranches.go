@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/gasoid/merge-bot/logger"
-	"github.com/gasoid/merge-bot/metrics"
+	"github.com/gasoid/merge-bot/v3/logger"
+	"github.com/gasoid/merge-bot/v3/metrics"
 )
 
 type StaleBranch struct {

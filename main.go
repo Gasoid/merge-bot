@@ -1,11 +1,11 @@
 package main
 
 import (
-	"github.com/gasoid/merge-bot/cache"
-	"github.com/gasoid/merge-bot/config"
-	_ "github.com/gasoid/merge-bot/handlers/gitlab"
-	"github.com/gasoid/merge-bot/logger"
-	_ "github.com/gasoid/merge-bot/webhook/gitlab"
+	"github.com/gasoid/merge-bot/v3/cache"
+	"github.com/gasoid/merge-bot/v3/config"
+	_ "github.com/gasoid/merge-bot/v3/handlers/gitlab"
+	"github.com/gasoid/merge-bot/v3/logger"
+	_ "github.com/gasoid/merge-bot/v3/webhook/gitlab"
 )
 
 func main() {

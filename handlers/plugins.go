@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/gasoid/merge-bot/logger"
+	"github.com/gasoid/merge-bot/v3/logger"
 )
 
 const (
