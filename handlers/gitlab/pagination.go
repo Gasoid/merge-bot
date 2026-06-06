@@ -4,15 +4,15 @@ import (
 	"iter"
 
 	"github.com/gasoid/merge-bot/v3/logger"
-	gitlab "gitlab.com/gitlab-org/api/client-go"
+	gitlab "gitlab.com/gitlab-org/api/client-go/v2"
 )
 
 func paginate[T any](
-	fetchPage func(page, perPage int) ([]T, *gitlab.Response, error),
-	size int,
+	fetchPage func(page, perPage int64) ([]T, *gitlab.Response, error),
+	size int64,
 ) iter.Seq[T] {
 	return func(yield func(T) bool) {
-		page := 1
+		var page int64 = 1
 
 		for {
 			items, resp, err := fetchPage(page, size)
@@ -35,20 +35,20 @@ func paginate[T any](
 	}
 }
 
-func (g GitlabProvider) listBranches(projectId, size int) iter.Seq[*gitlab.Branch] {
-	return paginate(func(page, perPage int) ([]*gitlab.Branch, *gitlab.Response, error) {
-		return g.client.Branches.ListBranches(projectId, &gitlab.ListBranchesOptions{
+func (g GitlabProvider) listBranches(projectID, size int64) iter.Seq[*gitlab.Branch] {
+	return paginate(func(page, perPage int64) ([]*gitlab.Branch, *gitlab.Response, error) {
+		return g.client.Branches.ListBranches(projectID, &gitlab.ListBranchesOptions{
 			ListOptions: gitlab.ListOptions{Page: page, PerPage: perPage},
 		})
 	}, size)
 }
 
-func (g GitlabProvider) listMergeRequests(projectId, size int, options *gitlab.ListProjectMergeRequestsOptions) iter.Seq[*gitlab.BasicMergeRequest] {
-	return paginate(func(page, perPage int) ([]*gitlab.BasicMergeRequest, *gitlab.Response, error) {
+func (g GitlabProvider) listMergeRequests(projectID, size int64, options *gitlab.ListProjectMergeRequestsOptions) iter.Seq[*gitlab.BasicMergeRequest] {
+	return paginate(func(page, perPage int64) ([]*gitlab.BasicMergeRequest, *gitlab.Response, error) {
 		if options == nil {
 			options = &gitlab.ListProjectMergeRequestsOptions{}
 		}
 		options.ListOptions = gitlab.ListOptions{Page: page, PerPage: perPage}
-		return g.client.MergeRequests.ListProjectMergeRequests(projectId, options)
+		return g.client.MergeRequests.ListProjectMergeRequests(projectID, options)
 	}, size)
 }

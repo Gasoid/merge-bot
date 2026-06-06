@@ -7,7 +7,7 @@ import (
 
 	"github.com/gasoid/merge-bot/v3/logger"
 	"github.com/gasoid/merge-bot/v3/webhook"
-	gitlab "gitlab.com/gitlab-org/api/client-go"
+	gitlab "gitlab.com/gitlab-org/api/client-go/v2"
 )
 
 const (
@@ -24,11 +24,11 @@ func init() {
 type GitlabProvider struct {
 	payload   []byte
 	note      string
-	noteId    int
+	noteId    int64
 	action    string
 	updatedAt string
-	projectId int
-	id        int
+	projectId int64
+	id        int64
 	secret    string
 }
 
@@ -112,15 +112,15 @@ func (g *GitlabProvider) GetCmd() string {
 	return ""
 }
 
-func (g *GitlabProvider) GetID() int {
+func (g *GitlabProvider) GetID() int64 {
 	return g.id
 }
 
-func (g *GitlabProvider) GetProjectID() int {
+func (g *GitlabProvider) GetProjectID() int64 {
 	return g.projectId
 }
 
-func (g *GitlabProvider) GetNoteID() int {
+func (g *GitlabProvider) GetNoteID() int64 {
 	return g.noteId
 }
 

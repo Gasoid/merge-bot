@@ -15,7 +15,7 @@ import (
 	"github.com/gasoid/merge-bot/v3/handlers"
 	"github.com/gasoid/merge-bot/v3/logger"
 	"github.com/hairyhenderson/go-codeowners"
-	gitlab "gitlab.com/gitlab-org/api/client-go"
+	gitlab "gitlab.com/gitlab-org/api/client-go/v2"
 
 	"github.com/dustin/go-humanize"
 )
@@ -43,11 +43,11 @@ const (
 type GitlabProvider struct {
 	client        *gitlab.Client
 	mr            *gitlab.MergeRequest
-	currentUserId int
+	currentUserID int64
 }
 
-func (g GitlabProvider) loadMR(projectId, mergeId int) (*gitlab.MergeRequest, error) {
-	mr, _, err := g.client.MergeRequests.GetMergeRequest(projectId, mergeId, &gitlab.GetMergeRequestsOptions{})
+func (g GitlabProvider) loadMR(projectID, mergeID int64) (*gitlab.MergeRequest, error) {
+	mr, _, err := g.client.MergeRequests.GetMergeRequest(projectID, mergeID, &gitlab.GetMergeRequestsOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -55,14 +55,14 @@ func (g GitlabProvider) loadMR(projectId, mergeId int) (*gitlab.MergeRequest, er
 	return mr, nil
 }
 
-func (g GitlabProvider) UpdateFromMaster(projectId, mergeId int) error {
-	mr, err := g.loadMR(projectId, mergeId)
+func (g GitlabProvider) UpdateFromMaster(projectID, mergeID int64) error {
+	mr, err := g.loadMR(projectID, mergeID)
 	if err != nil {
 		return err
 	}
 
 	project, _, err := g.client.Projects.GetProject(
-		projectId,
+		projectID,
 		&gitlab.GetProjectOptions{Statistics: new(true)},
 	)
 	if err != nil {
@@ -87,10 +87,10 @@ func (g GitlabProvider) UpdateFromMaster(projectId, mergeId int) error {
 	)
 }
 
-func (g GitlabProvider) findDiscussion(projectId, mergeId int) (string, string, int, error) {
+func (g GitlabProvider) findDiscussion(projectID, mergeID int64) (string, string, int64, error) {
 	discussions, _, err := g.client.Discussions.ListMergeRequestDiscussions(
-		projectId,
-		mergeId,
+		projectID,
+		mergeID,
 		&gitlab.ListMergeRequestDiscussionsOptions{})
 	if err != nil {
 		return "", "", 0, err
@@ -106,20 +106,20 @@ func (g GitlabProvider) findDiscussion(projectId, mergeId int) (string, string, 
 			continue
 		}
 
-		if note.Author.ID != g.currentUserId {
+		if note.Author.ID != g.currentUserID {
 			continue
 		}
 
 		return d.ID, note.Body, note.ID, nil
 	}
 
-	logger.Info("could not find resolvable discussion", "merge request", mergeId, "project", projectId)
+	logger.Info("could not find resolvable discussion", "merge request", mergeID, "project", projectID)
 
 	return "", "", 0, handlers.DiscussionError
 }
 
-func (g GitlabProvider) UpdateDiscussion(projectId, mergeId int, message string) error {
-	discussionId, body, noteId, err := g.findDiscussion(projectId, mergeId)
+func (g GitlabProvider) UpdateDiscussion(projectID, mergeID int64, message string) error {
+	discussionId, body, noteId, err := g.findDiscussion(projectID, mergeID)
 	if err != nil {
 		return err
 	}
@@ -129,8 +129,8 @@ func (g GitlabProvider) UpdateDiscussion(projectId, mergeId int, message string)
 	}
 
 	_, _, err = g.client.Discussions.UpdateMergeRequestDiscussionNote(
-		projectId,
-		mergeId,
+		projectID,
+		mergeID,
 		discussionId,
 		noteId,
 		&gitlab.UpdateMergeRequestDiscussionNoteOptions{
@@ -143,15 +143,15 @@ func (g GitlabProvider) UpdateDiscussion(projectId, mergeId int, message string)
 	return nil
 }
 
-func (g GitlabProvider) UnresolveDiscussion(projectId, mergeId int) error {
-	discussionId, _, noteId, err := g.findDiscussion(projectId, mergeId)
+func (g GitlabProvider) UnresolveDiscussion(projectID, mergeID int64) error {
+	discussionId, _, noteId, err := g.findDiscussion(projectID, mergeID)
 	if err != nil {
 		return err
 	}
 
 	_, _, err = g.client.Discussions.UpdateMergeRequestDiscussionNote(
-		projectId,
-		mergeId,
+		projectID,
+		mergeID,
 		discussionId,
 		noteId,
 		&gitlab.UpdateMergeRequestDiscussionNoteOptions{
@@ -163,12 +163,12 @@ func (g GitlabProvider) UnresolveDiscussion(projectId, mergeId int) error {
 	return nil
 }
 
-func (g GitlabProvider) CreateDiscussion(projectId, mergeId int, message string) error {
-	logger.Debug("createDiscussion in gitlab", "message", message, "projectId", projectId)
+func (g GitlabProvider) CreateDiscussion(projectID, mergeID int64, message string) error {
+	logger.Debug("createDiscussion in gitlab", "message", message, "projectId", projectID)
 
 	_, _, err := g.client.Discussions.CreateMergeRequestDiscussion(
-		projectId,
-		mergeId,
+		projectID,
+		mergeID,
 		&gitlab.CreateMergeRequestDiscussionOptions{
 			Body: &message,
 		},
@@ -176,21 +176,21 @@ func (g GitlabProvider) CreateDiscussion(projectId, mergeId int, message string)
 	return err
 }
 
-func (g *GitlabProvider) LeaveComment(projectId, mergeId int, message string) error {
-	logger.Debug("leaveComment in gitlab", "message", message, "projectId", projectId)
+func (g *GitlabProvider) LeaveComment(projectID, mergeID int64, message string) error {
+	logger.Debug("leaveComment in gitlab", "message", message, "projectId", projectID)
 
 	_, _, err := g.client.Notes.CreateMergeRequestNote(
-		projectId,
-		mergeId,
+		projectID,
+		mergeID,
 		&gitlab.CreateMergeRequestNoteOptions{Body: &message},
 	)
 
 	return err
 }
 
-func (g *GitlabProvider) AwardEmoji(projectId, mergeId, noteId int, emoji string) error {
+func (g *GitlabProvider) AwardEmoji(projectID, mergeID, noteID int64, emoji string) error {
 	_, _, err := g.client.AwardEmoji.CreateMergeRequestAwardEmojiOnNote(
-		projectId, mergeId, noteId,
+		projectID, mergeID, noteID,
 		&gitlab.CreateAwardEmojiOptions{
 			Name: emoji,
 		})
@@ -198,20 +198,20 @@ func (g *GitlabProvider) AwardEmoji(projectId, mergeId, noteId int, emoji string
 	return err
 }
 
-func (g *GitlabProvider) Merge(projectId, mergeId int, message string) error {
+func (g *GitlabProvider) Merge(projectID, mergeID int64, message string) error {
 	t := true
-	_, _, err := g.client.MergeRequests.AcceptMergeRequest(projectId,
-		mergeId,
+	_, _, err := g.client.MergeRequests.AcceptMergeRequest(projectID,
+		mergeID,
 		&gitlab.AcceptMergeRequestOptions{Squash: &t, ShouldRemoveSourceBranch: &t, SquashCommitMessage: &message},
 	)
 
 	return err
 }
 
-func (g *GitlabProvider) GetApprovals(projectId, mergeId int) (map[string]struct{}, error) {
+func (g *GitlabProvider) GetApprovals(projectID, mergeID int64) (map[string]struct{}, error) {
 
 	approvals := map[string]struct{}{}
-	approvalsState, _, err := g.client.MergeRequests.GetMergeRequestApprovals(projectId, mergeId)
+	approvalsState, _, err := g.client.MergeRequests.GetMergeRequestApprovals(projectID, mergeID)
 	if err != nil {
 		return nil, err
 	}
@@ -227,7 +227,7 @@ func (g *GitlabProvider) GetApprovals(projectId, mergeId int) (map[string]struct
 	return approvals, nil
 }
 
-func (g *GitlabProvider) GetFailedPipelines() (int, error) {
+func (g *GitlabProvider) GetFailedPipelines() (int64, error) {
 	if g.mr.HeadPipeline != nil && g.mr.HeadPipeline.Status != string(gitlab.DeploymentStatusSuccess) {
 		return 1, nil
 	}
@@ -235,8 +235,8 @@ func (g *GitlabProvider) GetFailedPipelines() (int, error) {
 	return 0, nil
 }
 
-func (g *GitlabProvider) IsValid(projectId, mergeId int) (bool, error) {
-	mr, err := g.loadMR(projectId, mergeId)
+func (g *GitlabProvider) IsValid(projectID, mergeID int64) (bool, error) {
+	mr, err := g.loadMR(projectID, mergeID)
 	if err != nil {
 		return false, err
 	}
@@ -250,13 +250,13 @@ func (g *GitlabProvider) IsValid(projectId, mergeId int) (bool, error) {
 	return !g.mr.HasConflicts, nil
 }
 
-func (g *GitlabProvider) GetFile(projectId int, path string) ([]byte, error) {
-	project, _, err := g.client.Projects.GetProject(projectId, &gitlab.GetProjectOptions{})
+func (g *GitlabProvider) GetFile(projectID int64, path string) ([]byte, error) {
+	project, _, err := g.client.Projects.GetProject(projectID, &gitlab.GetProjectOptions{})
 	if err != nil {
 		return nil, err
 	}
 
-	gitlabFile, _, err := g.client.RepositoryFiles.GetFile(projectId, path, &gitlab.GetFileOptions{Ref: &project.DefaultBranch})
+	gitlabFile, _, err := g.client.RepositoryFiles.GetFile(projectID, path, &gitlab.GetFileOptions{Ref: &project.DefaultBranch})
 	if err != nil {
 		return nil, err
 	}
@@ -269,14 +269,14 @@ func (g *GitlabProvider) GetFile(projectId int, path string) ([]byte, error) {
 	return content, nil
 }
 
-func (g *GitlabProvider) GetMRInfo(projectId, mergeId int, configPath string) (*handlers.MrInfo, error) {
+func (g *GitlabProvider) GetMRInfo(projectID, mergeID int64, configPath string) (*handlers.MrInfo, error) {
 	var err error
 	info := handlers.MrInfo{
-		ProjectId: projectId,
-		Id:        mergeId,
+		ProjectID: projectID,
+		ID:        mergeID,
 	}
 
-	info.IsValid, err = g.IsValid(projectId, mergeId)
+	info.IsValid, err = g.IsValid(projectID, mergeID)
 	if err != nil {
 		return nil, err
 	}
@@ -286,7 +286,7 @@ func (g *GitlabProvider) GetMRInfo(projectId, mergeId int, configPath string) (*
 	info.SourceBranch = g.mr.SourceBranch
 	info.Author = g.mr.Author.Username
 
-	b, err := g.GetFile(projectId, configPath)
+	b, err := g.GetFile(projectID, configPath)
 	if err != nil {
 		logger.Debug("i am using default config to validate a request")
 		info.ConfigContent = ""
@@ -296,7 +296,7 @@ func (g *GitlabProvider) GetMRInfo(projectId, mergeId int, configPath string) (*
 
 	info.Title = g.mr.Title
 	info.Description = g.mr.Description
-	info.Approvals, err = g.GetApprovals(projectId, mergeId)
+	info.Approvals, err = g.GetApprovals(projectID, mergeID)
 	if err != nil {
 		return nil, err
 	}
@@ -308,7 +308,7 @@ func (g *GitlabProvider) GetMRInfo(projectId, mergeId int, configPath string) (*
 	}
 
 	if g.mr.HeadPipeline != nil {
-		report, _, err := g.client.Pipelines.GetPipelineTestReport(projectId, g.mr.HeadPipeline.IID)
+		report, _, err := g.client.Pipelines.GetPipelineTestReport(projectID, g.mr.HeadPipeline.IID)
 		if err != nil {
 			logger.Debug("GetPipelineTestReport returns error, but i am tolerating this issue", "error", err)
 			info.FailedTests = 1
@@ -320,11 +320,11 @@ func (g *GitlabProvider) GetMRInfo(projectId, mergeId int, configPath string) (*
 	return &info, nil
 }
 
-func (g GitlabProvider) GetVar(projectId int, varName string) (string, error) {
-	secretVar, resp, err := g.client.ProjectVariables.GetVariable(projectId, varName, &gitlab.GetProjectVariableOptions{})
+func (g GitlabProvider) GetVar(projectID int64, varName string) (string, error) {
+	secretVar, resp, err := g.client.ProjectVariables.GetVariable(projectID, varName, &gitlab.GetProjectVariableOptions{})
 	if err != nil {
 		if resp.StatusCode == http.StatusNotFound {
-			logger.Debug("variable not found", "varName", varName, "projectId", projectId)
+			logger.Debug("variable not found", "varName", varName, "projectId", projectID)
 			return "", nil
 		}
 
@@ -334,15 +334,15 @@ func (g GitlabProvider) GetVar(projectId int, varName string) (string, error) {
 	return secretVar.Value, nil
 }
 
-func (g GitlabProvider) ListBranches(projectId, size int, protected bool) iter.Seq[handlers.StaleBranch] {
+func (g GitlabProvider) ListBranches(projectID, size int64, protected bool) iter.Seq[handlers.StaleBranch] {
 
 	return func(yield func(handlers.StaleBranch) bool) {
-		for b := range g.listBranches(projectId, size) {
+		for b := range g.listBranches(projectID, size) {
 			if b.Default {
 				continue
 			}
 
-			listMr, _, err := g.client.MergeRequests.ListProjectMergeRequests(projectId,
+			listMr, _, err := g.client.MergeRequests.ListProjectMergeRequests(projectID,
 				&gitlab.ListProjectMergeRequestsOptions{
 					SourceBranch: &b.Name,
 					State:        new("opened"),
@@ -369,13 +369,13 @@ func (g GitlabProvider) ListBranches(projectId, size int, protected bool) iter.S
 	}
 }
 
-func (g *GitlabProvider) DeleteBranch(projectId int, name string) error {
-	_, err := g.client.Branches.DeleteBranch(projectId, name)
+func (g *GitlabProvider) DeleteBranch(projectID int64, name string) error {
+	_, err := g.client.Branches.DeleteBranch(projectID, name)
 	return err
 }
 
-func (g GitlabProvider) ListMergeRequests(projectId, size int, protected bool) iter.Seq[handlers.MR] {
-	listMr := g.listMergeRequests(projectId, size,
+func (g GitlabProvider) ListMergeRequests(projectID, size int64, protected bool) iter.Seq[handlers.MR] {
+	listMr := g.listMergeRequests(projectID, size,
 		&gitlab.ListProjectMergeRequestsOptions{
 			State:   new("opened"),
 			OrderBy: new("updated_at"),
@@ -384,7 +384,7 @@ func (g GitlabProvider) ListMergeRequests(projectId, size int, protected bool) i
 
 	return func(yield func(handlers.MR) bool) {
 		for mr := range listMr {
-			b, _, err := g.client.Branches.GetBranch(projectId, mr.SourceBranch)
+			b, _, err := g.client.Branches.GetBranch(projectID, mr.SourceBranch)
 			if err != nil {
 				logger.Error("GetBranch fails", "err", err)
 				continue
@@ -397,7 +397,7 @@ func (g GitlabProvider) ListMergeRequests(projectId, size int, protected bool) i
 			}
 
 			if !yield(handlers.MR{
-				Id:          mr.IID,
+				ID:          mr.IID,
 				Labels:      mr.Labels,
 				Branch:      mr.SourceBranch,
 				Protected:   b.Protected,
@@ -408,10 +408,10 @@ func (g GitlabProvider) ListMergeRequests(projectId, size int, protected bool) i
 	}
 }
 
-func (g GitlabProvider) FindMergeRequests(projectId int, targetBranch, label string) ([]handlers.MR, error) {
+func (g GitlabProvider) FindMergeRequests(projectID int64, targetBranch, label string) ([]handlers.MR, error) {
 	mrs := make([]handlers.MR, 0)
 
-	listMr := g.listMergeRequests(projectId, findMRSize,
+	listMr := g.listMergeRequests(projectID, findMRSize,
 		&gitlab.ListProjectMergeRequestsOptions{
 			State:        new("opened"),
 			Labels:       &gitlab.LabelOptions{label},
@@ -420,7 +420,7 @@ func (g GitlabProvider) FindMergeRequests(projectId int, targetBranch, label str
 
 	for mr := range listMr {
 		mrs = append(mrs, handlers.MR{
-			Id:          mr.IID,
+			ID:          mr.IID,
 			Labels:      mr.Labels,
 			Branch:      mr.SourceBranch,
 			LastUpdated: *mr.UpdatedAt})
@@ -431,8 +431,8 @@ func (g GitlabProvider) FindMergeRequests(projectId int, targetBranch, label str
 	return mrs, nil
 }
 
-func (g GitlabProvider) CreateLabel(projectId int, name, color string) error {
-	labels, _, err := g.client.Labels.ListLabels(projectId, &gitlab.ListLabelsOptions{Search: new(name)})
+func (g GitlabProvider) CreateLabel(projectID int64, name, color string) error {
+	labels, _, err := g.client.Labels.ListLabels(projectID, &gitlab.ListLabelsOptions{Search: new(name)})
 	if err != nil {
 		return fmt.Errorf("listLabels failed to search: %w", err)
 	}
@@ -446,7 +446,7 @@ func (g GitlabProvider) CreateLabel(projectId int, name, color string) error {
 
 	if !labelFound {
 		if _, _, err := g.client.Labels.CreateLabel(
-			projectId,
+			projectID,
 			&gitlab.CreateLabelOptions{Name: new(name), Color: new(color)}); err != nil {
 			return fmt.Errorf("could't create label: %w", err)
 		}
@@ -454,8 +454,8 @@ func (g GitlabProvider) CreateLabel(projectId int, name, color string) error {
 	return nil
 }
 
-func (g GitlabProvider) AssignLabel(projectId, mergeId int, name, color string) error {
-	mr, _, err := g.client.MergeRequests.GetMergeRequest(projectId, mergeId, &gitlab.GetMergeRequestsOptions{})
+func (g GitlabProvider) AssignLabel(projectID, mergeID int64, name, color string) error {
+	mr, _, err := g.client.MergeRequests.GetMergeRequest(projectID, mergeID, &gitlab.GetMergeRequestsOptions{})
 	if err != nil {
 		return fmt.Errorf("could't get merge request: %w", err)
 	}
@@ -464,21 +464,21 @@ func (g GitlabProvider) AssignLabel(projectId, mergeId int, name, color string) 
 		return nil
 	}
 
-	if err := g.CreateLabel(projectId, name, color); err != nil {
+	if err := g.CreateLabel(projectID, name, color); err != nil {
 		return err
 	}
 
 	if _, _, err := g.client.MergeRequests.UpdateMergeRequest(
-		projectId,
-		mergeId,
+		projectID,
+		mergeID,
 		&gitlab.UpdateMergeRequestOptions{AddLabels: &gitlab.LabelOptions{name}}); err != nil {
 		return fmt.Errorf("could't update mergeRequest: %w", err)
 	}
 	return nil
 }
 
-func (g GitlabProvider) RerunPipeline(projectId, pipelineId int, ref string) (string, error) {
-	pipelineVars, _, err := g.client.Pipelines.GetPipelineVariables(projectId, pipelineId)
+func (g GitlabProvider) RerunPipeline(projectID, pipelineID int64, ref string) (string, error) {
+	pipelineVars, _, err := g.client.Pipelines.GetPipelineVariables(projectID, pipelineID)
 	if err != nil {
 		return "", err
 	}
@@ -488,7 +488,7 @@ func (g GitlabProvider) RerunPipeline(projectId, pipelineId int, ref string) (st
 		runVars = append(runVars, &gitlab.PipelineVariableOptions{Key: &v.Key, Value: &v.Value, VariableType: &v.VariableType})
 	}
 
-	pipeline, _, err := g.client.Pipelines.CreatePipeline(projectId, &gitlab.CreatePipelineOptions{
+	pipeline, _, err := g.client.Pipelines.CreatePipeline(projectID, &gitlab.CreatePipelineOptions{
 		Variables: &runVars,
 		Ref:       &ref,
 	})
@@ -499,8 +499,8 @@ func (g GitlabProvider) RerunPipeline(projectId, pipelineId int, ref string) (st
 	return pipeline.WebURL, nil
 }
 
-func (g GitlabProvider) GetRawDiffs(projectId, mergeId int) ([]byte, error) {
-	result, _, err := g.client.MergeRequests.ShowMergeRequestRawDiffs(projectId, mergeId, &gitlab.ShowMergeRequestRawDiffsOptions{})
+func (g GitlabProvider) GetRawDiffs(projectID, mergeID int64) ([]byte, error) {
+	result, _, err := g.client.MergeRequests.ShowMergeRequestRawDiffs(projectID, mergeID, &gitlab.ShowMergeRequestRawDiffsOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -508,8 +508,8 @@ func (g GitlabProvider) GetRawDiffs(projectId, mergeId int) ([]byte, error) {
 	return result, nil
 }
 
-func (g GitlabProvider) getChangedFiles(projectId, mergeId int) ([]string, error) {
-	result, _, err := g.client.MergeRequests.ListMergeRequestDiffs(projectId, mergeId, &gitlab.ListMergeRequestDiffsOptions{})
+func (g GitlabProvider) getChangedFiles(projectID, mergeID int64) ([]string, error) {
+	result, _, err := g.client.MergeRequests.ListMergeRequestDiffs(projectID, mergeID, &gitlab.ListMergeRequestDiffsOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -533,15 +533,15 @@ func (g GitlabProvider) getChangedFiles(projectId, mergeId int) ([]string, error
 	return changedFiles, nil
 }
 
-func (g GitlabProvider) codeOwners(projectId, mergeId int) (map[string]struct{}, error) {
+func (g GitlabProvider) codeOwners(projectID, mergeID int64) (map[string]struct{}, error) {
 	candidates := map[string]struct{}{}
 
-	b, err := g.GetFile(projectId, "CODEOWNERS")
+	b, err := g.GetFile(projectID, "CODEOWNERS")
 	if err != nil {
 		return nil, err
 	}
 
-	changedFiles, err := g.getChangedFiles(projectId, mergeId)
+	changedFiles, err := g.getChangedFiles(projectID, mergeID)
 	if err != nil {
 		return nil, err
 	}
@@ -560,8 +560,8 @@ func (g GitlabProvider) codeOwners(projectId, mergeId int) (map[string]struct{},
 	return candidates, nil
 }
 
-func (g GitlabProvider) AssignReviewers(projectId, mergeId int, users []string) error {
-	usersIds := []int{}
+func (g GitlabProvider) AssignReviewers(projectID, mergeID int64, users []string) error {
+	usersIds := []int64{}
 
 	for _, u := range users {
 		listUsers, _, err := g.client.Users.ListUsers(&gitlab.ListUsersOptions{Username: &u})
@@ -574,17 +574,17 @@ func (g GitlabProvider) AssignReviewers(projectId, mergeId int, users []string) 
 		}
 	}
 
-	_, _, err := g.client.MergeRequests.UpdateMergeRequest(projectId, mergeId, &gitlab.UpdateMergeRequestOptions{
+	_, _, err := g.client.MergeRequests.UpdateMergeRequest(projectID, mergeID, &gitlab.UpdateMergeRequestOptions{
 		ReviewerIDs: &usersIds,
 	})
 
 	return err
 }
 
-func (g GitlabProvider) GetContributors(projectId, mergeId int) ([]handlers.Candidate, error) {
+func (g GitlabProvider) GetContributors(projectID, mergeID int64) ([]handlers.Candidate, error) {
 	candidates := []handlers.Candidate{}
 
-	emails, err := cache.GetContributors(projectId)
+	emails, err := cache.GetContributors(projectID)
 	if err != nil {
 		return nil, err
 	}
@@ -593,7 +593,7 @@ func (g GitlabProvider) GetContributors(projectId, mergeId int) ([]handlers.Cand
 		now := time.Now()
 		months3back := now.Add(-1 * time.Hour * 24 * 30 * 3)
 
-		commits, _, err := g.client.Commits.ListCommits(projectId, &gitlab.ListCommitsOptions{
+		commits, _, err := g.client.Commits.ListCommits(projectID, &gitlab.ListCommitsOptions{
 			Since: &months3back,
 		})
 		if err != nil {
@@ -611,13 +611,13 @@ func (g GitlabProvider) GetContributors(projectId, mergeId int) ([]handlers.Cand
 			emails = append(emails, k)
 		}
 
-		if err := cache.SetContributors(projectId, emails); err != nil {
+		if err := cache.SetContributors(projectID, emails); err != nil {
 			return nil, err
 		}
 	}
 
 	for _, e := range emails {
-		members, _, err := g.client.ProjectMembers.ListAllProjectMembers(projectId, &gitlab.ListProjectMembersOptions{
+		members, _, err := g.client.ProjectMembers.ListAllProjectMembers(projectID, &gitlab.ListProjectMembersOptions{
 			Query: &e,
 		})
 		if err != nil {
@@ -637,12 +637,12 @@ func (g GitlabProvider) GetContributors(projectId, mergeId int) ([]handlers.Cand
 				continue
 			}
 
-			user, _, err := g.client.Users.GetUser(members[0].ID, gitlab.GetUsersOptions{})
+			user, _, err := g.client.Users.GetUser(members[0].ID, &gitlab.GetUserOptions{})
 			if err != nil {
 				continue
 			}
 
-			codeowners, err := g.codeOwners(projectId, mergeId)
+			codeowners, err := g.codeOwners(projectID, mergeID)
 			if err != nil {
 				continue
 			}
@@ -661,7 +661,7 @@ func (g GitlabProvider) GetContributors(projectId, mergeId int) ([]handlers.Cand
 	return candidates, nil
 }
 
-func (g GitlabProvider) CreateThreadInLine(projectId, mergeId int, thread handlers.Thread) error {
+func (g GitlabProvider) CreateThreadInLine(projectID, mergeID int64, thread handlers.Thread) error {
 	if g.mr == nil {
 		return errors.New("no mr information")
 	}
@@ -688,7 +688,7 @@ func (g GitlabProvider) CreateThreadInLine(projectId, mergeId int, thread handle
 	}
 
 	_, _, err := g.client.Discussions.CreateMergeRequestDiscussion(
-		projectId, mergeId,
+		projectID, mergeID,
 		&gitlab.CreateMergeRequestDiscussionOptions{
 			Body:     new(thread.Body),
 			Position: position,
@@ -745,7 +745,7 @@ func New() handlers.RequestProvider {
 		return nil
 	}
 
-	p.currentUserId = user.ID
+	p.currentUserID = user.ID
 	return &p
 }
 

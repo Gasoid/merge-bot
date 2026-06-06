@@ -116,8 +116,8 @@ func TestRequest_ListMergeRequests(t *testing.T) {
 		provider RequestProvider
 	}
 	type args struct {
-		projectId int
-		size      int
+		projectID int64
+		size      int64
 	}
 	tests := []struct {
 		name    string
@@ -132,7 +132,7 @@ func TestRequest_ListMergeRequests(t *testing.T) {
 				provider: &testProvider{},
 			},
 			args: args{
-				projectId: 1,
+				projectID: 1,
 				size:      10,
 			},
 			want:    nil,
@@ -144,7 +144,7 @@ func TestRequest_ListMergeRequests(t *testing.T) {
 			r := &Request{
 				provider: tt.fields.provider,
 			}
-			got := r.provider.ListMergeRequests(tt.args.projectId, tt.args.size, false)
+			got := r.provider.ListMergeRequests(tt.args.projectID, tt.args.size, false)
 
 			assert.Equal(t, tt.want, got)
 		})
@@ -156,8 +156,8 @@ func TestRequest_AssignLabel(t *testing.T) {
 		provider RequestProvider
 	}
 	type args struct {
-		projectId int
-		mergeId   int
+		projectID int64
+		mergeID   int64
 		name      string
 		color     string
 	}
@@ -173,8 +173,8 @@ func TestRequest_AssignLabel(t *testing.T) {
 				provider: &testProvider{},
 			},
 			args: args{
-				projectId: 1,
-				mergeId:   1,
+				projectID: 1,
+				mergeID:   1,
 				name:      "test-label",
 				color:     "#ff0000",
 			},
@@ -186,7 +186,7 @@ func TestRequest_AssignLabel(t *testing.T) {
 			r := &Request{
 				provider: tt.fields.provider,
 			}
-			err := r.provider.AssignLabel(tt.args.projectId, tt.args.mergeId, tt.args.name, tt.args.color)
+			err := r.provider.AssignLabel(tt.args.projectID, tt.args.mergeID, tt.args.name, tt.args.color)
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {

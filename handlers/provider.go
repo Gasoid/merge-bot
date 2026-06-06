@@ -36,15 +36,15 @@ func Register(name string, constructor func() RequestProvider) {
 }
 
 type MrInfo struct {
-	ProjectId       int
-	Id              int
+	ProjectID       int64
+	ID              int64
 	Labels          []string
 	TargetBranch    string
 	SourceBranch    string
 	Approvals       map[string]struct{}
 	Author          string
-	FailedPipelines int
-	FailedTests     int
+	FailedPipelines int64
+	FailedTests     int64
 	Title           string
 	Description     string
 	ConfigContent   string
@@ -52,39 +52,39 @@ type MrInfo struct {
 }
 
 type Branches interface {
-	ListBranches(projectId, size int, protected bool) iter.Seq[StaleBranch]
-	DeleteBranch(projectId int, name string) error
+	ListBranches(projectID, size int64, protected bool) iter.Seq[StaleBranch]
+	DeleteBranch(projectID int64, name string) error
 }
 
 type Comments interface {
-	LeaveComment(projectId, mergeId int, message string) error
-	AwardEmoji(projectId, mergeId, noteId int, emoji string) error
+	LeaveComment(projectID, mergeID int64, message string) error
+	AwardEmoji(projectID, mergeID, noteID int64, emoji string) error
 }
 
 type Discussions interface {
-	CreateDiscussion(projectId, mergeId int, message string) error
-	UnresolveDiscussion(projectId, mergeId int) error
-	CreateThreadInLine(projectId, mergeId int, thread Thread) error
+	CreateDiscussion(projectID, mergeID int64, message string) error
+	UnresolveDiscussion(projectID, mergeID int64) error
+	CreateThreadInLine(projectID, mergeID int64, thread Thread) error
 }
 
 type MergeRequest interface {
-	Merge(projectId, mergeId int, message string) error
-	GetMRInfo(projectId, mergeId int, path string) (*MrInfo, error)
-	ListMergeRequests(projectId, size int, protected bool) iter.Seq[MR]
-	FindMergeRequests(projectId int, targetBranch, label string) ([]MR, error)
-	UpdateFromMaster(projectId, mergeId int) error
-	AssignLabel(projectId, mergeId int, name, color string) error
-	GetRawDiffs(projectId, mergeId int) ([]byte, error)
-	AssignReviewers(projectId, mergeId int, users []string) error
+	Merge(projectID, mergeID int64, message string) error
+	GetMRInfo(projectID, mergeID int64, path string) (*MrInfo, error)
+	ListMergeRequests(projectID, size int64, protected bool) iter.Seq[MR]
+	FindMergeRequests(projectID int64, targetBranch, label string) ([]MR, error)
+	UpdateFromMaster(projectID, mergeID int64) error
+	AssignLabel(projectID, mergeID int64, name, color string) error
+	GetRawDiffs(projectID, mergeID int64) ([]byte, error)
+	AssignReviewers(projectID, mergeID int64, users []string) error
 }
 
 type Project interface {
-	CreateLabel(projectId int, name, color string) error
-	GetVar(projectId int, varName string) (string, error)
-	RerunPipeline(projectId, pipelineId int, ref string) (string, error)
-	GetFile(projectId int, path string) ([]byte, error)
+	CreateLabel(projectID int64, name, color string) error
+	GetVar(projectID int64, varName string) (string, error)
+	RerunPipeline(projectID, pipelineID int64, ref string) (string, error)
+	GetFile(projectID int64, path string) ([]byte, error)
 	IsHealthy() bool
-	GetContributors(projectId, mergeId int) ([]Candidate, error)
+	GetContributors(projectID, mergeID int64) ([]Candidate, error)
 }
 
 type RequestProvider interface {
@@ -127,7 +127,7 @@ type Config struct {
 		ExcludeBranches []string `yaml:"exclude_branches"`
 		Protected       bool     `yaml:"protected"`
 		Days            int      `yaml:"days"`
-		BatchSize       int      `yaml:"batch_size"`
+		BatchSize       int64    `yaml:"batch_size"`
 		WaitDays        int      `yaml:"wait_days"`
 	} `yaml:"stale_branches_deletion"`
 

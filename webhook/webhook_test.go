@@ -13,9 +13,9 @@ import (
 type testProvider struct {
 	isNew     bool
 	isValid   bool
-	id        int
-	projectID int
-	noteID    int
+	id        int64
+	projectID int64
+	noteID    int64
 	cmd       string
 	secret    string
 	err       error
@@ -33,15 +33,15 @@ func (p *testProvider) GetCmd() string {
 	return p.cmd
 }
 
-func (p *testProvider) GetID() int {
+func (p *testProvider) GetID() int64 {
 	return p.id
 }
 
-func (p *testProvider) GetProjectID() int {
+func (p *testProvider) GetProjectID() int64 {
 	return p.projectID
 }
 
-func (p *testProvider) GetNoteID() int {
+func (p *testProvider) GetNoteID() int64 {
 	return p.noteID
 }
 
