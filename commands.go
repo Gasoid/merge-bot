@@ -17,9 +17,9 @@ func init() {
 	handle("!merge", MergeCmd)
 	handle("!check", CheckCmd)
 	handle("!update", UpdateBranchCmd)
-	handle("!rerun", RerunPipeline)
-	handle("!rr", RR)
-	handle(webhook.OnNewMR, NewMR)
+	handle("!rerun", RerunPipelineCmd)
+	handle("!spin", ReviewRouletteCmd)
+	handle(webhook.OnNewMR, NewMREvent)
 	handle(webhook.OnMerge, MergeEvent)
 	handle(webhook.OnUpdate, UpdateEvent)
 	handle(webhook.OnCommit, PushEvent)
@@ -92,7 +92,7 @@ func CheckCmd(command *handlers.Request, args string) error {
 	return command.LeaveComment(text)
 }
 
-func RR(command *handlers.Request, args string) error {
+func ReviewRouletteCmd(command *handlers.Request, args string) error {
 	if err := command.ReviewRoulette(); err != nil {
 		return fmt.Errorf("command.ReviewRoulette returns err: %w", err)
 	}
@@ -100,7 +100,7 @@ func RR(command *handlers.Request, args string) error {
 	return nil
 }
 
-func NewMR(command *handlers.Request, args string) error {
+func NewMREvent(command *handlers.Request, args string) error {
 	if err := command.Greetings(); err != nil {
 		return fmt.Errorf("command.Greetings returns err: %w", err)
 	}
@@ -143,7 +143,7 @@ func PushEvent(command *handlers.Request, args string) error {
 	return nil
 }
 
-func RerunPipeline(command *handlers.Request, args string) error {
+func RerunPipelineCmd(command *handlers.Request, args string) error {
 	arg := strings.TrimPrefix(args, "#")
 	pipelineId, err := strconv.Atoi(arg)
 	if err != nil {
