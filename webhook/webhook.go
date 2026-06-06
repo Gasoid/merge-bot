@@ -39,18 +39,18 @@ func (e *Error) Error() string {
 
 type Provider interface {
 	GetCmd() string
-	GetID() int
-	GetProjectID() int
+	GetID() int64
+	GetProjectID() int64
 	ParseRequest(request *http.Request) error
 	GetSecret() string
-	GetNoteID() int
+	GetNoteID() int64
 }
 
 type Webhook struct {
 	provider Provider
 	Event    string
 	Args     string
-	NoteID   int
+	NoteID   int64
 }
 
 func (w Webhook) GetSecret() string {
@@ -61,11 +61,11 @@ func (w *Webhook) GetCmd() string {
 	return w.provider.GetCmd()
 }
 
-func (w *Webhook) GetID() int {
+func (w *Webhook) GetID() int64 {
 	return w.provider.GetID()
 }
 
-func (w *Webhook) GetProjectID() int {
+func (w *Webhook) GetProjectID() int64 {
 	return w.provider.GetProjectID()
 }
 

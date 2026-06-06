@@ -39,7 +39,7 @@ type Request struct {
 	config   *Config
 }
 
-func (r *Request) LoadInfoAndConfig(projectId, id int) error {
+func (r *Request) LoadInfoAndConfig(projectId, id int64) error {
 	var err error
 	r.info, err = r.provider.GetMRInfo(projectId, id, configPath)
 	if err != nil {
@@ -110,7 +110,7 @@ func (r *Request) ParseConfig(content string) (*Config, error) {
 			ExcludeBranches []string `yaml:"exclude_branches"`
 			Protected       bool     `yaml:"protected"`
 			Days            int      `yaml:"days"`
-			BatchSize       int      `yaml:"batch_size"`
+			BatchSize       int64    `yaml:"batch_size"`
 			WaitDays        int      `yaml:"wait_days"`
 		}{
 			Enabled:         false,
@@ -129,11 +129,11 @@ func (r *Request) ParseConfig(content string) (*Config, error) {
 }
 
 func (r *Request) LeaveComment(message string) error {
-	return r.provider.LeaveComment(r.info.ProjectId, r.info.Id, message)
+	return r.provider.LeaveComment(r.info.ProjectID, r.info.ID, message)
 }
 
 func (r Request) CreateDiscussion(message string) error {
-	return r.provider.CreateDiscussion(r.info.ProjectId, r.info.Id, message)
+	return r.provider.CreateDiscussion(r.info.ProjectID, r.info.ID, message)
 }
 
 func (r Request) UnresolveDiscussion() error {
@@ -141,7 +141,7 @@ func (r Request) UnresolveDiscussion() error {
 		return nil
 	}
 
-	return r.provider.UnresolveDiscussion(r.info.ProjectId, r.info.Id)
+	return r.provider.UnresolveDiscussion(r.info.ProjectID, r.info.ID)
 }
 
 func (r Request) getGreetingsText() (string, error) {
@@ -181,14 +181,14 @@ func (r *Request) DeleteStaleBranches() error {
 		return nil
 	}
 
-	deleteStaleBranches.Add(fmt.Sprintf("clean_stale_merge_requests_%d", r.info.ProjectId),
+	deleteStaleBranches.Add(fmt.Sprintf("clean_stale_merge_requests_%d", r.info.ProjectID),
 		metrics.BackgroundRun("clean_stale_merge_requests", func() {
 			if err := r.cleanStaleMergeRequests(); err != nil {
 				logger.Info("cleanStaleMergeRequests", "err", err)
 			}
 		}))
 
-	deleteStaleBranches.Add(fmt.Sprintf("clean_stale_branches_%d", r.info.ProjectId),
+	deleteStaleBranches.Add(fmt.Sprintf("clean_stale_branches_%d", r.info.ProjectID),
 		metrics.BackgroundRun("clean_stale_branches", func() {
 			if err := r.cleanStaleBranches(); err != nil {
 				logger.Info("cleanStaleBranches", "err", err)
@@ -200,14 +200,14 @@ func (r *Request) DeleteStaleBranches() error {
 
 func (r *Request) Merge() (bool, string, error) {
 	if r.config.AutoMasterMerge {
-		err := r.provider.UpdateFromMaster(r.info.ProjectId, r.info.Id)
+		err := r.provider.UpdateFromMaster(r.info.ProjectID, r.info.ID)
 		if err != nil {
 			return false, "", err
 		}
 	}
 
 	if ok, text, err := r.IsValid(); ok {
-		if err := r.provider.Merge(r.info.ProjectId, r.info.Id, fmt.Sprintf("%s\nMerged by MergeApproveBot", r.info.Title)); err != nil {
+		if err := r.provider.Merge(r.info.ProjectID, r.info.ID, fmt.Sprintf("%s\nMerged by MergeApproveBot", r.info.Title)); err != nil {
 			return false, "", err
 		}
 		return true, "", nil
@@ -217,22 +217,22 @@ func (r *Request) Merge() (bool, string, error) {
 }
 
 func (r Request) UpdateFromMaster() error {
-	if err := r.provider.UpdateFromMaster(r.info.ProjectId, r.info.Id); err != nil {
+	if err := r.provider.UpdateFromMaster(r.info.ProjectID, r.info.ID); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (r Request) UpdateBranches() error {
-	listMr, err := r.provider.FindMergeRequests(r.info.ProjectId, r.info.TargetBranch, autoUpdateLabel)
+	listMr, err := r.provider.FindMergeRequests(r.info.ProjectID, r.info.TargetBranch, autoUpdateLabel)
 	if err != nil {
 		return err
 	}
 
 	for _, mr := range listMr {
-		updateBranch.Add(fmt.Sprintf("update_branch_%d_%d", r.info.ProjectId, mr.Id),
+		updateBranch.Add(fmt.Sprintf("update_branch_%d_%d", r.info.ProjectID, mr.ID),
 			metrics.BackgroundRun("update_branch", func() {
-				if err := r.provider.UpdateFromMaster(r.info.ProjectId, mr.Id); err != nil {
+				if err := r.provider.UpdateFromMaster(r.info.ProjectID, mr.ID); err != nil {
 					logger.Info("UpdateFromDestination", "err", err)
 				}
 			}))
@@ -242,25 +242,25 @@ func (r Request) UpdateBranches() error {
 }
 
 func (r Request) CreateLabels() error {
-	if err := r.provider.CreateLabel(r.info.ProjectId, staleLabel, staleLabelColor); err != nil {
+	if err := r.provider.CreateLabel(r.info.ProjectID, staleLabel, staleLabelColor); err != nil {
 		return err
 	}
 
-	if err := r.provider.CreateLabel(r.info.ProjectId, autoUpdateLabel, autoUpdateLabelColor); err != nil {
+	if err := r.provider.CreateLabel(r.info.ProjectID, autoUpdateLabel, autoUpdateLabelColor); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (r Request) RerunPipeline(pipelineId int) (string, error) {
-	logger.Debug("rerun", "pipelineId", pipelineId)
-	return r.provider.RerunPipeline(r.info.ProjectId, pipelineId, r.info.SourceBranch)
+func (r Request) RerunPipeline(pipelineID int64) (string, error) {
+	logger.Debug("rerun", "pipelineId", pipelineID)
+	return r.provider.RerunPipeline(r.info.ProjectID, pipelineID, r.info.SourceBranch)
 }
 
 func (r Request) ValidateSecret(secret string) bool {
 	const mergeBotSecret = "MERGE_BOT_SECRET"
 
-	secretVar, err := r.provider.GetVar(r.info.ProjectId, mergeBotSecret)
+	secretVar, err := r.provider.GetVar(r.info.ProjectID, mergeBotSecret)
 	if err != nil {
 		logger.Info("cound't validate secret", "err", err)
 		return false
@@ -269,8 +269,8 @@ func (r Request) ValidateSecret(secret string) bool {
 	return secretVar == secret
 }
 
-func (r Request) AwardEmoji(noteId int, emoji string) error {
-	return r.provider.AwardEmoji(r.info.ProjectId, r.info.Id, noteId, emoji)
+func (r Request) AwardEmoji(noteID int64, emoji string) error {
+	return r.provider.AwardEmoji(r.info.ProjectID, r.info.ID, noteID, emoji)
 }
 
 type Candidate struct {
@@ -295,7 +295,7 @@ func (c Candidate) IsAvailable() bool {
 }
 
 func (r Request) SpinRoulette() ([]string, error) {
-	candidates, err := r.provider.GetContributors(r.info.ProjectId, r.info.Id)
+	candidates, err := r.provider.GetContributors(r.info.ProjectID, r.info.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -304,7 +304,7 @@ func (r Request) SpinRoulette() ([]string, error) {
 		r.config.AssignReviewers.ReviewerNumber = 1
 	}
 
-	counts, err := cache.GetCounts(r.info.ProjectId)
+	counts, err := cache.GetCounts(r.info.ProjectID)
 	if err != nil {
 		return nil, err
 	}
@@ -314,6 +314,14 @@ func (r Request) SpinRoulette() ([]string, error) {
 			if v, ok := counts[candidates[i].Username]; ok {
 				candidates[i].Count = v
 			}
+		}
+	} else {
+		for _, c := range candidates {
+			counts[c.Username] = 0
+		}
+
+		if err := cache.SetCounts(r.info.ProjectID, counts); err != nil {
+			return nil, err
 		}
 	}
 
@@ -362,12 +370,12 @@ func (r Request) reviewRoulette() error {
 	}
 
 	for _, u := range usernames {
-		if _, err := cache.IncrCount(r.info.ProjectId, u); err != nil {
+		if _, err := cache.IncrCount(r.info.ProjectID, u); err != nil {
 			return err
 		}
 	}
 
-	return r.provider.AssignReviewers(r.info.ProjectId, r.info.Id, usernames)
+	return r.provider.AssignReviewers(r.info.ProjectID, r.info.ID, usernames)
 }
 
 func (r Request) AssignReviewers() error {
@@ -382,18 +390,18 @@ func (r Request) ReviewRoulette() error {
 	return r.reviewRoulette()
 }
 
-// func (r Request) UpdateReviewRouletteCounts(event string) error {
+// func (r Request) UpdateReviewRouletteCounts() error {
 // 	if !r.config.AssignReviewers.Enabled {
 // 		return nil
 // 	}
 
-// 	counts, err := cache.GetCounts(r.info.ProjectId)
+// 	counts, err := cache.GetCounts(r.info.ProjectID)
 // 	if err != nil {
 // 		return err
 // 	}
 
 // 	if len(counts) == 0 {
-// 		candidates, err := r.provider.GetContributors(r.info.ProjectId, r.info.Id)
+// 		candidates, err := r.provider.GetContributors(r.info.ProjectID, r.info.ID)
 // 		if err != nil {
 // 			return err
 // 		}
@@ -402,20 +410,14 @@ func (r Request) ReviewRoulette() error {
 // 			counts[c.Username] = 0
 // 		}
 
-// 		if err := cache.SetCounts(r.info.ProjectId, counts); err != nil {
+// 		if err := cache.SetCounts(r.info.ProjectID, counts); err != nil {
 // 			return err
 // 		}
 // 	}
 
-// 	for a := range r.info.Approvals {
-// 		switch event {
-// 		case DecrCount:
-// 			_, err := cache.DecrCount(r.info.ProjectId, a)
-// 			return err
-// 		case IncrCount:
-// 			_, err := cache.IncrCount(r.info.ProjectId, a)
-// 			return err
-// 		}
+// 	for _ = range r.info.Reviewers {
+
+// 		// _, err := cache.IncrCount(r.info.ProjectID, a)
 // 	}
 // 	return nil
 // }

@@ -10,7 +10,7 @@ import (
 )
 
 type MR struct {
-	Id          int
+	ID          int64
 	Branch      string
 	Protected   bool
 	Labels      []string
@@ -19,11 +19,11 @@ type MR struct {
 
 func (r Request) cleanStaleMergeRequests() error {
 	var (
-		days            = r.config.StaleBranchesDeletion.Days
-		coolDays        = r.config.StaleBranchesDeletion.WaitDays
-		now             = time.Now()
-		branchesDeleted = 0
-		excludeBranches = make(map[string]struct{}, len(r.config.StaleBranchesDeletion.ExcludeBranches))
+		days                  = r.config.StaleBranchesDeletion.Days
+		coolDays              = r.config.StaleBranchesDeletion.WaitDays
+		now                   = time.Now()
+		branchesDeleted int64 = 0
+		excludeBranches       = make(map[string]struct{}, len(r.config.StaleBranchesDeletion.ExcludeBranches))
 	)
 
 	defer func() {
@@ -35,7 +35,7 @@ func (r Request) cleanStaleMergeRequests() error {
 		excludeBranches[s] = struct{}{}
 	}
 
-	for mr := range r.provider.ListMergeRequests(r.info.ProjectId, r.config.StaleBranchesDeletion.BatchSize, r.config.StaleBranchesDeletion.Protected) {
+	for mr := range r.provider.ListMergeRequests(r.info.ProjectID, r.config.StaleBranchesDeletion.BatchSize, r.config.StaleBranchesDeletion.Protected) {
 		if branchesDeleted >= r.config.StaleBranchesDeletion.BatchSize {
 			break
 		}
@@ -43,7 +43,7 @@ func (r Request) cleanStaleMergeRequests() error {
 		span := now.Sub(mr.LastUpdated)
 		if slices.Contains(mr.Labels, staleLabel) {
 			if span > time.Duration(time.Duration(coolDays)*24*time.Hour) {
-				if err := r.provider.DeleteBranch(r.info.ProjectId, mr.Branch); err != nil {
+				if err := r.provider.DeleteBranch(r.info.ProjectID, mr.Branch); err != nil {
 					return fmt.Errorf("DeleteBranch returns error: %w", err)
 				}
 				branchesDeleted++
@@ -58,7 +58,7 @@ func (r Request) cleanStaleMergeRequests() error {
 
 		if span > time.Duration(time.Duration(days)*24*time.Hour) {
 			// mr is stale
-			if err := r.provider.AssignLabel(r.info.ProjectId, mr.Id, staleLabel, staleLabelColor); err != nil {
+			if err := r.provider.AssignLabel(r.info.ProjectID, mr.ID, staleLabel, staleLabelColor); err != nil {
 				return fmt.Errorf("AssignLabel returns error: %w", err)
 			}
 
@@ -66,7 +66,7 @@ func (r Request) cleanStaleMergeRequests() error {
 			pluralCoolDays := english.Plural(coolDays, "day", "")
 
 			message := fmt.Sprintf("This MR is stale because it has been open %s with no activity. Remove stale label othewise this will be closed in %s.", pluralDays, pluralCoolDays)
-			if err := r.provider.LeaveComment(r.info.ProjectId, mr.Id, message); err != nil {
+			if err := r.provider.LeaveComment(r.info.ProjectID, mr.ID, message); err != nil {
 				return fmt.Errorf("LeaveComment returns error: %w", err)
 			}
 

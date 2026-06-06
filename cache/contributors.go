@@ -2,6 +2,8 @@ package cache
 
 import (
 	"fmt"
+
+	"github.com/gasoid/merge-bot/v3/logger"
 )
 
 var (
@@ -13,19 +15,19 @@ const (
 	contributorsPrefix = "mergebot:contributors"
 )
 
-func contributorsKey(id int) string {
+func contributorsKey(id int64) string {
 	return fmt.Sprintf("%s:%d", contributorsPrefix, id)
 }
 
-func countsKey(id int) string {
+func countsKey(id int64) string {
 	return fmt.Sprintf("%s:%d", countsPrefix, id)
 }
 
-func SetCounts(id int, counts map[string]int) error {
+func SetCounts(id int64, counts map[string]int) error {
 	return contributors.JsonSet(countsKey(id), counts)
 }
 
-func GetCounts(id int) (map[string]int, error) {
+func GetCounts(id int64) (map[string]int, error) {
 	val, err := contributors.JsonGet(countsKey(id))
 	if err != nil {
 		return nil, err
@@ -42,7 +44,7 @@ func GetCounts(id int) (map[string]int, error) {
 	return nil, nil
 }
 
-func IncrCount(id int, item string) (bool, error) {
+func IncrCount(id int64, item string) (bool, error) {
 	ok, err := contributors.JsonExists(countsKey(id), item)
 	if err != nil {
 		return false, err
@@ -55,7 +57,7 @@ func IncrCount(id int, item string) (bool, error) {
 	}
 }
 
-func DecrCount(id int, item string) (bool, error) {
+func DecrCount(id int64, item string) (bool, error) {
 	ok, err := contributors.JsonExists(countsKey(id), item)
 	if err != nil {
 		return false, err
@@ -68,7 +70,7 @@ func DecrCount(id int, item string) (bool, error) {
 	return false, nil
 }
 
-func GetContributors(id int) ([]string, error) {
+func GetContributors(id int64) ([]string, error) {
 	val, err := contributors.JsonGet(contributorsKey(id))
 	if err != nil {
 		return nil, err
@@ -85,7 +87,8 @@ func GetContributors(id int) ([]string, error) {
 	return nil, nil
 }
 
-func SetContributors(id int, candidates []string) error {
+func SetContributors(id int64, candidates []string) error {
+	logger.Debug("save contributors", "size", len(candidates))
 	return contributors.JsonSet(contributorsKey(id), candidates)
 }
 

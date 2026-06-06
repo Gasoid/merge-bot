@@ -152,7 +152,7 @@ func RerunPipelineCmd(command *handlers.Request, args string) error {
 	}
 
 	logger.Debug("rerun", "args", args, "arg", arg)
-	pipelineURL, err := command.RerunPipeline(pipelineId)
+	pipelineURL, err := command.RerunPipeline(int64(pipelineId))
 	if err != nil {
 		if errors.Is(err, handlers.NotFoundError) {
 			return command.LeaveComment("> [!important]\n> Provided pipeline was not found")

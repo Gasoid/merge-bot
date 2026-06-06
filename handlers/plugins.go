@@ -26,8 +26,8 @@ type PluginInput struct {
 }
 
 type Thread struct {
-	NewLine int    `json:"new_line"`
-	OldLine int    `json:"old_line"`
+	NewLine int64  `json:"new_line"`
+	OldLine int64  `json:"old_line"`
 	Body    string `json:"body"`
 	NewPath string `json:"new_path"`
 	OldPath string `json:"old_path"`
@@ -43,7 +43,7 @@ func (r Request) RunWithContext(call PluginCall, vars map[string][]string) error
 		return errors.New("no MR info")
 	}
 
-	rawDiffs, err := r.provider.GetRawDiffs(r.info.ProjectId, r.info.Id)
+	rawDiffs, err := r.provider.GetRawDiffs(r.info.ProjectID, r.info.ID)
 	if err != nil {
 		return err
 	}
@@ -67,7 +67,7 @@ func (r Request) RunWithContext(call PluginCall, vars map[string][]string) error
 				}
 
 			case secretType:
-				val, err := r.provider.GetVar(r.info.ProjectId, strings.ToUpper(k))
+				val, err := r.provider.GetVar(r.info.ProjectID, strings.ToUpper(k))
 				if err != nil {
 					return err
 				}
@@ -113,8 +113,8 @@ func (r Request) RunWithContext(call PluginCall, vars map[string][]string) error
 
 	for _, t := range output.Threads {
 		if err := r.provider.CreateThreadInLine(
-			r.info.ProjectId,
-			r.info.Id,
+			r.info.ProjectID,
+			r.info.ID,
 			t); err != nil {
 			logger.Info("CreateThreadInLine returns error", "err", err, "thread", t)
 		}

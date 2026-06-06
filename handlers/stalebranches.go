@@ -17,10 +17,10 @@ type StaleBranch struct {
 func (r Request) cleanStaleBranches() error {
 	logger.Debug("deletion of stale branches has been run")
 	var (
-		branchesDeleted = 0
-		days            = r.config.StaleBranchesDeletion.Days
-		now             = time.Now()
-		excludeBranches = make(map[string]struct{}, len(r.config.StaleBranchesDeletion.ExcludeBranches))
+		branchesDeleted int64 = 0
+		days                  = r.config.StaleBranchesDeletion.Days
+		now                   = time.Now()
+		excludeBranches       = make(map[string]struct{}, len(r.config.StaleBranchesDeletion.ExcludeBranches))
 	)
 
 	defer func() {
@@ -32,7 +32,7 @@ func (r Request) cleanStaleBranches() error {
 		excludeBranches[s] = struct{}{}
 	}
 
-	for b := range r.provider.ListBranches(r.info.ProjectId, r.config.StaleBranchesDeletion.BatchSize, r.config.StaleBranchesDeletion.Protected) {
+	for b := range r.provider.ListBranches(r.info.ProjectID, r.config.StaleBranchesDeletion.BatchSize, r.config.StaleBranchesDeletion.Protected) {
 		if branchesDeleted >= r.config.StaleBranchesDeletion.BatchSize {
 			break
 		}
@@ -46,7 +46,7 @@ func (r Request) cleanStaleBranches() error {
 			// branch is stale
 			// delete branch
 			logger.Debug("branch info", "name", b.Name, "createdAt", b.LastUpdated.String())
-			if err := r.provider.DeleteBranch(r.info.ProjectId, b.Name); err != nil {
+			if err := r.provider.DeleteBranch(r.info.ProjectID, b.Name); err != nil {
 				return fmt.Errorf("DeleteBranch returns error: %w", err)
 			}
 			branchesDeleted++

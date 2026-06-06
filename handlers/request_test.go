@@ -15,7 +15,7 @@ import (
 type testProvider struct {
 	err             error
 	approvals       map[string]struct{}
-	failedPipelines int
+	failedPipelines int64
 	state           string
 	title           string
 	config          string
@@ -29,7 +29,7 @@ func newTestProvider() RequestProvider {
 	return &testProvider{}
 }
 
-func (p *testProvider) LeaveComment(projectId, id int, message string) error {
+func (p *testProvider) LeaveComment(projectID, id int64, message string) error {
 	p.commentCalled = true
 	p.lastComment = message
 	if p.leaveCommentErr != nil {
@@ -38,26 +38,26 @@ func (p *testProvider) LeaveComment(projectId, id int, message string) error {
 	return p.err
 }
 
-func (p *testProvider) Merge(projectId, id int, message string) error {
+func (p *testProvider) Merge(projectID, id int64, message string) error {
 	return p.err
 }
 
-func (p *testProvider) ListBranches(projectId, size int, protected bool) iter.Seq[StaleBranch] {
+func (p *testProvider) ListBranches(projectID, size int64, protected bool) iter.Seq[StaleBranch] {
 	return nil
 }
 
-func (p *testProvider) DeleteBranch(projectId int, name string) error {
+func (p *testProvider) DeleteBranch(projectID int64, name string) error {
 	return nil
 }
 
-func (p *testProvider) GetVar(projectId int, varName string) (string, error) {
+func (p *testProvider) GetVar(projectID int64, varName string) (string, error) {
 	return "test", nil
 }
 
-func (p *testProvider) GetMRInfo(projectId, id int, path string) (*MrInfo, error) {
+func (p *testProvider) GetMRInfo(projectID, id int64, path string) (*MrInfo, error) {
 	return &MrInfo{
-		ProjectId:       projectId,
-		Id:              id,
+		ProjectID:       projectID,
+		ID:              id,
 		Title:           p.title,
 		ConfigContent:   p.config,
 		Approvals:       p.approvals,
@@ -76,59 +76,59 @@ func (p *testProvider) IsValid() bool {
 	return true
 }
 
-func (p *testProvider) UpdateFromMaster(projectId, mergeId int) error {
+func (p *testProvider) UpdateFromMaster(projectID, mergeID int64) error {
 	return nil
 }
 
-func (p *testProvider) ListMergeRequests(projectId, size int, protected bool) iter.Seq[MR] {
+func (p *testProvider) ListMergeRequests(projectID, size int64, protected bool) iter.Seq[MR] {
 	return nil
 }
 
-func (p *testProvider) FindMergeRequests(projectId int, targetBranch, label string) ([]MR, error) {
+func (p *testProvider) FindMergeRequests(projectID int64, targetBranch, label string) ([]MR, error) {
 	return nil, p.err
 }
 
-func (p *testProvider) AssignLabel(projectId, mergeId int, name, color string) error {
+func (p *testProvider) AssignLabel(projectID, mergeID int64, name, color string) error {
 	return p.err
 }
 
-func (p *testProvider) CreateLabel(projectId int, name, color string) error {
+func (p *testProvider) CreateLabel(projectID int64, name, color string) error {
 	return p.err
 }
 
-func (p *testProvider) RerunPipeline(projectId, pipelineId int, ref string) (string, error) {
+func (p *testProvider) RerunPipeline(projectID, pipelineID int64, ref string) (string, error) {
 	return "", p.err
 }
 
-func (p *testProvider) CreateDiscussion(projectId, mergeId int, message string) error {
+func (p *testProvider) CreateDiscussion(projectID, mergeID int64, message string) error {
 	return p.err
 }
 
-func (p *testProvider) UnresolveDiscussion(projectId, mergeId int) error {
+func (p *testProvider) UnresolveDiscussion(projectID, mergeID int64) error {
 	return p.err
 }
 
-func (p *testProvider) GetRawDiffs(projectId, mergeId int) ([]byte, error) {
+func (p *testProvider) GetRawDiffs(projectID, mergeID int64) ([]byte, error) {
 	return nil, p.err
 }
 
-func (p *testProvider) CreateThreadInLine(projectId, mergeId int, thread Thread) error {
+func (p *testProvider) CreateThreadInLine(projectID, mergeID int64, thread Thread) error {
 	return p.err
 }
 
-func (p *testProvider) AwardEmoji(projectId, mergeId, noteId int, emoji string) error {
+func (p *testProvider) AwardEmoji(projectID, mergeID, noteID int64, emoji string) error {
 	return p.err
 }
 
-func (p *testProvider) GetFile(projectId int, path string) ([]byte, error) {
+func (p *testProvider) GetFile(projectID int64, path string) ([]byte, error) {
 	return nil, p.err
 }
 
-func (p *testProvider) GetChangedFiles(projectId, mergeId int) ([]string, error) {
+func (p *testProvider) GetChangedFiles(projectID, mergeID int64) ([]string, error) {
 	return nil, p.err
 }
 
-func (p *testProvider) AssignReviewers(projectId, mergeId int, users []string) error {
+func (p *testProvider) AssignReviewers(projectID, mergeID int64, users []string) error {
 	return p.err
 }
 
@@ -136,7 +136,7 @@ func (p testProvider) IsHealthy() bool {
 	return true
 }
 
-func (p testProvider) GetContributors(projectId, mergeId int) ([]Candidate, error) {
+func (p testProvider) GetContributors(projectID, mergeID int64) ([]Candidate, error) {
 	return nil, p.err
 }
 
@@ -200,8 +200,8 @@ func TestRequest_Greetings(t *testing.T) {
 		provider RequestProvider
 	}
 	type args struct {
-		projectId int
-		id        int
+		projectID int64
+		id        int64
 	}
 	tests := []struct {
 		name              string
@@ -220,7 +220,7 @@ func TestRequest_Greetings(t *testing.T) {
 					state:  "opened",
 				},
 			},
-			args:              args{projectId: 1, id: 1},
+			args:              args{projectID: 1, id: 1},
 			wantErr:           false,
 			wantCommentCalled: false,
 		},
@@ -233,7 +233,7 @@ func TestRequest_Greetings(t *testing.T) {
 					state:  "opened",
 				},
 			},
-			args:              args{projectId: 1, id: 1},
+			args:              args{projectID: 1, id: 1},
 			wantErr:           false,
 			wantCommentCalled: true,
 			expectedComment:   "Requirements:\n - Min approvals: 1\n - Title regex: .*\n\nOnce you're done, send **!merge** command and I will merge it!",
@@ -249,7 +249,7 @@ func TestRequest_Greetings(t *testing.T) {
 					state: "opened",
 				},
 			},
-			args:              args{projectId: 1, id: 1},
+			args:              args{projectID: 1, id: 1},
 			wantErr:           false,
 			wantCommentCalled: true,
 			expectedComment:   "Hello! You need 1 approvals.",
@@ -265,7 +265,7 @@ func TestRequest_Greetings(t *testing.T) {
 					state: "opened",
 				},
 			},
-			args:              args{projectId: 1, id: 1},
+			args:              args{projectID: 1, id: 1},
 			wantErr:           true,
 			wantCommentCalled: false,
 		},
@@ -276,7 +276,7 @@ func TestRequest_Greetings(t *testing.T) {
 					err: assert.AnError,
 				},
 			},
-			args:              args{projectId: 1, id: 1},
+			args:              args{projectID: 1, id: 1},
 			wantErr:           true,
 			wantCommentCalled: false,
 		},
@@ -290,7 +290,7 @@ func TestRequest_Greetings(t *testing.T) {
 					leaveCommentErr: assert.AnError,
 				},
 			},
-			args:              args{projectId: 1, id: 1},
+			args:              args{projectID: 1, id: 1},
 			wantErr:           true,
 			wantCommentCalled: true,
 		},
@@ -308,7 +308,7 @@ func TestRequest_Greetings(t *testing.T) {
 			}
 
 			// Load info and config first (this is required for the current implementation)
-			err := r.LoadInfoAndConfig(tt.args.projectId, tt.args.id)
+			err := r.LoadInfoAndConfig(tt.args.projectID, tt.args.id)
 			if err != nil && !tt.wantErr {
 				t.Fatalf("LoadInfoAndConfig failed: %v", err)
 			}

@@ -15,9 +15,9 @@ import (
 
 // Integration test for complete webhook flow
 type integrationTestProvider struct {
-	projectID int
-	id        int
-	noteID    int
+	projectID int64
+	id        int64
+	noteID    int64
 	secret    string
 	cmd       string
 	event     string
@@ -27,15 +27,15 @@ func (p *integrationTestProvider) GetCmd() string {
 	return p.cmd
 }
 
-func (p *integrationTestProvider) GetID() int {
+func (p *integrationTestProvider) GetID() int64 {
 	return p.id
 }
 
-func (p *integrationTestProvider) GetProjectID() int {
+func (p *integrationTestProvider) GetProjectID() int64 {
 	return p.projectID
 }
 
-func (p *integrationTestProvider) GetNoteID() int {
+func (p *integrationTestProvider) GetNoteID() int64 {
 	return p.noteID
 }
 
