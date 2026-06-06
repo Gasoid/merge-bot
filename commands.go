@@ -117,18 +117,10 @@ func MergeEvent(command *handlers.Request, args string) error {
 		return fmt.Errorf("command.UpdateBranchesWithLabel returns err: %w", err)
 	}
 
-	if err := command.UpdateReviewRouletteCounts(handlers.DecrCount); err != nil {
-		return fmt.Errorf("command.UpdateReviewRouletteCounts returns err: %w", err)
-	}
-
 	return nil
 }
 
 func UpdateEvent(command *handlers.Request, args string) error {
-	if err := command.UpdateReviewRouletteCounts(handlers.IncrCount); err != nil {
-		return fmt.Errorf("command.UpdateReviewRouletteCounts returns err: %w", err)
-	}
-
 	ok, _, err := command.IsValid()
 	if err != nil {
 		return fmt.Errorf("command.IsValid returns err: %w", err)

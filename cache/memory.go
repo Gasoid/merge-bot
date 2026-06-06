@@ -63,8 +63,8 @@ func (m *MemCache) JsonExists(key, item string) (bool, error) {
 		return false, err
 	}
 
-	m.memcacheLock.Lock()
-	defer m.memcacheLock.Unlock()
+	m.memcacheLock.RLock()
+	defer m.memcacheLock.RUnlock()
 
 	data := val.(map[string]int)
 
@@ -81,8 +81,8 @@ func (m *MemCache) set(key string, val any) error {
 }
 
 func (m *MemCache) get(key string) (any, error) {
-	m.memcacheLock.Lock()
-	defer m.memcacheLock.Unlock()
+	m.memcacheLock.RLock()
+	defer m.memcacheLock.RUnlock()
 
 	if val, ok := m.keys[key]; ok {
 		return val, nil

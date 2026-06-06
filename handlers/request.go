@@ -356,6 +356,12 @@ func (r Request) reviewRoulette() error {
 		return err
 	}
 
+	for _, u := range usernames {
+		if _, err := cache.IncrCount(r.info.ProjectId, u); err != nil {
+			return err
+		}
+	}
+
 	return r.provider.AssignReviewers(r.info.ProjectId, r.info.Id, usernames)
 }
 
@@ -371,40 +377,40 @@ func (r Request) ReviewRoulette() error {
 	return r.reviewRoulette()
 }
 
-func (r Request) UpdateReviewRouletteCounts(event string) error {
-	if !r.config.AssignReviewers.Enabled {
-		return nil
-	}
+// func (r Request) UpdateReviewRouletteCounts(event string) error {
+// 	if !r.config.AssignReviewers.Enabled {
+// 		return nil
+// 	}
 
-	counts, err := cache.GetCounts(r.info.ProjectId)
-	if err != nil {
-		return err
-	}
+// 	counts, err := cache.GetCounts(r.info.ProjectId)
+// 	if err != nil {
+// 		return err
+// 	}
 
-	if len(counts) == 0 {
-		candidates, err := r.provider.GetContributors(r.info.ProjectId, r.info.Id)
-		if err != nil {
-			return err
-		}
+// 	if len(counts) == 0 {
+// 		candidates, err := r.provider.GetContributors(r.info.ProjectId, r.info.Id)
+// 		if err != nil {
+// 			return err
+// 		}
 
-		for _, c := range candidates {
-			counts[c.Username] = 0
-		}
+// 		for _, c := range candidates {
+// 			counts[c.Username] = 0
+// 		}
 
-		if err := cache.SetCounts(r.info.ProjectId, counts); err != nil {
-			return err
-		}
-	}
+// 		if err := cache.SetCounts(r.info.ProjectId, counts); err != nil {
+// 			return err
+// 		}
+// 	}
 
-	for a := range r.info.Approvals {
-		switch event {
-		case DecrCount:
-			_, err := cache.DecrCount(r.info.ProjectId, a)
-			return err
-		case IncrCount:
-			_, err := cache.IncrCount(r.info.ProjectId, a)
-			return err
-		}
-	}
-	return nil
-}
+// 	for a := range r.info.Approvals {
+// 		switch event {
+// 		case DecrCount:
+// 			_, err := cache.DecrCount(r.info.ProjectId, a)
+// 			return err
+// 		case IncrCount:
+// 			_, err := cache.IncrCount(r.info.ProjectId, a)
+// 			return err
+// 		}
+// 	}
+// 	return nil
+// }
