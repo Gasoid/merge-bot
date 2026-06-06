@@ -286,6 +286,10 @@ func (g *GitlabProvider) GetMRInfo(projectID, mergeID int64, configPath string) 
 	info.SourceBranch = g.mr.SourceBranch
 	info.Author = g.mr.Author.Username
 
+	for _, r := range g.mr.Reviewers {
+		info.Reviewers = append(info.Reviewers, r.Username)
+	}
+
 	b, err := g.GetFile(projectID, configPath)
 	if err != nil {
 		logger.Debug("i am using default config to validate a request")
@@ -629,9 +633,10 @@ func (g GitlabProvider) GetContributors(projectID, mergeID int64) ([]handlers.Ca
 		}
 
 		if members[0].AccessLevel >= gitlab.MaintainerPermissions {
-			// g.client.MergeRequests.ListProjectMergeRequests(projectId, &gitlab.ListProjectMergeRequestsOptions{
-			// 	ReviewerID: ,
+			// g.client.MergeRequests.ListProjectMergeRequests(projectID, &gitlab.ListProjectMergeRequestsOptions{
+			// 	ReviewerUsername: ,
 			// })
+
 			status, _, err := g.client.Users.GetUserStatus(members[0].ID)
 			if err != nil {
 				continue

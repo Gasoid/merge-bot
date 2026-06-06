@@ -2,6 +2,8 @@ package cache
 
 import (
 	"fmt"
+
+	"github.com/gasoid/merge-bot/v3/logger"
 )
 
 var (
@@ -86,6 +88,7 @@ func GetContributors(id int64) ([]string, error) {
 }
 
 func SetContributors(id int64, candidates []string) error {
+	logger.Debug("save contributors", "size", len(candidates))
 	return contributors.JsonSet(contributorsKey(id), candidates)
 }
 

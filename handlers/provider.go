@@ -42,6 +42,7 @@ type MrInfo struct {
 	TargetBranch    string
 	SourceBranch    string
 	Approvals       map[string]struct{}
+	Reviewers       []string
 	Author          string
 	FailedPipelines int64
 	FailedTests     int64
