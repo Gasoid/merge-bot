@@ -190,6 +190,6 @@ func TestWebhookGetMethods(t *testing.T) {
 
 	assert.Equal(t, "test-secret", webhook.GetSecret())
 	assert.Equal(t, "test-cmd", webhook.GetCmd())
-	assert.Equal(t, 123, webhook.GetID())
-	assert.Equal(t, 456, webhook.GetProjectID())
+	assert.Equal(t, int64(123), webhook.GetID())
+	assert.Equal(t, int64(456), webhook.GetProjectID())
 }
