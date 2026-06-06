@@ -1,16 +1,20 @@
 package gitlab
 
 import (
+	"bytes"
 	b64 "encoding/base64"
 	"errors"
 	"fmt"
 	"iter"
 	"net/http"
 	"slices"
+	"time"
 
+	"github.com/gasoid/merge-bot/cache"
 	"github.com/gasoid/merge-bot/config"
 	"github.com/gasoid/merge-bot/handlers"
 	"github.com/gasoid/merge-bot/logger"
+	"github.com/hairyhenderson/go-codeowners"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
 
 	"github.com/dustin/go-humanize"
@@ -246,19 +250,23 @@ func (g *GitlabProvider) IsValid(projectId, mergeId int) (bool, error) {
 	return !g.mr.HasConflicts, nil
 }
 
-func (g *GitlabProvider) GetFile(projectId int, path string) (string, error) {
+func (g *GitlabProvider) GetFile(projectId int, path string) ([]byte, error) {
 	project, _, err := g.client.Projects.GetProject(projectId, &gitlab.GetProjectOptions{})
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	gitlabFile, _, err := g.client.RepositoryFiles.GetFile(projectId, path, &gitlab.GetFileOptions{Ref: &project.DefaultBranch})
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	content, _ := b64.StdEncoding.DecodeString(gitlabFile.Content)
-	return string(content), nil
+	content, err := b64.StdEncoding.DecodeString(gitlabFile.Content)
+	if err != nil {
+		return nil, err
+	}
+
+	return content, nil
 }
 
 func (g *GitlabProvider) GetMRInfo(projectId, mergeId int, configPath string) (*handlers.MrInfo, error) {
@@ -278,9 +286,12 @@ func (g *GitlabProvider) GetMRInfo(projectId, mergeId int, configPath string) (*
 	info.SourceBranch = g.mr.SourceBranch
 	info.Author = g.mr.Author.Username
 
-	info.ConfigContent, err = g.GetFile(projectId, configPath)
+	b, err := g.GetFile(projectId, configPath)
 	if err != nil {
 		logger.Debug("i am using default config to validate a request")
+		info.ConfigContent = ""
+	} else {
+		info.ConfigContent = string(b)
 	}
 
 	info.Title = g.mr.Title
@@ -495,6 +506,159 @@ func (g GitlabProvider) GetRawDiffs(projectId, mergeId int) ([]byte, error) {
 	}
 
 	return result, nil
+}
+
+func (g GitlabProvider) getChangedFiles(projectId, mergeId int) ([]string, error) {
+	result, _, err := g.client.MergeRequests.ListMergeRequestDiffs(projectId, mergeId, &gitlab.ListMergeRequestDiffsOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	changedFiles := make([]string, 0, len(result))
+	for _, l := range result {
+		if l.NewPath == l.OldPath {
+			changedFiles = append(changedFiles, l.NewPath)
+			continue
+		}
+
+		if l.NewPath != "" {
+			changedFiles = append(changedFiles, l.NewPath)
+		}
+
+		if l.OldPath != "" {
+			changedFiles = append(changedFiles, l.OldPath)
+		}
+	}
+
+	return changedFiles, nil
+}
+
+func (g GitlabProvider) codeOwners(projectId, mergeId int) (map[string]struct{}, error) {
+	candidates := map[string]struct{}{}
+
+	b, err := g.GetFile(projectId, "CODEOWNERS")
+	if err != nil {
+		return nil, err
+	}
+
+	changedFiles, err := g.getChangedFiles(projectId, mergeId)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, f := range changedFiles {
+		owners, err := codeowners.FromReader(bytes.NewReader(b), "")
+		if err != nil {
+			return nil, err
+		}
+
+		for _, o := range owners.Owners(f) {
+			candidates[o] = struct{}{}
+		}
+	}
+
+	return candidates, nil
+}
+
+func (g GitlabProvider) AssignReviewers(projectId, mergeId int, users []string) error {
+	usersIds := []int{}
+
+	for _, u := range users {
+		listUsers, _, err := g.client.Users.ListUsers(&gitlab.ListUsersOptions{Username: &u})
+		if err != nil {
+			return err
+		}
+
+		if len(listUsers) == 1 {
+			usersIds = append(usersIds, listUsers[0].ID)
+		}
+	}
+
+	_, _, err := g.client.MergeRequests.UpdateMergeRequest(projectId, mergeId, &gitlab.UpdateMergeRequestOptions{
+		ReviewerIDs: &usersIds,
+	})
+
+	return err
+}
+
+func (g GitlabProvider) GetContributors(projectId, mergeId int) ([]handlers.Candidate, error) {
+	candidates := []handlers.Candidate{}
+
+	emails, err := cache.GetContributors(projectId)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(emails) == 0 {
+		now := time.Now()
+		months3back := now.Add(-1 * time.Hour * 24 * 30 * 3)
+
+		commits, _, err := g.client.Commits.ListCommits(projectId, &gitlab.ListCommitsOptions{
+			Since: &months3back,
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		seen := make(map[string]struct{}, 10)
+
+		for _, c := range commits {
+			seen[c.AuthorEmail] = struct{}{}
+		}
+
+		emails := make([]string, 0, len(seen))
+		for k := range seen {
+			emails = append(emails, k)
+		}
+
+		if err := cache.SetContributors(projectId, emails); err != nil {
+			return nil, err
+		}
+	}
+
+	for _, e := range emails {
+		members, _, err := g.client.ProjectMembers.ListAllProjectMembers(projectId, &gitlab.ListProjectMembersOptions{
+			Query: &e,
+		})
+		if err != nil {
+			continue
+		}
+
+		if len(members) != 1 {
+			continue
+		}
+
+		if members[0].AccessLevel >= gitlab.MaintainerPermissions {
+			// g.client.MergeRequests.ListProjectMergeRequests(projectId, &gitlab.ListProjectMergeRequestsOptions{
+			// 	ReviewerID: ,
+			// })
+			status, _, err := g.client.Users.GetUserStatus(members[0].ID)
+			if err != nil {
+				continue
+			}
+
+			user, _, err := g.client.Users.GetUser(members[0].ID, gitlab.GetUsersOptions{})
+			if err != nil {
+				continue
+			}
+
+			codeowners, err := g.codeOwners(projectId, mergeId)
+			if err != nil {
+				continue
+			}
+
+			_, isCodeOwner := codeowners[members[0].Username]
+
+			candidates = append(candidates, handlers.Candidate{
+				Username:    members[0].Username,
+				StatusEmoji: status.Emoji,
+				Status:      status.Message,
+				Timezone:    user.Location,
+				IsCodeOwner: isCodeOwner})
+		}
+	}
+
+	return candidates, nil
 }
 
 func (g GitlabProvider) CreateThreadInLine(projectId, mergeId int, thread handlers.Thread) error {

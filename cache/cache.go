@@ -1,0 +1,33 @@
+package cache
+
+import (
+	"fmt"
+)
+
+type Cache interface {
+	JsonSet(key string, v any) error
+	JsonGet(key string) (any, error)
+	JsonExists(key, item string) (bool, error)
+	JsonAdd(key, item string, v int) error
+	JsonIncr(key string, item string, v int) (bool, error)
+	Connect() error
+}
+
+type CacheError struct {
+	Operation string
+	Err       error
+}
+
+func (e *CacheError) Error() string {
+	return fmt.Sprintf("cache failed to execute operation: %s because of error: %s", e.Operation, e.Err)
+}
+
+func Init() error {
+	if redisUrl == "" {
+		contributors = &MemCache{}
+		return contributors.Connect()
+	}
+
+	contributors = &RedisCache{}
+	return contributors.Connect()
+}

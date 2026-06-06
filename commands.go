@@ -17,8 +17,9 @@ func init() {
 	handle("!merge", MergeCmd)
 	handle("!check", CheckCmd)
 	handle("!update", UpdateBranchCmd)
-	handle("!rerun", RerunPipeline)
-	handle(webhook.OnNewMR, NewMR)
+	handle("!rerun", RerunPipelineCmd)
+	handle("!spin", ReviewRouletteCmd)
+	handle(webhook.OnNewMR, NewMREvent)
 	handle(webhook.OnMerge, MergeEvent)
 	handle(webhook.OnUpdate, UpdateEvent)
 	handle(webhook.OnCommit, PushEvent)
@@ -91,9 +92,21 @@ func CheckCmd(command *handlers.Request, args string) error {
 	return command.LeaveComment(text)
 }
 
-func NewMR(command *handlers.Request, args string) error {
+func ReviewRouletteCmd(command *handlers.Request, args string) error {
+	if err := command.ReviewRoulette(); err != nil {
+		return fmt.Errorf("command.ReviewRoulette returns err: %w", err)
+	}
+
+	return nil
+}
+
+func NewMREvent(command *handlers.Request, args string) error {
 	if err := command.Greetings(); err != nil {
 		return fmt.Errorf("command.Greetings returns err: %w", err)
+	}
+
+	if err := command.AssignReviewers(); err != nil {
+		return fmt.Errorf("command.AssignReviewers returns err: %w", err)
 	}
 
 	return nil
@@ -127,11 +140,10 @@ func UpdateEvent(command *handlers.Request, args string) error {
 }
 
 func PushEvent(command *handlers.Request, args string) error {
-	//Reset Approval is available in gitlab CE
 	return nil
 }
 
-func RerunPipeline(command *handlers.Request, args string) error {
+func RerunPipelineCmd(command *handlers.Request, args string) error {
 	arg := strings.TrimPrefix(args, "#")
 	pipelineId, err := strconv.Atoi(arg)
 	if err != nil {

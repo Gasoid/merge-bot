@@ -4,8 +4,12 @@ import (
 	"bytes"
 	"fmt"
 	"html/template"
+	"math/rand"
+	"slices"
+	"sort"
 	"strings"
 
+	"github.com/gasoid/merge-bot/cache"
 	"github.com/gasoid/merge-bot/logger"
 	"github.com/gasoid/merge-bot/metrics"
 	"github.com/gasoid/merge-bot/semaphore"
@@ -18,11 +22,15 @@ const (
 	autoUpdateLabelColor = "#6699cc"
 	staleLabel           = "merge-bot:stale"
 	staleLabelColor      = "#cccccc"
+	DecrCount            = "merge"
+	IncrCount            = "update"
 )
 
 var (
 	deleteStaleBranches = semaphore.NewKeyedSemaphore(1)
 	updateBranch        = semaphore.NewKeyedSemaphore(2)
+	vacationStatuses    = []string{"ooo", "vacation", "travel", "parental leave"}
+	emojiStatuses       = []string{"beach", "beach_umbrella", "palm_tree", "red_circle", "no_entry"}
 )
 
 type Request struct {
@@ -93,6 +101,10 @@ func (r *Request) ParseConfig(content string) (*Config, error) {
 			Template:   "Requirements:\n - Min approvals: {{ .MinApprovals }}\n - Title regex: {{ .TitleRegex }}\n\nOnce you're done, send **!merge** command and I will merge it!",
 		},
 		AutoMasterMerge: false,
+		AssignReviewers: AssignReviewers{
+			UseCodeowners:  true,
+			ReviewerNumber: 1,
+		},
 		StaleBranchesDeletion: struct {
 			Enabled         bool     `yaml:"enabled"`
 			ExcludeBranches []string `yaml:"exclude_branches"`
@@ -260,3 +272,150 @@ func (r Request) ValidateSecret(secret string) bool {
 func (r Request) AwardEmoji(noteId int, emoji string) error {
 	return r.provider.AwardEmoji(r.info.ProjectId, r.info.Id, noteId, emoji)
 }
+
+type Candidate struct {
+	Username    string
+	Count       int
+	StatusEmoji string
+	Status      string
+	Timezone    string
+	IsCodeOwner bool
+}
+
+func (c Candidate) IsAvailable() bool {
+	status := strings.ToLower(c.Status)
+
+	for _, s := range vacationStatuses {
+		if strings.Contains(status, s) {
+			return false
+		}
+	}
+
+	return slices.Contains(emojiStatuses, c.StatusEmoji)
+}
+
+func (r Request) SpinRoulette() ([]string, error) {
+	candidates, err := r.provider.GetContributors(r.info.ProjectId, r.info.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	if r.config.AssignReviewers.ReviewerNumber < 1 {
+		r.config.AssignReviewers.ReviewerNumber = 1
+	}
+
+	counts, err := cache.GetCounts(r.info.ProjectId)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(counts) > 0 {
+		for i := range candidates {
+			if v, ok := counts[candidates[i].Username]; ok {
+				candidates[i].Count = v
+			}
+		}
+	}
+
+	rand.Shuffle(len(candidates)/2, func(i, j int) {
+		candidates[i], candidates[j] = candidates[j], candidates[i]
+	})
+
+	sort.Slice(candidates, func(i, j int) bool {
+		if r.config.AssignReviewers.UseCodeowners {
+			if candidates[i].IsCodeOwner && !candidates[j].IsCodeOwner {
+				return true
+			}
+
+			if candidates[j].IsCodeOwner && !candidates[i].IsCodeOwner {
+				return false
+			}
+		}
+
+		return candidates[i].Count < candidates[j].Count
+	})
+
+	usernames := make([]string, 0, r.config.AssignReviewers.ReviewerNumber)
+
+	for _, c := range candidates {
+		if !c.IsAvailable() {
+			continue
+		}
+
+		if c.Username == r.info.Author {
+			continue
+		}
+
+		usernames = append(usernames, c.Username)
+		if len(usernames) == r.config.AssignReviewers.ReviewerNumber {
+			break
+		}
+	}
+
+	return usernames, nil
+}
+
+func (r Request) reviewRoulette() error {
+	usernames, err := r.SpinRoulette()
+	if err != nil {
+		return err
+	}
+
+	for _, u := range usernames {
+		if _, err := cache.IncrCount(r.info.ProjectId, u); err != nil {
+			return err
+		}
+	}
+
+	return r.provider.AssignReviewers(r.info.ProjectId, r.info.Id, usernames)
+}
+
+func (r Request) AssignReviewers() error {
+	if !r.config.AssignReviewers.Enabled {
+		return nil
+	}
+
+	return r.reviewRoulette()
+}
+
+func (r Request) ReviewRoulette() error {
+	return r.reviewRoulette()
+}
+
+// func (r Request) UpdateReviewRouletteCounts(event string) error {
+// 	if !r.config.AssignReviewers.Enabled {
+// 		return nil
+// 	}
+
+// 	counts, err := cache.GetCounts(r.info.ProjectId)
+// 	if err != nil {
+// 		return err
+// 	}
+
+// 	if len(counts) == 0 {
+// 		candidates, err := r.provider.GetContributors(r.info.ProjectId, r.info.Id)
+// 		if err != nil {
+// 			return err
+// 		}
+
+// 		for _, c := range candidates {
+// 			counts[c.Username] = 0
+// 		}
+
+// 		if err := cache.SetCounts(r.info.ProjectId, counts); err != nil {
+// 			return err
+// 		}
+// 	}
+
+// 	for a := range r.info.Approvals {
+// 		switch event {
+// 		case DecrCount:
+// 			_, err := cache.DecrCount(r.info.ProjectId, a)
+// 			return err
+// 		case IncrCount:
+// 			_, err := cache.IncrCount(r.info.ProjectId, a)
+// 			return err
+// 		}
+// 	}
+// 	return nil
+// }
