@@ -395,14 +395,16 @@ func (r Request) UpdateReviewRouletteCounts() error {
 		return err
 	}
 
-	if len(counts) == 0 {
-		for _, c := range gamblers {
-			counts[c.Username] = c.Count
-		}
+	if len(counts) > 0 {
+		return nil
+	}
 
-		if err := cache.SetCounts(r.info.ProjectID, counts); err != nil {
-			return err
-		}
+	for _, c := range gamblers {
+		counts[c.Username] = c.Count
+	}
+
+	if err := cache.SetCounts(r.info.ProjectID, counts); err != nil {
+		return err
 	}
 
 	return nil
