@@ -399,6 +399,8 @@ func (r Request) UpdateReviewRouletteCounts() error {
 		return nil
 	}
 
+	counts = make(map[string]int, len(gamblers))
+
 	for _, c := range gamblers {
 		counts[c.Username] = c.Count
 	}
