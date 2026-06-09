@@ -58,10 +58,9 @@ func (r *RedisCache) Connect() error {
 }
 
 func (r *RedisCache) JsonSet(key string, v any) error {
-	if _, err := r.client.JSONSetWithArgs(context.TODO(), key, "$", v, &redis.JSONSetArgsOptions{Mode: "NX"}).Result(); err != nil {
-		if err != redis.Nil {
-			return &CacheError{Operation: "JsonSet", Err: err}
-		}
+	if _, err := r.client.JSONSet(context.TODO(), key, "$", v).Result(); err != nil {
+		logger.Debug("redis error", "err", err, "key", key, "v", v)
+		return &CacheError{Operation: "JsonSet", Err: err}
 	}
 
 	return nil
@@ -145,16 +144,17 @@ func (r *RedisCache) JsonIncr(key, item string, v int) (bool, error) {
 }
 
 func (r *RedisCache) TryAcquireLock(key string) bool {
-	if _, err := r.client.SetArgs(context.TODO(), key, true, redis.SetArgs{Mode: "NX", TTL: lockTTL}).Result(); err != nil {
-		if err == redis.Nil {
-			return true
-		}
+	_, err := r.client.SetArgs(context.TODO(), key, true, redis.SetArgs{Mode: "NX", TTL: lockTTL}).Result()
+	if err == nil {
+		return true
+	}
 
-		logger.Info("can't aquire a lock", "error", &CacheError{Operation: "TryAcquireLock", Err: err})
+	if err == redis.Nil {
 		return false
 	}
 
-	return true
+	logger.Info("can't aquire a lock", "error", &CacheError{Operation: "TryAcquireLock", Err: err})
+	return false
 }
 
 func (r *RedisCache) Unlock(key string) {
