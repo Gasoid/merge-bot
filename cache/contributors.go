@@ -56,6 +56,7 @@ func GetCounts(id int64) (map[string]int, error) {
 		return nil, nil
 	}
 
+	logger.Debug("GetCounts", "val", val)
 	if candidates, ok := val.(map[string]int); ok {
 		return candidates, nil
 	}
