@@ -59,7 +59,9 @@ func (r *RedisCache) Connect() error {
 
 func (r *RedisCache) JsonSet(key string, v any) error {
 	if _, err := r.client.JSONSetWithArgs(context.TODO(), key, "$", v, &redis.JSONSetArgsOptions{Mode: "NX"}).Result(); err != nil {
-		return &CacheError{Operation: "JSONSetWithArgs", Err: err}
+		if err != redis.Nil {
+			return &CacheError{Operation: "JSONSetWithArgs", Err: err}
+		}
 	}
 
 	return nil
