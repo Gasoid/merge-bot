@@ -2,6 +2,7 @@ package cache
 
 import (
 	"sync"
+	"time"
 )
 
 type MemCache struct {
@@ -72,6 +73,10 @@ func (m *MemCache) JsonExists(key, item string) (bool, error) {
 
 	_, ok := data[item]
 	return ok, nil
+}
+
+func (m *MemCache) ExtendTTL(key string, ttl time.Duration) error {
+	return nil
 }
 
 func (m *MemCache) set(key string, val any) error {

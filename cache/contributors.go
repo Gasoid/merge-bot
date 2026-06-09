@@ -2,6 +2,7 @@ package cache
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/gasoid/merge-bot/v3/logger"
 )
@@ -15,6 +16,8 @@ const (
 	contributorsPrefix = "mergebot:contributors"
 	updateLocksPrefix  = "mergebot:update:locks"
 	locksPrefix        = "mergebot:locks"
+	countsTTL          = time.Hour * 12
+	contributorsTTL    = time.Hour * 12
 )
 
 func contributorsKey(id int64) string {
@@ -34,7 +37,11 @@ func updateLockKey(id int64) string {
 }
 
 func SetCounts(id int64, counts map[string]int) error {
-	return contributors.JsonSet(countsKey(id), counts)
+	if err := contributors.JsonSet(countsKey(id), counts); err != nil {
+		return err
+	}
+
+	return contributors.ExtendTTL(countsKey(id), countsTTL)
 }
 
 func GetCounts(id int64) (map[string]int, error) {
@@ -57,6 +64,10 @@ func GetCounts(id int64) (map[string]int, error) {
 func IncrCount(id int64, item string) (bool, error) {
 	ok, err := contributors.JsonExists(countsKey(id), item)
 	if err != nil {
+		return false, err
+	}
+
+	if err := contributors.ExtendTTL(countsKey(id), countsTTL); err != nil {
 		return false, err
 	}
 
@@ -99,7 +110,11 @@ func GetContributors(id int64) ([]int64, error) {
 
 func SetContributors(id int64, candidates []int64) error {
 	logger.Debug("save contributors", "size", len(candidates))
-	return contributors.JsonSet(contributorsKey(id), candidates)
+	if err := contributors.JsonSet(contributorsKey(id), candidates); err != nil {
+		return err
+	}
+
+	return contributors.ExtendTTL(contributorsKey(id), contributorsTTL)
 }
 
 func TryAcquireBranchDeletionLock(id int64) bool {

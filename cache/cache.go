@@ -2,6 +2,7 @@ package cache
 
 import (
 	"fmt"
+	"time"
 )
 
 type Cache interface {
@@ -10,6 +11,7 @@ type Cache interface {
 	JsonExists(key, item string) (bool, error)
 	JsonAdd(key, item string, v int) error
 	JsonIncr(key string, item string, v int) (bool, error)
+	ExtendTTL(key string, ttl time.Duration) error
 	TryAcquireLock(key string) bool
 	Unlock(key string)
 	Connect() error
