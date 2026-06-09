@@ -7,7 +7,8 @@ import (
 
 type Cache interface {
 	JsonSet(key string, v any) error
-	JsonGet(key string) (any, error)
+	JsonGet(key string) ([]int64, error)
+	JsonGetMap(key string) (map[string]int, error)
 	JsonExists(key, item string) (bool, error)
 	JsonAdd(key, item string, v int) error
 	JsonIncr(key string, item string, v int) (bool, error)

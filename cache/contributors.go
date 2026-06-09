@@ -47,7 +47,7 @@ func SetCounts(id int64, counts map[string]int) error {
 
 func GetCounts(id int64) (map[string]int, error) {
 	logger.Debug("GetCounts")
-	val, err := contributors.JsonGet(countsKey(id))
+	val, err := contributors.JsonGetMap(countsKey(id))
 	if err != nil {
 		return nil, err
 	}
@@ -57,11 +57,7 @@ func GetCounts(id int64) (map[string]int, error) {
 	}
 
 	logger.Debug("GetCounts", "val", val)
-	if candidates, ok := val.(map[string]int); ok {
-		return candidates, nil
-	}
-
-	return nil, nil
+	return val, nil
 }
 
 func IncrCount(id int64, item string) (bool, error) {
@@ -101,15 +97,7 @@ func GetContributors(id int64) ([]int64, error) {
 		return nil, err
 	}
 
-	if val == nil {
-		return nil, nil
-	}
-
-	if candidates, ok := val.([]int64); ok {
-		return candidates, nil
-	}
-
-	return nil, nil
+	return val, nil
 }
 
 func SetContributors(id int64, candidates []int64) error {

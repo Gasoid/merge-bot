@@ -88,20 +88,46 @@ func (r *RedisCache) JsonAdd(key, item string, v int) error {
 	return nil
 }
 
-func (r *RedisCache) JsonGet(key string) (any, error) {
+func (r *RedisCache) JsonGet(key string) ([]int64, error) {
 	val, err := r.client.JSONGet(context.TODO(), key, "$").Result()
 	if err != nil {
 		if err == redis.Nil {
-			return "", nil
+			return nil, nil
 		}
-		return "", &CacheError{Operation: "JsonGet", Err: err}
+		return nil, &CacheError{Operation: "JsonGet", Err: err}
 	}
 
 	if val == "[]" {
 		return nil, nil
 	}
 
-	result := []any{}
+	result := [][]int64{}
+
+	if err := json.Unmarshal([]byte(val), &result); err != nil {
+		return nil, fmt.Errorf("json data is invalid %w", err)
+	}
+
+	if len(result) == 0 {
+		return nil, nil
+	}
+
+	return result[0], nil
+}
+
+func (r *RedisCache) JsonGetMap(key string) (map[string]int, error) {
+	val, err := r.client.JSONGet(context.TODO(), key, "$").Result()
+	if err != nil {
+		if err == redis.Nil {
+			return nil, nil
+		}
+		return nil, &CacheError{Operation: "JsonGet", Err: err}
+	}
+
+	if val == "[]" {
+		return nil, nil
+	}
+
+	result := []map[string]int{}
 
 	if err := json.Unmarshal([]byte(val), &result); err != nil {
 		return nil, fmt.Errorf("json data is invalid %w", err)
