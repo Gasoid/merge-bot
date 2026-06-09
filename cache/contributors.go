@@ -46,6 +46,7 @@ func SetCounts(id int64, counts map[string]int) error {
 }
 
 func GetCounts(id int64) (map[string]int, error) {
+	logger.Debug("GetCounts")
 	val, err := contributors.JsonGet(countsKey(id))
 	if err != nil {
 		return nil, err

@@ -403,6 +403,7 @@ func (r Request) UpdateReviewRouletteCounts() error {
 		counts[c.Username] = c.Count
 	}
 
+	logger.Debug("attempt to save results")
 	if err := cache.SetCounts(r.info.ProjectID, counts); err != nil {
 		return err
 	}
