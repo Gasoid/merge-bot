@@ -12,7 +12,6 @@ import (
 	"github.com/gasoid/merge-bot/v3/cache"
 	"github.com/gasoid/merge-bot/v3/logger"
 	"github.com/gasoid/merge-bot/v3/metrics"
-	"github.com/gasoid/merge-bot/v3/semaphore"
 
 	"gopkg.in/yaml.v3"
 )
@@ -27,10 +26,8 @@ const (
 )
 
 var (
-	deleteStaleBranches = semaphore.NewKeyedSemaphore(1)
-	updateBranch        = semaphore.NewKeyedSemaphore(2)
-	vacationStatuses    = []string{"ooo", "vacation", "travel", "parental leave"}
-	emojiStatuses       = []string{"beach", "beach_umbrella", "palm_tree", "red_circle", "no_entry"}
+	vacationStatuses = []string{"ooo", "vacation", "travel", "parental leave"}
+	emojiStatuses    = []string{"beach", "beach_umbrella", "palm_tree", "red_circle", "no_entry"}
 )
 
 type Request struct {
@@ -181,19 +178,21 @@ func (r *Request) DeleteStaleBranches() error {
 		return nil
 	}
 
-	deleteStaleBranches.Add(fmt.Sprintf("clean_stale_merge_requests_%d", r.info.ProjectID),
-		metrics.BackgroundRun("clean_stale_merge_requests", func() {
-			if err := r.cleanStaleMergeRequests(); err != nil {
-				logger.Info("cleanStaleMergeRequests", "err", err)
-			}
-		}))
+	if cache.TryAcquireBranchDeletionLock(r.info.ProjectID) {
+		defer cache.BranchDeletionUnlock(r.info.ProjectID)
 
-	deleteStaleBranches.Add(fmt.Sprintf("clean_stale_branches_%d", r.info.ProjectID),
-		metrics.BackgroundRun("clean_stale_branches", func() {
-			if err := r.cleanStaleBranches(); err != nil {
-				logger.Info("cleanStaleBranches", "err", err)
-			}
-		}))
+		metrics.BackgroundRunInc("clean_stale_merge_requests")
+
+		if err := r.cleanStaleMergeRequests(); err != nil {
+			logger.Info("cleanStaleMergeRequests", "err", err)
+		}
+
+		metrics.BackgroundRunInc("clean_stale_branches")
+
+		if err := r.cleanStaleBranches(); err != nil {
+			logger.Info("cleanStaleBranches", "err", err)
+		}
+	}
 
 	return nil
 }
@@ -229,13 +228,16 @@ func (r Request) UpdateBranches() error {
 		return err
 	}
 
-	for _, mr := range listMr {
-		updateBranch.Add(fmt.Sprintf("update_branch_%d_%d", r.info.ProjectID, mr.ID),
-			metrics.BackgroundRun("update_branch", func() {
-				if err := r.provider.UpdateFromMaster(r.info.ProjectID, mr.ID); err != nil {
-					logger.Info("UpdateFromDestination", "err", err)
-				}
-			}))
+	if cache.TryAcquireUpdateLock(r.info.ProjectID) {
+		defer cache.UpdateUnlock(r.info.ProjectID)
+
+		for _, mr := range listMr {
+			metrics.BackgroundRunInc("update_branch")
+
+			if err := r.provider.UpdateFromMaster(r.info.ProjectID, mr.ID); err != nil {
+				logger.Info("UpdateFromDestination", "err", err)
+			}
+		}
 	}
 
 	return nil

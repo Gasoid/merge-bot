@@ -44,13 +44,8 @@ func Handler(event string, f func() error) error {
 	return err
 }
 
-func BackgroundRun(task string, f func()) func() {
-	backgroundTaskEnqueuedCounter.WithLabelValues(task).Inc()
-
-	return func() {
-		backgroundTaskCounter.WithLabelValues(task).Inc()
-		f()
-	}
+func BackgroundRunInc(task string) {
+	backgroundTaskCounter.WithLabelValues(task).Inc()
 }
 
 func CommandSucceededInc(command string) {

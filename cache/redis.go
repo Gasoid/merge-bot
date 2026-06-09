@@ -5,8 +5,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/gasoid/merge-bot/v3/config"
+	"github.com/gasoid/merge-bot/v3/logger"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -25,9 +27,9 @@ var (
 `)
 )
 
-// const (
-// 	ttl = 30 * 24 * time.Hour
-// )
+const (
+	ttl = 30 * time.Minute
+)
 
 func init() {
 	config.StringVar(&redisUrl, "redis-url", "", "redis url redis://<user>:<pass>@localhost:6379/<db> (also via REDIS_URL)")
@@ -128,6 +130,22 @@ func (r *RedisCache) JsonIncr(key, item string, v int) (bool, error) {
 	}
 
 	return true, nil
+}
+
+func (r *RedisCache) TryAcquireLock(key string) bool {
+	if _, err := r.client.SetArgs(context.TODO(), key, true, redis.SetArgs{Mode: "NX", TTL: ttl}).Result(); err != nil {
+		logger.Info("can't aquire a lock", "error", &CacheError{Operation: "SetArgs", Err: err})
+		return false
+	}
+
+	return true
+}
+
+func (r *RedisCache) Unlock(key string) {
+	if _, err := r.client.Del(context.TODO(), key).Result(); err != nil {
+		logger.Info("can't delete a lock", "error", &CacheError{Operation: "Del", Err: err})
+		return
+	}
 }
 
 var (

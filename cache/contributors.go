@@ -13,6 +13,8 @@ var (
 const (
 	countsPrefix       = "mergebot:counts"
 	contributorsPrefix = "mergebot:contributors"
+	updateLocksPrefix  = "mergebot:update:locks"
+	locksPrefix        = "mergebot:locks"
 )
 
 func contributorsKey(id int64) string {
@@ -21,6 +23,14 @@ func contributorsKey(id int64) string {
 
 func countsKey(id int64) string {
 	return fmt.Sprintf("%s:%d", countsPrefix, id)
+}
+
+func locksKey(id int64) string {
+	return fmt.Sprintf("%s:%d", locksPrefix, id)
+}
+
+func updateLockKey(id int64) string {
+	return fmt.Sprintf("%s:%d", updateLocksPrefix, id)
 }
 
 func SetCounts(id int64, counts map[string]int) error {
@@ -92,6 +102,18 @@ func SetContributors(id int64, candidates []string) error {
 	return contributors.JsonSet(contributorsKey(id), candidates)
 }
 
-func Connect() error {
-	return contributors.Connect()
+func TryAcquireBranchDeletionLock(id int64) bool {
+	return contributors.TryAcquireLock(locksKey(id))
+}
+
+func BranchDeletionUnlock(id int64) {
+	contributors.Unlock(locksKey(id))
+}
+
+func TryAcquireUpdateLock(id int64) bool {
+	return contributors.TryAcquireLock(updateLockKey(id))
+}
+
+func UpdateUnlock(id int64) {
+	contributors.Unlock(updateLockKey(id))
 }

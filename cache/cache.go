@@ -10,6 +10,8 @@ type Cache interface {
 	JsonExists(key, item string) (bool, error)
 	JsonAdd(key, item string, v int) error
 	JsonIncr(key string, item string, v int) (bool, error)
+	TryAcquireLock(key string) bool
+	Unlock(key string)
 	Connect() error
 }
 
@@ -25,9 +27,8 @@ func (e *CacheError) Error() string {
 func Init() error {
 	if redisUrl == "" {
 		contributors = &MemCache{}
-		return contributors.Connect()
+	} else {
+		contributors = &RedisCache{}
 	}
-
-	contributors = &RedisCache{}
 	return contributors.Connect()
 }

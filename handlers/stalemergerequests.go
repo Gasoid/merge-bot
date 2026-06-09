@@ -65,7 +65,7 @@ func (r Request) cleanStaleMergeRequests() error {
 			pluralDays := english.Plural(days, "day", "")
 			pluralCoolDays := english.Plural(coolDays, "day", "")
 
-			message := fmt.Sprintf("This MR is stale because it has been open for %s with no activity. Remove the stale label otherwise it will be closed in %s.", pluralDays, pluralCoolDays)
+			message := fmt.Sprintf("This MR is stale because it has been open for %s with no activity ⌛. Remove the stale label otherwise it will be closed in %s 🧹.", pluralDays, pluralCoolDays)
 			if err := r.provider.LeaveComment(r.info.ProjectID, mr.ID, message); err != nil {
 				return fmt.Errorf("LeaveComment returns error: %w", err)
 			}

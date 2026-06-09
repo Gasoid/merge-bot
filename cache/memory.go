@@ -5,6 +5,8 @@ import (
 )
 
 type MemCache struct {
+	mu           sync.Mutex
+	locks        map[string]bool
 	keys         map[string]any
 	memcacheLock sync.RWMutex
 }
@@ -92,11 +94,37 @@ func (m *MemCache) get(key string) (any, error) {
 }
 
 func (m *MemCache) Connect() error {
+	m.memcacheLock.Lock()
+	defer m.memcacheLock.Unlock()
+
 	if m.keys == nil {
 		m.keys = make(map[string]any)
 	}
 
+	if m.locks == nil {
+		m.locks = make(map[string]bool)
+	}
+
 	return nil
+}
+
+func (m *MemCache) TryAcquireLock(key string) bool {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if !m.locks[key] {
+		m.locks[key] = true
+		return true
+	} else {
+		return false
+	}
+}
+
+func (m *MemCache) Unlock(key string) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	m.locks[key] = false
 }
 
 var (
