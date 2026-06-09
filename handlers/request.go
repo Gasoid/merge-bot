@@ -297,7 +297,7 @@ func (c Candidate) IsAvailable() bool {
 }
 
 func (r Request) SpinRoulette() ([]string, error) {
-	candidates, err := r.provider.GetContributors(r.info.ProjectID, r.info.ID)
+	gamblers, err := r.provider.GetContributors(r.info.ProjectID, r.info.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -312,51 +312,43 @@ func (r Request) SpinRoulette() ([]string, error) {
 	}
 
 	if len(counts) > 0 {
-		for i := range candidates {
-			if v, ok := counts[candidates[i].Username]; ok {
-				candidates[i].Count = v
+		for i := range gamblers {
+			if v, ok := counts[gamblers[i].Username]; ok {
+				gamblers[i].Count = v
 			}
-		}
-	} else {
-		for _, c := range candidates {
-			counts[c.Username] = 0
-		}
-
-		if err := cache.SetCounts(r.info.ProjectID, counts); err != nil {
-			return nil, err
 		}
 	}
 
-	rand.Shuffle(len(candidates)/2, func(i, j int) {
-		candidates[i], candidates[j] = candidates[j], candidates[i]
+	rand.Shuffle(len(gamblers)/2, func(i, j int) {
+		gamblers[i], gamblers[j] = gamblers[j], gamblers[i]
 	})
 
-	sort.Slice(candidates, func(i, j int) bool {
+	sort.Slice(gamblers, func(i, j int) bool {
 		if r.config.AssignReviewers.UseCodeowners {
-			if candidates[i].IsCodeOwner && !candidates[j].IsCodeOwner {
+			if gamblers[i].IsCodeOwner && !gamblers[j].IsCodeOwner {
 				return true
 			}
 
-			if candidates[j].IsCodeOwner && !candidates[i].IsCodeOwner {
+			if gamblers[j].IsCodeOwner && !gamblers[i].IsCodeOwner {
 				return false
 			}
 		}
 
-		return candidates[i].Count < candidates[j].Count
+		return gamblers[i].Count < gamblers[j].Count
 	})
 
 	usernames := make([]string, 0, r.config.AssignReviewers.ReviewerNumber)
 
-	for _, c := range candidates {
-		if !c.IsAvailable() {
+	for _, g := range gamblers {
+		if !g.IsAvailable() {
 			continue
 		}
 
-		if c.Username == r.info.Author {
+		if g.Username == r.info.Author {
 			continue
 		}
 
-		usernames = append(usernames, c.Username)
+		usernames = append(usernames, g.Username)
 		if len(usernames) == r.config.AssignReviewers.ReviewerNumber {
 			break
 		}
@@ -392,34 +384,26 @@ func (r Request) ReviewRoulette() error {
 	return r.reviewRoulette()
 }
 
-// func (r Request) UpdateReviewRouletteCounts() error {
-// 	if !r.config.AssignReviewers.Enabled {
-// 		return nil
-// 	}
+func (r Request) UpdateReviewRouletteCounts() error {
+	gamblers, err := r.provider.GetContributors(r.info.ProjectID, r.info.ID)
+	if err != nil {
+		return err
+	}
 
-// 	counts, err := cache.GetCounts(r.info.ProjectID)
-// 	if err != nil {
-// 		return err
-// 	}
+	counts, err := cache.GetCounts(r.info.ProjectID)
+	if err != nil {
+		return err
+	}
 
-// 	if len(counts) == 0 {
-// 		candidates, err := r.provider.GetContributors(r.info.ProjectID, r.info.ID)
-// 		if err != nil {
-// 			return err
-// 		}
+	if len(counts) == 0 {
+		for _, c := range gamblers {
+			counts[c.Username] = 0
+		}
 
-// 		for _, c := range candidates {
-// 			counts[c.Username] = 0
-// 		}
+		if err := cache.SetCounts(r.info.ProjectID, counts); err != nil {
+			return err
+		}
+	}
 
-// 		if err := cache.SetCounts(r.info.ProjectID, counts); err != nil {
-// 			return err
-// 		}
-// 	}
-
-// 	for _ = range r.info.Reviewers {
-
-// 		// _, err := cache.IncrCount(r.info.ProjectID, a)
-// 	}
-// 	return nil
-// }
+	return nil
+}

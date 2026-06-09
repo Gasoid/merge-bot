@@ -35,7 +35,7 @@ func (r Request) cleanStaleMergeRequests() error {
 		excludeBranches[s] = struct{}{}
 	}
 
-	for mr := range r.provider.ListMergeRequests(r.info.ProjectID, r.config.StaleBranchesDeletion.BatchSize, r.config.StaleBranchesDeletion.Protected) {
+	for mr := range r.provider.ListMergeRequests(r.info.ProjectID, r.config.StaleBranchesDeletion.BatchSize, true) {
 		if branchesDeleted >= r.config.StaleBranchesDeletion.BatchSize {
 			break
 		}

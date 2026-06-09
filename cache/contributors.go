@@ -80,7 +80,7 @@ func DecrCount(id int64, item string) (bool, error) {
 	return false, nil
 }
 
-func GetContributors(id int64) ([]string, error) {
+func GetContributors(id int64) ([]int64, error) {
 	val, err := contributors.JsonGet(contributorsKey(id))
 	if err != nil {
 		return nil, err
@@ -90,14 +90,14 @@ func GetContributors(id int64) ([]string, error) {
 		return nil, nil
 	}
 
-	if candidates, ok := val.([]string); ok {
+	if candidates, ok := val.([]int64); ok {
 		return candidates, nil
 	}
 
 	return nil, nil
 }
 
-func SetContributors(id int64, candidates []string) error {
+func SetContributors(id int64, candidates []int64) error {
 	logger.Debug("save contributors", "size", len(candidates))
 	return contributors.JsonSet(contributorsKey(id), candidates)
 }
