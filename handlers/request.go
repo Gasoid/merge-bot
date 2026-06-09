@@ -397,7 +397,7 @@ func (r Request) UpdateReviewRouletteCounts() error {
 
 	if len(counts) == 0 {
 		for _, c := range gamblers {
-			counts[c.Username] = 0
+			counts[c.Username] = c.Count
 		}
 
 		if err := cache.SetCounts(r.info.ProjectID, counts); err != nil {
