@@ -28,7 +28,7 @@ var (
 )
 
 const (
-	ttl = 30 * time.Minute
+	lockTTL = 30 * time.Minute
 )
 
 func init() {
@@ -60,6 +60,14 @@ func (r *RedisCache) Connect() error {
 func (r *RedisCache) JsonSet(key string, v any) error {
 	if _, err := r.client.JSONSetWithArgs(context.TODO(), key, "$", v, &redis.JSONSetArgsOptions{Mode: "NX"}).Result(); err != nil {
 		return &CacheError{Operation: "JSONSetWithArgs", Err: err}
+	}
+
+	return nil
+}
+
+func (r *RedisCache) ExtendTTL(key string, ttl time.Duration) error {
+	if _, err := r.client.Expire(context.TODO(), key, ttl).Result(); err != nil {
+		return &CacheError{Operation: "Expire", Err: err}
 	}
 
 	return nil
@@ -133,7 +141,7 @@ func (r *RedisCache) JsonIncr(key, item string, v int) (bool, error) {
 }
 
 func (r *RedisCache) TryAcquireLock(key string) bool {
-	if _, err := r.client.SetArgs(context.TODO(), key, true, redis.SetArgs{Mode: "NX", TTL: ttl}).Result(); err != nil {
+	if _, err := r.client.SetArgs(context.TODO(), key, true, redis.SetArgs{Mode: "NX", TTL: lockTTL}).Result(); err != nil {
 		logger.Info("can't aquire a lock", "error", &CacheError{Operation: "SetArgs", Err: err})
 		return false
 	}

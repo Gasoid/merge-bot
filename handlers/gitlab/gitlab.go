@@ -556,6 +556,8 @@ func (g GitlabProvider) codeOwners(projectID, mergeID int64) (map[string]struct{
 			return nil, err
 		}
 
+		// it seems it is not right logic
+		// TODO: rewrite it to more desirable logic
 		for _, o := range owners.Owners(f) {
 			candidates[o] = struct{}{}
 		}
@@ -586,79 +588,78 @@ func (g GitlabProvider) AssignReviewers(projectID, mergeID int64, users []string
 }
 
 func (g GitlabProvider) GetContributors(projectID, mergeID int64) ([]handlers.Candidate, error) {
+	const (
+		batch int64 = 50
+	)
+
 	candidates := []handlers.Candidate{}
 
-	emails, err := cache.GetContributors(projectID)
+	userIDs, err := cache.GetContributors(projectID)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(emails) == 0 {
+	counts := map[string]int{}
+
+	if len(userIDs) == 0 {
 		now := time.Now()
 		months3back := now.Add(-1 * time.Hour * 24 * 30 * 3)
 
-		commits, _, err := g.client.Commits.ListCommits(projectID, &gitlab.ListCommitsOptions{
-			Since: &months3back,
-		})
-		if err != nil {
-			return nil, err
+		for mr := range g.listMergeRequests(projectID, batch, &gitlab.ListProjectMergeRequestsOptions{
+			UpdatedAfter: &months3back,
+		}) {
+			userIDs = append(userIDs, mr.Author.ID)
+			for _, r := range mr.Reviewers {
+				counts[r.Username]++
+			}
 		}
 
-		seen := make(map[string]struct{}, 10)
+		seen := make(map[int64]struct{}, 10)
 
-		for _, c := range commits {
-			seen[c.AuthorEmail] = struct{}{}
+		for _, id := range userIDs {
+			seen[id] = struct{}{}
 		}
 
-		emails := make([]string, 0, len(seen))
+		uniqueIDs := make([]int64, 0, len(seen))
 		for k := range seen {
-			emails = append(emails, k)
+			uniqueIDs = append(uniqueIDs, k)
 		}
 
-		if err := cache.SetContributors(projectID, emails); err != nil {
+		if err := cache.SetContributors(projectID, uniqueIDs); err != nil {
 			return nil, err
 		}
+
+		userIDs = uniqueIDs
 	}
 
-	for _, e := range emails {
-		members, _, err := g.client.ProjectMembers.ListAllProjectMembers(projectID, &gitlab.ListProjectMembersOptions{
-			Query: &e,
-		})
-		if err != nil {
-			continue
-		}
+	codeowners, err := g.codeOwners(projectID, mergeID)
+	if err != nil {
+		return nil, err
+	}
 
-		if len(members) != 1 {
-			continue
-		}
-
-		if members[0].AccessLevel >= gitlab.MaintainerPermissions {
-			// g.client.MergeRequests.ListProjectMergeRequests(projectID, &gitlab.ListProjectMergeRequestsOptions{
-			// 	ReviewerUsername: ,
-			// })
-
-			status, _, err := g.client.Users.GetUserStatus(members[0].ID)
+	for m := range g.listAllProjectMembers(projectID, batch, &gitlab.ListProjectMembersOptions{
+		UserIDs: &userIDs,
+	}) {
+		if m.AccessLevel >= gitlab.MaintainerPermissions {
+			status, _, err := g.client.Users.GetUserStatus(m.ID)
 			if err != nil {
+				logger.Error("GetUserStatus", "err", err)
 				continue
 			}
 
-			user, _, err := g.client.Users.GetUser(members[0].ID, &gitlab.GetUserOptions{})
-			if err != nil {
-				continue
-			}
+			// user, _, err := g.client.Users.GetUser(m.ID, &gitlab.GetUserOptions{})
+			// if err != nil {
+			// 	continue
+			// }
 
-			codeowners, err := g.codeOwners(projectID, mergeID)
-			if err != nil {
-				continue
-			}
-
-			_, isCodeOwner := codeowners[members[0].Username]
+			_, isCodeOwner := codeowners[m.Username]
 
 			candidates = append(candidates, handlers.Candidate{
-				Username:    members[0].Username,
+				Username:    m.Username,
 				StatusEmoji: status.Emoji,
 				Status:      status.Message,
-				Timezone:    user.Location,
+				Count:       counts[m.Username],
+				// Timezone:    user.Location,
 				IsCodeOwner: isCodeOwner})
 		}
 	}

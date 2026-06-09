@@ -52,3 +52,13 @@ func (g GitlabProvider) listMergeRequests(projectID, size int64, options *gitlab
 		return g.client.MergeRequests.ListProjectMergeRequests(projectID, options)
 	}, size)
 }
+
+func (g GitlabProvider) listAllProjectMembers(projectID, size int64, options *gitlab.ListProjectMembersOptions) iter.Seq[*gitlab.ProjectMember] {
+	return paginate(func(page, perPage int64) ([]*gitlab.ProjectMember, *gitlab.Response, error) {
+		if options == nil {
+			options = &gitlab.ListProjectMembersOptions{}
+		}
+		options.ListOptions = gitlab.ListOptions{Page: page, PerPage: perPage}
+		return g.client.ProjectMembers.ListAllProjectMembers(projectID, options)
+	}, size)
+}
