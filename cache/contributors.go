@@ -37,8 +37,9 @@ func updateLockKey(id int64) string {
 }
 
 func SetCounts(id int64, counts map[string]int) error {
+	logger.Debug("SetCounts", "size", len(counts))
 	if err := contributors.JsonSet(countsKey(id), counts); err != nil {
-		return err
+		return fmt.Errorf("can't save counts err: %w", err)
 	}
 
 	return contributors.ExtendTTL(countsKey(id), countsTTL)
@@ -62,6 +63,7 @@ func GetCounts(id int64) (map[string]int, error) {
 }
 
 func IncrCount(id int64, item string) (bool, error) {
+	logger.Debug("IncrCount", "item", item)
 	ok, err := contributors.JsonExists(countsKey(id), item)
 	if err != nil {
 		return false, err

@@ -67,7 +67,9 @@ func (r *RedisCache) JsonSet(key string, v any) error {
 
 func (r *RedisCache) ExtendTTL(key string, ttl time.Duration) error {
 	if _, err := r.client.Expire(context.TODO(), key, ttl).Result(); err != nil {
-		return &CacheError{Operation: "Expire", Err: err}
+		if err != redis.Nil {
+			return &CacheError{Operation: "Expire", Err: err}
+		}
 	}
 
 	return nil
