@@ -542,6 +542,10 @@ func (g GitlabProvider) codeOwners(projectID, mergeID int64) (map[string]struct{
 
 	b, err := g.GetFile(projectID, "CODEOWNERS")
 	if err != nil {
+		if errors.Is(err, gitlab.ErrNotFound) {
+			return nil, nil
+		}
+
 		return nil, err
 	}
 
