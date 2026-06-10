@@ -542,6 +542,10 @@ func (g GitlabProvider) codeOwners(projectID, mergeID int64) (map[string]struct{
 
 	b, err := g.GetFile(projectID, "CODEOWNERS")
 	if err != nil {
+		if errors.Is(err, gitlab.ErrNotFound) {
+			return nil, nil
+		}
+
 		return nil, err
 	}
 
@@ -567,7 +571,9 @@ func (g GitlabProvider) codeOwners(projectID, mergeID int64) (map[string]struct{
 }
 
 func (g GitlabProvider) AssignReviewers(projectID, mergeID int64, users []string) error {
-	usersIds := []int64{}
+	logger.Debug("AssignReviewers started", "users", users)
+
+	usersIDs := []int64{}
 
 	for _, u := range users {
 		listUsers, _, err := g.client.Users.ListUsers(&gitlab.ListUsersOptions{Username: &u})
@@ -576,12 +582,13 @@ func (g GitlabProvider) AssignReviewers(projectID, mergeID int64, users []string
 		}
 
 		if len(listUsers) == 1 {
-			usersIds = append(usersIds, listUsers[0].ID)
+			usersIDs = append(usersIDs, listUsers[0].ID)
 		}
 	}
 
+	logger.Debug("UpdateMergeRequest", "users", usersIDs)
 	_, _, err := g.client.MergeRequests.UpdateMergeRequest(projectID, mergeID, &gitlab.UpdateMergeRequestOptions{
-		ReviewerIDs: &usersIds,
+		ReviewerIDs: &usersIDs,
 	})
 
 	return err
@@ -640,28 +647,35 @@ func (g GitlabProvider) GetContributors(projectID, mergeID int64) ([]handlers.Ca
 	for m := range g.listAllProjectMembers(projectID, batch, &gitlab.ListProjectMembersOptions{
 		UserIDs: &userIDs,
 	}) {
-		if m.AccessLevel >= gitlab.MaintainerPermissions {
-			status, _, err := g.client.Users.GetUserStatus(m.ID)
-			if err != nil {
-				logger.Error("GetUserStatus", "err", err)
-				continue
-			}
 
-			// user, _, err := g.client.Users.GetUser(m.ID, &gitlab.GetUserOptions{})
-			// if err != nil {
-			// 	continue
-			// }
+		_, isCodeOwner := codeowners[m.Username]
 
-			_, isCodeOwner := codeowners[m.Username]
-
-			candidates = append(candidates, handlers.Candidate{
-				Username:    m.Username,
-				StatusEmoji: status.Emoji,
-				Status:      status.Message,
-				Count:       counts[m.Username],
-				// Timezone:    user.Location,
-				IsCodeOwner: isCodeOwner})
+		if !isCodeOwner && m.AccessLevel < gitlab.MaintainerPermissions {
+			continue
 		}
+
+		if m.State != "active" {
+			continue
+		}
+
+		status, _, err := g.client.Users.GetUserStatus(m.ID)
+		if err != nil {
+			logger.Error("GetUserStatus", "err", err)
+			continue
+		}
+
+		// user, _, err := g.client.Users.GetUser(m.ID, &gitlab.GetUserOptions{})
+		// if err != nil {
+		// 	continue
+		// }
+
+		candidates = append(candidates, handlers.Candidate{
+			Username:    m.Username,
+			StatusEmoji: status.Emoji,
+			Status:      status.Message,
+			Count:       counts[m.Username],
+			// Timezone:    user.Location,
+			IsCodeOwner: isCodeOwner})
 	}
 
 	return candidates, nil

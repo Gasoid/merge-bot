@@ -34,8 +34,22 @@ func (m *MemCache) JsonAdd(key string, item string, v int) error {
 	return nil
 }
 
-func (m *MemCache) JsonGet(key string) (any, error) {
-	return m.get(key)
+func (m *MemCache) JsonGet(key string) ([]int64, error) {
+	val, err := m.get(key)
+	if err != nil {
+		return nil, err
+	}
+
+	return val.([]int64), nil
+}
+
+func (m *MemCache) JsonGetMap(key string) (map[string]int, error) {
+	val, err := m.get(key)
+	if err != nil {
+		return nil, err
+	}
+
+	return val.(map[string]int), nil
 }
 
 func (m *MemCache) JsonIncr(key, item string, v int) (bool, error) {

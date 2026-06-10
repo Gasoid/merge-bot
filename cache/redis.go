@@ -58,8 +58,9 @@ func (r *RedisCache) Connect() error {
 }
 
 func (r *RedisCache) JsonSet(key string, v any) error {
-	if _, err := r.client.JSONSetWithArgs(context.TODO(), key, "$", v, &redis.JSONSetArgsOptions{Mode: "NX"}).Result(); err != nil {
-		return &CacheError{Operation: "JSONSetWithArgs", Err: err}
+	if _, err := r.client.JSONSet(context.TODO(), key, "$", v).Result(); err != nil {
+		logger.Debug("redis error", "err", err, "key", key, "v", v)
+		return &CacheError{Operation: "JsonSet", Err: err}
 	}
 
 	return nil
@@ -67,7 +68,9 @@ func (r *RedisCache) JsonSet(key string, v any) error {
 
 func (r *RedisCache) ExtendTTL(key string, ttl time.Duration) error {
 	if _, err := r.client.Expire(context.TODO(), key, ttl).Result(); err != nil {
-		return &CacheError{Operation: "Expire", Err: err}
+		if err != redis.Nil {
+			return &CacheError{Operation: "Expire", Err: err}
+		}
 	}
 
 	return nil
@@ -79,26 +82,52 @@ func (r *RedisCache) JsonAdd(key, item string, v int) error {
 	}
 
 	if _, err := r.client.JSONSetWithArgs(context.TODO(), key, "$."+item, v, &redis.JSONSetArgsOptions{Mode: "NX"}).Result(); err != nil {
-		return &CacheError{Operation: "JSONSetWithArgs", Err: err}
+		return &CacheError{Operation: "JsonAdd", Err: err}
 	}
 
 	return nil
 }
 
-func (r *RedisCache) JsonGet(key string) (any, error) {
+func (r *RedisCache) JsonGet(key string) ([]int64, error) {
 	val, err := r.client.JSONGet(context.TODO(), key, "$").Result()
 	if err != nil {
 		if err == redis.Nil {
-			return "", nil
+			return nil, nil
 		}
-		return "", &CacheError{Operation: "JsonGet", Err: err}
+		return nil, &CacheError{Operation: "JsonGet", Err: err}
 	}
 
 	if val == "[]" {
 		return nil, nil
 	}
 
-	result := []any{}
+	result := [][]int64{}
+
+	if err := json.Unmarshal([]byte(val), &result); err != nil {
+		return nil, fmt.Errorf("json data is invalid %w", err)
+	}
+
+	if len(result) == 0 {
+		return nil, nil
+	}
+
+	return result[0], nil
+}
+
+func (r *RedisCache) JsonGetMap(key string) (map[string]int, error) {
+	val, err := r.client.JSONGet(context.TODO(), key, "$").Result()
+	if err != nil {
+		if err == redis.Nil {
+			return nil, nil
+		}
+		return nil, &CacheError{Operation: "JsonGet", Err: err}
+	}
+
+	if val == "[]" {
+		return nil, nil
+	}
+
+	result := []map[string]int{}
 
 	if err := json.Unmarshal([]byte(val), &result); err != nil {
 		return nil, fmt.Errorf("json data is invalid %w", err)
@@ -117,7 +146,7 @@ func (r *RedisCache) JsonExists(key, item string) (bool, error) {
 		if err == redis.Nil {
 			return false, nil
 		}
-		return false, &CacheError{Operation: "JsonGet", Err: err}
+		return false, &CacheError{Operation: "JsonExists", Err: err}
 	}
 
 	if val == "[]" {
@@ -130,7 +159,7 @@ func (r *RedisCache) JsonExists(key, item string) (bool, error) {
 func (r *RedisCache) JsonIncr(key, item string, v int) (bool, error) {
 	result, err := casScript.Run(context.TODO(), r.client, []string{key}, item, v).Int()
 	if err != nil {
-		return false, &CacheError{Operation: "casScript", Err: err}
+		return false, &CacheError{Operation: "JsonIncr", Err: err}
 	}
 
 	if result == 0 {
@@ -141,17 +170,22 @@ func (r *RedisCache) JsonIncr(key, item string, v int) (bool, error) {
 }
 
 func (r *RedisCache) TryAcquireLock(key string) bool {
-	if _, err := r.client.SetArgs(context.TODO(), key, true, redis.SetArgs{Mode: "NX", TTL: lockTTL}).Result(); err != nil {
-		logger.Info("can't aquire a lock", "error", &CacheError{Operation: "SetArgs", Err: err})
+	_, err := r.client.SetArgs(context.TODO(), key, true, redis.SetArgs{Mode: "NX", TTL: lockTTL}).Result()
+	if err == nil {
+		return true
+	}
+
+	if err == redis.Nil {
 		return false
 	}
 
-	return true
+	logger.Info("can't aquire a lock", "error", &CacheError{Operation: "TryAcquireLock", Err: err})
+	return false
 }
 
 func (r *RedisCache) Unlock(key string) {
 	if _, err := r.client.Del(context.TODO(), key).Result(); err != nil {
-		logger.Info("can't delete a lock", "error", &CacheError{Operation: "Del", Err: err})
+		logger.Info("can't delete a lock", "error", &CacheError{Operation: "Unlock", Err: err})
 		return
 	}
 }

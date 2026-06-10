@@ -37,15 +37,17 @@ func updateLockKey(id int64) string {
 }
 
 func SetCounts(id int64, counts map[string]int) error {
+	logger.Debug("SetCounts", "size", len(counts))
 	if err := contributors.JsonSet(countsKey(id), counts); err != nil {
-		return err
+		return fmt.Errorf("can't save counts err: %w", err)
 	}
 
 	return contributors.ExtendTTL(countsKey(id), countsTTL)
 }
 
 func GetCounts(id int64) (map[string]int, error) {
-	val, err := contributors.JsonGet(countsKey(id))
+	logger.Debug("GetCounts")
+	val, err := contributors.JsonGetMap(countsKey(id))
 	if err != nil {
 		return nil, err
 	}
@@ -54,14 +56,12 @@ func GetCounts(id int64) (map[string]int, error) {
 		return nil, nil
 	}
 
-	if candidates, ok := val.(map[string]int); ok {
-		return candidates, nil
-	}
-
-	return nil, nil
+	logger.Debug("GetCounts", "val", val)
+	return val, nil
 }
 
 func IncrCount(id int64, item string) (bool, error) {
+	logger.Debug("IncrCount", "item", item)
 	ok, err := contributors.JsonExists(countsKey(id), item)
 	if err != nil {
 		return false, err
@@ -97,15 +97,7 @@ func GetContributors(id int64) ([]int64, error) {
 		return nil, err
 	}
 
-	if val == nil {
-		return nil, nil
-	}
-
-	if candidates, ok := val.([]int64); ok {
-		return candidates, nil
-	}
-
-	return nil, nil
+	return val, nil
 }
 
 func SetContributors(id int64, candidates []int64) error {

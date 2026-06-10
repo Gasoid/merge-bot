@@ -28,6 +28,7 @@ const (
 var (
 	vacationStatuses = []string{"ooo", "vacation", "travel", "parental leave"}
 	emojiStatuses    = []string{"beach", "beach_umbrella", "palm_tree", "red_circle", "no_entry"}
+	botNicks         = []string{"bot", "jira", "gitlab", "github"}
 )
 
 type Request struct {
@@ -293,17 +294,22 @@ func (c Candidate) IsAvailable() bool {
 		}
 	}
 
-	return slices.Contains(emojiStatuses, c.StatusEmoji)
+	return !slices.Contains(emojiStatuses, c.StatusEmoji)
 }
 
-func (r Request) SpinRoulette() ([]string, error) {
+func (c Candidate) IsBot() bool {
+	for _, s := range botNicks {
+		if strings.Contains(strings.ToLower(c.Username), s) {
+			return true
+		}
+	}
+	return false
+}
+
+func (r Request) spinRoulette(num int) ([]string, error) {
 	gamblers, err := r.provider.GetContributors(r.info.ProjectID, r.info.ID)
 	if err != nil {
 		return nil, err
-	}
-
-	if r.config.AssignReviewers.ReviewerNumber < 1 {
-		r.config.AssignReviewers.ReviewerNumber = 1
 	}
 
 	counts, err := cache.GetCounts(r.info.ProjectID)
@@ -344,12 +350,16 @@ func (r Request) SpinRoulette() ([]string, error) {
 			continue
 		}
 
+		if g.IsBot() {
+			continue
+		}
+
 		if g.Username == r.info.Author {
 			continue
 		}
 
 		usernames = append(usernames, g.Username)
-		if len(usernames) == r.config.AssignReviewers.ReviewerNumber {
+		if len(usernames) == num {
 			break
 		}
 	}
@@ -357,16 +367,38 @@ func (r Request) SpinRoulette() ([]string, error) {
 	return usernames, nil
 }
 
-func (r Request) reviewRoulette() error {
-	usernames, err := r.SpinRoulette()
+func (r Request) reviewRoulette(num int) error {
+	if len(r.info.Reviewers) != 0 {
+		if err := r.provider.LeaveComment(r.info.ProjectID, r.info.ID, "🎲 Merge Request has assigned reviewers already"); err != nil {
+			return err
+		}
+		return nil
+	}
+
+	usernames, err := r.spinRoulette(max(num, 1))
 	if err != nil {
 		return err
 	}
 
+	logger.Debug("usernames for review", "usernames", usernames)
 	for _, u := range usernames {
 		if _, err := cache.IncrCount(r.info.ProjectID, u); err != nil {
 			return err
 		}
+	}
+
+	if len(usernames) == 0 {
+		return nil
+	}
+
+	formatUsernames := make([]string, 0, len(usernames))
+	for _, u := range usernames {
+		formatUsernames = append(formatUsernames, "@"+u)
+	}
+
+	rouletteMessage := fmt.Sprintf("🎲 **Review Roulette** — %d contributors in the pool\nReviewers selected: %s", len(formatUsernames), strings.Join(formatUsernames, ","))
+	if err := r.provider.LeaveComment(r.info.ProjectID, r.info.ID, rouletteMessage); err != nil {
+		return err
 	}
 
 	return r.provider.AssignReviewers(r.info.ProjectID, r.info.ID, usernames)
@@ -377,14 +409,29 @@ func (r Request) AssignReviewers() error {
 		return nil
 	}
 
-	return r.reviewRoulette()
+	ok, _, err := r.IsValid()
+	if err != nil {
+		return err
+	}
+
+	if ok {
+		return r.reviewRoulette(r.config.AssignReviewers.ReviewerNumber)
+	} else {
+		return nil
+	}
 }
 
-func (r Request) ReviewRoulette() error {
-	return r.reviewRoulette()
+func (r Request) ReviewRoulette(num int) error {
+	if num == 0 {
+		num = r.config.AssignReviewers.ReviewerNumber
+	}
+
+	return r.reviewRoulette(num)
 }
 
 func (r Request) UpdateReviewRouletteCounts() error {
+	metrics.BackgroundRunInc("update_review_roulette_counts")
+
 	gamblers, err := r.provider.GetContributors(r.info.ProjectID, r.info.ID)
 	if err != nil {
 		return err
@@ -398,6 +445,8 @@ func (r Request) UpdateReviewRouletteCounts() error {
 	if len(counts) > 0 {
 		return nil
 	}
+
+	counts = make(map[string]int, len(gamblers))
 
 	for _, c := range gamblers {
 		counts[c.Username] = c.Count

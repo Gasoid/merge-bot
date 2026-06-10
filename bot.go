@@ -105,7 +105,7 @@ func Handler(c echo.Context) error {
 				return
 			}
 
-			go staleBranchesRoutine(command)
+			go backgroundRoutine(command)
 
 			if hook.NoteID > 0 {
 				if err := command.AwardEmoji(hook.NoteID, emojiRobot); err != nil {
@@ -143,12 +143,16 @@ func handle(onEvent string, funcHandler func(*handlers.Request, string) error) {
 	}
 }
 
-func staleBranchesRoutine(command *handlers.Request) {
+func backgroundRoutine(command *handlers.Request) {
 	if err := command.CreateLabels(); err != nil {
 		logger.Error("command.CreateLabels", "err", err)
 	}
 
 	if err := command.DeleteStaleBranches(); err != nil {
 		logger.Error("command.DeleteStaleBranches", "err", err)
+	}
+
+	if err := command.UpdateReviewRouletteCounts(); err != nil {
+		logger.Error("command.UpdateReviewRouletteCounts", "err", err)
 	}
 }
