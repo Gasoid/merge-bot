@@ -28,6 +28,7 @@ const (
 var (
 	vacationStatuses = []string{"ooo", "vacation", "travel", "parental leave"}
 	emojiStatuses    = []string{"beach", "beach_umbrella", "palm_tree", "red_circle", "no_entry"}
+	botNicks         = []string{"bot", "jira"}
 )
 
 type Request struct {
@@ -296,6 +297,15 @@ func (c Candidate) IsAvailable() bool {
 	return !slices.Contains(emojiStatuses, c.StatusEmoji)
 }
 
+func (c Candidate) IsBot() bool {
+	for _, s := range botNicks {
+		if strings.Contains(c.Username, s) {
+			return true
+		}
+	}
+	return false
+}
+
 func (r Request) spinRoulette(num int) ([]string, error) {
 	gamblers, err := r.provider.GetContributors(r.info.ProjectID, r.info.ID)
 	if err != nil {
@@ -337,6 +347,10 @@ func (r Request) spinRoulette(num int) ([]string, error) {
 
 	for _, g := range gamblers {
 		if !g.IsAvailable() {
+			continue
+		}
+
+		if g.IsBot() {
 			continue
 		}
 
