@@ -370,6 +370,7 @@ func (r Request) reviewRoulette() error {
 		return err
 	}
 
+	logger.Debug("usernames for review", "usernames", usernames)
 	for _, u := range usernames {
 		if _, err := cache.IncrCount(r.info.ProjectID, u); err != nil {
 			return err

@@ -571,7 +571,9 @@ func (g GitlabProvider) codeOwners(projectID, mergeID int64) (map[string]struct{
 }
 
 func (g GitlabProvider) AssignReviewers(projectID, mergeID int64, users []string) error {
-	usersIds := []int64{}
+	logger.Debug("AssignReviewers started", "users", users)
+
+	usersIDs := []int64{}
 
 	for _, u := range users {
 		listUsers, _, err := g.client.Users.ListUsers(&gitlab.ListUsersOptions{Username: &u})
@@ -580,12 +582,13 @@ func (g GitlabProvider) AssignReviewers(projectID, mergeID int64, users []string
 		}
 
 		if len(listUsers) == 1 {
-			usersIds = append(usersIds, listUsers[0].ID)
+			usersIDs = append(usersIDs, listUsers[0].ID)
 		}
 	}
 
+	logger.Debug("UpdateMergeRequest", "users", usersIDs)
 	_, _, err := g.client.MergeRequests.UpdateMergeRequest(projectID, mergeID, &gitlab.UpdateMergeRequestOptions{
-		ReviewerIDs: &usersIds,
+		ReviewerIDs: &usersIDs,
 	})
 
 	return err
