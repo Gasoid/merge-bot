@@ -26,7 +26,7 @@ Try the bot on our [demo repository](https://gitlab.com/Gasoid/sugar-test) or in
 - `!check` - Validates whether the MR meets all rules
 - `!update` - Updates the branch from the target branch (e.g., main/master)
 - `!rerun` - Re-run pipeline, e.g. `!rerun #123123333` or `!rerun 123123333`, command will run pipeline against the branch of the merge request with variables of provided pipeline (e.g. 123123333)
-- `!spin` - Assign random reviewers, e.g. `!spin 2` will assign 2 random reviewers, if number is not provided, it will use reviewer_number from config file
+- `!spin` - Assign random reviewers, e.g. `!spin 2` will assign 2 random reviewers, if number is not provided, it will use reviewer_number from config file. Default is 2.
 
 ## Table of Contents
 
@@ -168,7 +168,7 @@ auto_master_merge: false  # Auto-update branch from target branch
 review_roulette:
   enabled: false  # Randomly assign reviewers
 	use_codeowners: true
-	reviewer_number: 1
+	reviewer_number: 2
 	exclude_usernames: []
 
 stale_branches_deletion:

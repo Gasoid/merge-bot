@@ -101,7 +101,7 @@ func (r *Request) ParseConfig(content string) (*Config, error) {
 		AutoMasterMerge: false,
 		AssignReviewers: AssignReviewers{
 			UseCodeowners:    true,
-			ReviewerNumber:   1,
+			ReviewerNumber:   2,
 			ExcludeUsernames: []string{},
 		},
 		StaleBranchesDeletion: struct {
