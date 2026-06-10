@@ -647,28 +647,34 @@ func (g GitlabProvider) GetContributors(projectID, mergeID int64) ([]handlers.Ca
 	for m := range g.listAllProjectMembers(projectID, batch, &gitlab.ListProjectMembersOptions{
 		UserIDs: &userIDs,
 	}) {
-		if m.AccessLevel >= gitlab.MaintainerPermissions {
-			status, _, err := g.client.Users.GetUserStatus(m.ID)
-			if err != nil {
-				logger.Error("GetUserStatus", "err", err)
-				continue
-			}
-
-			// user, _, err := g.client.Users.GetUser(m.ID, &gitlab.GetUserOptions{})
-			// if err != nil {
-			// 	continue
-			// }
-
-			_, isCodeOwner := codeowners[m.Username]
-
-			candidates = append(candidates, handlers.Candidate{
-				Username:    m.Username,
-				StatusEmoji: status.Emoji,
-				Status:      status.Message,
-				Count:       counts[m.Username],
-				// Timezone:    user.Location,
-				IsCodeOwner: isCodeOwner})
+		if m.AccessLevel < gitlab.MaintainerPermissions {
+			continue
 		}
+
+		if m.State != "active" {
+			continue
+		}
+
+		status, _, err := g.client.Users.GetUserStatus(m.ID)
+		if err != nil {
+			logger.Error("GetUserStatus", "err", err)
+			continue
+		}
+
+		// user, _, err := g.client.Users.GetUser(m.ID, &gitlab.GetUserOptions{})
+		// if err != nil {
+		// 	continue
+		// }
+
+		_, isCodeOwner := codeowners[m.Username]
+
+		candidates = append(candidates, handlers.Candidate{
+			Username:    m.Username,
+			StatusEmoji: status.Emoji,
+			Status:      status.Message,
+			Count:       counts[m.Username],
+			// Timezone:    user.Location,
+			IsCodeOwner: isCodeOwner})
 	}
 
 	return candidates, nil
