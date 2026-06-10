@@ -167,9 +167,9 @@ auto_master_merge: false  # Auto-update branch from target branch
 
 review_roulette:
   enabled: false  # Randomly assign reviewers
-	use_codeowners: true
-	reviewer_number: 2
-	exclude_usernames: []
+  use_codeowners: true
+  reviewer_number: 2
+  exclude_usernames: []
 
 stale_branches_deletion:
   enabled: false  # Clean up stale branches after merge
@@ -210,7 +210,7 @@ auto_master_merge: true
 
 review_roulette:
   enabled: true 
-	reviewer_number: 3
+  reviewer_number: 3
 
 stale_branches_deletion:
   enabled: true
