@@ -246,6 +246,7 @@ You can also enable the `resolvable` option to allow the bot to update and resol
 
 ### Review Roulette
 Enable random reviewer assignment for new merge requests. You can specify the number of reviewers to assign and whether to use CODEOWNERS for selection. Exclude specific usernames from being assigned as reviewers. Also you can use `!spin` command to assign new random reviewers to the merge request.
+
 If user has status: ooo, vacation, travel and parental leave in GitLab, they will be excluded from review roulette.
 Also emoji status is supported, if user has emoji status: 🏖️, 🔴, ⛔, 🌴 they will be excluded from review roulette as well.
 
