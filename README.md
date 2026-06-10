@@ -122,7 +122,7 @@ go run ./
   -sentry-enabled
         Enable Sentry error reporting (default: true, also via SENTRY_ENABLED)
   -redis-url string
-        Redis URL for plugin state storage (also via REDIS_URL)
+        Redis URL as cache storage, it needs for distributed locking, if you have more than 1 instance (also via REDIS_URL)
   -plugins string
         Comma-separated list of plugin config URLs or paths (also via PLUGINS)
   -version
