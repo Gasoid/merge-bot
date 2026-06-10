@@ -93,7 +93,19 @@ func CheckCmd(command *handlers.Request, args string) error {
 }
 
 func ReviewRouletteCmd(command *handlers.Request, args string) error {
-	if err := command.ReviewRoulette(); err != nil {
+	arg := strings.TrimSpace(args)
+
+	num := 0
+	if arg != "" {
+		var err error
+		num, err = strconv.Atoi(arg)
+		if err != nil {
+			logger.Debug("spin", "args", args, "arg", arg)
+			return command.LeaveComment("> [!important]\n> Number of players is invalid or wrong")
+		}
+	}
+
+	if err := command.ReviewRoulette(num); err != nil {
 		return fmt.Errorf("command.ReviewRoulette returns err: %w", err)
 	}
 

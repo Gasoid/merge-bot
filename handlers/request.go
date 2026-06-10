@@ -296,14 +296,10 @@ func (c Candidate) IsAvailable() bool {
 	return !slices.Contains(emojiStatuses, c.StatusEmoji)
 }
 
-func (r Request) SpinRoulette() ([]string, error) {
+func (r Request) spinRoulette(num int) ([]string, error) {
 	gamblers, err := r.provider.GetContributors(r.info.ProjectID, r.info.ID)
 	if err != nil {
 		return nil, err
-	}
-
-	if r.config.AssignReviewers.ReviewerNumber < 1 {
-		r.config.AssignReviewers.ReviewerNumber = 1
 	}
 
 	counts, err := cache.GetCounts(r.info.ProjectID)
@@ -349,7 +345,7 @@ func (r Request) SpinRoulette() ([]string, error) {
 		}
 
 		usernames = append(usernames, g.Username)
-		if len(usernames) == r.config.AssignReviewers.ReviewerNumber {
+		if len(usernames) == num {
 			break
 		}
 	}
@@ -357,7 +353,7 @@ func (r Request) SpinRoulette() ([]string, error) {
 	return usernames, nil
 }
 
-func (r Request) reviewRoulette() error {
+func (r Request) reviewRoulette(num int) error {
 	if len(r.info.Reviewers) != 0 {
 		if err := r.provider.LeaveComment(r.info.ProjectID, r.info.ID, "🎲 Merge Request has assigned reviewers already"); err != nil {
 			return err
@@ -365,7 +361,7 @@ func (r Request) reviewRoulette() error {
 		return nil
 	}
 
-	usernames, err := r.SpinRoulette()
+	usernames, err := r.spinRoulette(max(num, 1))
 	if err != nil {
 		return err
 	}
@@ -405,14 +401,18 @@ func (r Request) AssignReviewers() error {
 	}
 
 	if ok {
-		return r.reviewRoulette()
+		return r.reviewRoulette(r.config.AssignReviewers.ReviewerNumber)
 	} else {
 		return nil
 	}
 }
 
-func (r Request) ReviewRoulette() error {
-	return r.reviewRoulette()
+func (r Request) ReviewRoulette(num int) error {
+	if num == 0 {
+		num = r.config.AssignReviewers.ReviewerNumber
+	}
+
+	return r.reviewRoulette(num)
 }
 
 func (r Request) UpdateReviewRouletteCounts() error {
