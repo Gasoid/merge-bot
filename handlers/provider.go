@@ -106,9 +106,10 @@ type Rules struct {
 }
 
 type AssignReviewers struct {
-	Enabled        bool `yaml:"enabled"`
-	UseCodeowners  bool `yaml:"use_codeowners"`
-	ReviewerNumber int  `yaml:"reviewer_number"`
+	Enabled          bool     `yaml:"enabled"`
+	UseCodeowners    bool     `yaml:"use_codeowners"`
+	ReviewerNumber   int      `yaml:"reviewer_number"`
+	ExcludeUsernames []string `yaml:"exclude_usernames"`
 }
 
 type Config struct {
@@ -121,7 +122,7 @@ type Config struct {
 	} `yaml:"greetings"`
 
 	AutoMasterMerge bool            `yaml:"auto_master_merge"`
-	AssignReviewers AssignReviewers `yaml:"assign_reviewers"`
+	AssignReviewers AssignReviewers `yaml:"review_roulette"`
 
 	StaleBranchesDeletion struct {
 		Enabled         bool     `yaml:"enabled"`

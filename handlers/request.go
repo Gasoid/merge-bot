@@ -100,8 +100,9 @@ func (r *Request) ParseConfig(content string) (*Config, error) {
 		},
 		AutoMasterMerge: false,
 		AssignReviewers: AssignReviewers{
-			UseCodeowners:  true,
-			ReviewerNumber: 1,
+			UseCodeowners:    true,
+			ReviewerNumber:   1,
+			ExcludeUsernames: []string{},
 		},
 		StaleBranchesDeletion: struct {
 			Enabled         bool     `yaml:"enabled"`
@@ -179,20 +180,22 @@ func (r *Request) DeleteStaleBranches() error {
 		return nil
 	}
 
-	if cache.TryAcquireBranchDeletionLock(r.info.ProjectID) {
-		defer cache.BranchDeletionUnlock(r.info.ProjectID)
+	if !cache.TryAcquireBranchDeletionLock(r.info.ProjectID) {
+		return nil
+	}
 
-		metrics.BackgroundRunInc("clean_stale_merge_requests")
+	defer cache.BranchDeletionUnlock(r.info.ProjectID)
 
-		if err := r.cleanStaleMergeRequests(); err != nil {
-			logger.Info("cleanStaleMergeRequests", "err", err)
-		}
+	metrics.BackgroundRunInc("clean_stale_merge_requests")
 
-		metrics.BackgroundRunInc("clean_stale_branches")
+	if err := r.cleanStaleMergeRequests(); err != nil {
+		logger.Info("cleanStaleMergeRequests", "err", err)
+	}
 
-		if err := r.cleanStaleBranches(); err != nil {
-			logger.Info("cleanStaleBranches", "err", err)
-		}
+	metrics.BackgroundRunInc("clean_stale_branches")
+
+	if err := r.cleanStaleBranches(); err != nil {
+		logger.Info("cleanStaleBranches", "err", err)
 	}
 
 	return nil
@@ -229,15 +232,17 @@ func (r Request) UpdateBranches() error {
 		return err
 	}
 
-	if cache.TryAcquireUpdateLock(r.info.ProjectID) {
-		defer cache.UpdateUnlock(r.info.ProjectID)
+	if !cache.TryAcquireUpdateLock(r.info.ProjectID) {
+		return nil
+	}
 
-		for _, mr := range listMr {
-			metrics.BackgroundRunInc("update_branch")
+	defer cache.UpdateUnlock(r.info.ProjectID)
 
-			if err := r.provider.UpdateFromMaster(r.info.ProjectID, mr.ID); err != nil {
-				logger.Info("UpdateFromDestination", "err", err)
-			}
+	for _, mr := range listMr {
+		metrics.BackgroundRunInc("update_branch")
+
+		if err := r.provider.UpdateFromMaster(r.info.ProjectID, mr.ID); err != nil {
+			logger.Info("UpdateFromDestination", "err", err)
 		}
 	}
 
@@ -355,6 +360,10 @@ func (r Request) spinRoulette(num int) ([]string, error) {
 		}
 
 		if g.Username == r.info.Author {
+			continue
+		}
+
+		if slices.Contains(r.config.AssignReviewers.ExcludeUsernames, g.Username) {
 			continue
 		}
 
