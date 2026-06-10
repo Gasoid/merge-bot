@@ -359,6 +359,9 @@ func (r Request) SpinRoulette() ([]string, error) {
 
 func (r Request) reviewRoulette() error {
 	if len(r.info.Reviewers) != 0 {
+		if err := r.provider.LeaveComment(r.info.ProjectID, r.info.ID, "🎲 Merge Request has assigned reviewers already"); err != nil {
+			return err
+		}
 		return nil
 	}
 
@@ -373,6 +376,20 @@ func (r Request) reviewRoulette() error {
 		}
 	}
 
+	if len(usernames) == 0 {
+		return nil
+	}
+
+	formatUsernames := make([]string, 0, len(usernames))
+	for _, u := range usernames {
+		formatUsernames = append(formatUsernames, "@"+u)
+	}
+
+	rouletteMessage := fmt.Sprintf("🎲 **Review Roulette** — %d contributors in the pool\nReviewers selected: %s", len(formatUsernames), strings.Join(formatUsernames, ","))
+	if err := r.provider.LeaveComment(r.info.ProjectID, r.info.ID, rouletteMessage); err != nil {
+		return err
+	}
+
 	return r.provider.AssignReviewers(r.info.ProjectID, r.info.ID, usernames)
 }
 
@@ -381,7 +398,16 @@ func (r Request) AssignReviewers() error {
 		return nil
 	}
 
-	return r.reviewRoulette()
+	ok, _, err := r.IsValid()
+	if err != nil {
+		return err
+	}
+
+	if ok {
+		return r.reviewRoulette()
+	} else {
+		return nil
+	}
 }
 
 func (r Request) ReviewRoulette() error {
