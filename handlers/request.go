@@ -358,6 +358,10 @@ func (r Request) SpinRoulette() ([]string, error) {
 }
 
 func (r Request) reviewRoulette() error {
+	if len(r.info.Reviewers) != 0 {
+		return nil
+	}
+
 	usernames, err := r.SpinRoulette()
 	if err != nil {
 		return err
@@ -385,6 +389,8 @@ func (r Request) ReviewRoulette() error {
 }
 
 func (r Request) UpdateReviewRouletteCounts() error {
+	metrics.BackgroundRunInc("update_review_roulette_counts")
+
 	gamblers, err := r.provider.GetContributors(r.info.ProjectID, r.info.ID)
 	if err != nil {
 		return err
@@ -405,7 +411,6 @@ func (r Request) UpdateReviewRouletteCounts() error {
 		counts[c.Username] = c.Count
 	}
 
-	logger.Debug("attempt to save results")
 	if err := cache.SetCounts(r.info.ProjectID, counts); err != nil {
 		return err
 	}

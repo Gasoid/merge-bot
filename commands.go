@@ -140,11 +140,6 @@ func UpdateEvent(command *handlers.Request, args string) error {
 }
 
 func PushEvent(command *handlers.Request, args string) error {
-	err := command.UpdateReviewRouletteCounts()
-	if err != nil {
-		return fmt.Errorf("command.UpdateReviewRouletteCounts returns err: %w", err)
-	}
-
 	return nil
 }
 
