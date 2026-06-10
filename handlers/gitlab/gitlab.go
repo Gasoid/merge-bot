@@ -647,7 +647,10 @@ func (g GitlabProvider) GetContributors(projectID, mergeID int64) ([]handlers.Ca
 	for m := range g.listAllProjectMembers(projectID, batch, &gitlab.ListProjectMembersOptions{
 		UserIDs: &userIDs,
 	}) {
-		if m.AccessLevel < gitlab.MaintainerPermissions {
+
+		_, isCodeOwner := codeowners[m.Username]
+
+		if !isCodeOwner && m.AccessLevel < gitlab.MaintainerPermissions {
 			continue
 		}
 
@@ -665,8 +668,6 @@ func (g GitlabProvider) GetContributors(projectID, mergeID int64) ([]handlers.Ca
 		// if err != nil {
 		// 	continue
 		// }
-
-		_, isCodeOwner := codeowners[m.Username]
 
 		candidates = append(candidates, handlers.Candidate{
 			Username:    m.Username,
