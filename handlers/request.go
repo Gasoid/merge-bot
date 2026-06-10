@@ -28,7 +28,7 @@ const (
 var (
 	vacationStatuses = []string{"ooo", "vacation", "travel", "parental leave"}
 	emojiStatuses    = []string{"beach", "beach_umbrella", "palm_tree", "red_circle", "no_entry"}
-	botNicks         = []string{"bot", "jira"}
+	botNicks         = []string{"bot", "jira", "gitlab", "github"}
 )
 
 type Request struct {
@@ -299,7 +299,7 @@ func (c Candidate) IsAvailable() bool {
 
 func (c Candidate) IsBot() bool {
 	for _, s := range botNicks {
-		if strings.Contains(c.Username, s) {
+		if strings.Contains(strings.ToLower(c.Username), s) {
 			return true
 		}
 	}
