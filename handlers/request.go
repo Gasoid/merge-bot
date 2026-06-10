@@ -293,7 +293,7 @@ func (c Candidate) IsAvailable() bool {
 		}
 	}
 
-	return slices.Contains(emojiStatuses, c.StatusEmoji)
+	return !slices.Contains(emojiStatuses, c.StatusEmoji)
 }
 
 func (r Request) SpinRoulette() ([]string, error) {
@@ -337,13 +337,10 @@ func (r Request) SpinRoulette() ([]string, error) {
 		return gamblers[i].Count < gamblers[j].Count
 	})
 
-	logger.Debug("spin roulette", "gamblers", gamblers)
-
 	usernames := make([]string, 0, r.config.AssignReviewers.ReviewerNumber)
 
 	for _, g := range gamblers {
 		if !g.IsAvailable() {
-			logger.Debug("isNotAvailable", "player", g.Username)
 			continue
 		}
 
