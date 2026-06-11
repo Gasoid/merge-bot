@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/dustin/go-humanize/english"
 	"github.com/gasoid/merge-bot/v3/cache"
 	"github.com/gasoid/merge-bot/v3/logger"
 	"github.com/gasoid/merge-bot/v3/metrics"
@@ -418,12 +419,18 @@ func (r Request) reviewRoulette(num int) error {
 		formatUsernames = append(formatUsernames, "@"+u)
 	}
 
-	rouletteMessage := fmt.Sprintf("🎲 **Review Roulette** — %d contributors in the pool\n\n Reviewers selected: %s", result.totalPlayers, strings.Join(formatUsernames, ","))
+	unavailableMessage := ""
+	if result.unavailablePlayers > 0 {
+		players := english.Plural(result.unavailablePlayers, "player", "")
+		unavailableMessage = fmt.Sprintf(", %s - unavailable", players)
+	}
+
+	rouletteMessage := fmt.Sprintf("🎲 **Review Roulette** — %d contributors in the pool%s\n\n Reviewers selected: %s", result.totalPlayers, unavailableMessage, strings.Join(formatUsernames, ","))
 	if err := r.provider.LeaveComment(r.info.ProjectID, r.info.ID, rouletteMessage); err != nil {
 		return err
 	}
 
-	return r.provider.AssignReviewers(r.info.ProjectID, r.info.ID, usernames)
+	return r.provider.AssignReviewers(r.info.ProjectID, r.info.ID, result.usernames)
 }
 
 func (r Request) AssignReviewers() error {
