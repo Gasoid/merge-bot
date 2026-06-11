@@ -337,10 +337,13 @@ func (r Request) spinRoulette(num int) (*rouletteResult, error) {
 		for i := range gamblers {
 			if v, ok := counts[gamblers[i].Username]; ok {
 				gamblers[i].Count = v
-				if !gamblers[i].IsAvailable() {
-					result.unavailablePlayers++
-				}
 			}
+		}
+	}
+
+	for i := range gamblers {
+		if !gamblers[i].IsAvailable() {
+			result.unavailablePlayers++
 		}
 	}
 
