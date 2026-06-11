@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/dustin/go-humanize/english"
 	"github.com/gasoid/merge-bot/v3/cache"
 	"github.com/gasoid/merge-bot/v3/logger"
 	"github.com/gasoid/merge-bot/v3/metrics"
@@ -100,8 +101,9 @@ func (r *Request) ParseConfig(content string) (*Config, error) {
 		},
 		AutoMasterMerge: false,
 		AssignReviewers: AssignReviewers{
-			UseCodeowners:  true,
-			ReviewerNumber: 1,
+			UseCodeowners:    true,
+			ReviewerNumber:   2,
+			ExcludeUsernames: []string{},
 		},
 		StaleBranchesDeletion: struct {
 			Enabled         bool     `yaml:"enabled"`
@@ -179,20 +181,22 @@ func (r *Request) DeleteStaleBranches() error {
 		return nil
 	}
 
-	if cache.TryAcquireBranchDeletionLock(r.info.ProjectID) {
-		defer cache.BranchDeletionUnlock(r.info.ProjectID)
+	if !cache.TryAcquireBranchDeletionLock(r.info.ProjectID) {
+		return nil
+	}
 
-		metrics.BackgroundRunInc("clean_stale_merge_requests")
+	defer cache.BranchDeletionUnlock(r.info.ProjectID)
 
-		if err := r.cleanStaleMergeRequests(); err != nil {
-			logger.Info("cleanStaleMergeRequests", "err", err)
-		}
+	metrics.BackgroundRunInc("clean_stale_merge_requests")
 
-		metrics.BackgroundRunInc("clean_stale_branches")
+	if err := r.cleanStaleMergeRequests(); err != nil {
+		logger.Info("cleanStaleMergeRequests", "err", err)
+	}
 
-		if err := r.cleanStaleBranches(); err != nil {
-			logger.Info("cleanStaleBranches", "err", err)
-		}
+	metrics.BackgroundRunInc("clean_stale_branches")
+
+	if err := r.cleanStaleBranches(); err != nil {
+		logger.Info("cleanStaleBranches", "err", err)
 	}
 
 	return nil
@@ -229,15 +233,17 @@ func (r Request) UpdateBranches() error {
 		return err
 	}
 
-	if cache.TryAcquireUpdateLock(r.info.ProjectID) {
-		defer cache.UpdateUnlock(r.info.ProjectID)
+	if !cache.TryAcquireUpdateLock(r.info.ProjectID) {
+		return nil
+	}
 
-		for _, mr := range listMr {
-			metrics.BackgroundRunInc("update_branch")
+	defer cache.UpdateUnlock(r.info.ProjectID)
 
-			if err := r.provider.UpdateFromMaster(r.info.ProjectID, mr.ID); err != nil {
-				logger.Info("UpdateFromDestination", "err", err)
-			}
+	for _, mr := range listMr {
+		metrics.BackgroundRunInc("update_branch")
+
+		if err := r.provider.UpdateFromMaster(r.info.ProjectID, mr.ID); err != nil {
+			logger.Info("UpdateFromDestination", "err", err)
 		}
 	}
 
@@ -306,10 +312,39 @@ func (c Candidate) IsBot() bool {
 	return false
 }
 
-func (r Request) spinRoulette(num int) ([]string, error) {
+type rouletteResult struct {
+	totalPlayers       int
+	unavailablePlayers int
+	usernames          []string
+}
+
+func (r rouletteResult) String() string {
+	formatUsernames := make([]string, 0, len(r.usernames))
+	for _, u := range r.usernames {
+		formatUsernames = append(formatUsernames, "@"+u)
+	}
+
+	unavailableMessage := ""
+	if r.unavailablePlayers > 0 {
+		players := english.Plural(r.unavailablePlayers, "player", "")
+		unavailableMessage = fmt.Sprintf(", %s - unavailable", players)
+	}
+
+	return fmt.Sprintf(
+		"🎲 **Review Roulette** — %d contributors in the pool%s\n\n 🧠 Reviewers selected: %s",
+		r.totalPlayers,
+		unavailableMessage,
+		strings.Join(formatUsernames, ","))
+}
+
+func (r Request) spinRoulette(num int) (*rouletteResult, error) {
 	gamblers, err := r.provider.GetContributors(r.info.ProjectID, r.info.ID)
 	if err != nil {
 		return nil, err
+	}
+
+	result := rouletteResult{
+		totalPlayers: len(gamblers),
 	}
 
 	counts, err := cache.GetCounts(r.info.ProjectID)
@@ -322,6 +357,12 @@ func (r Request) spinRoulette(num int) ([]string, error) {
 			if v, ok := counts[gamblers[i].Username]; ok {
 				gamblers[i].Count = v
 			}
+		}
+	}
+
+	for i := range gamblers {
+		if !gamblers[i].IsAvailable() {
+			result.unavailablePlayers++
 		}
 	}
 
@@ -358,13 +399,19 @@ func (r Request) spinRoulette(num int) ([]string, error) {
 			continue
 		}
 
+		if slices.Contains(r.config.AssignReviewers.ExcludeUsernames, g.Username) {
+			continue
+		}
+
 		usernames = append(usernames, g.Username)
 		if len(usernames) == num {
 			break
 		}
 	}
 
-	return usernames, nil
+	result.usernames = usernames
+
+	return &result, nil
 }
 
 func (r Request) reviewRoulette(num int) error {
@@ -375,33 +422,27 @@ func (r Request) reviewRoulette(num int) error {
 		return nil
 	}
 
-	usernames, err := r.spinRoulette(max(num, 1))
+	result, err := r.spinRoulette(max(num, 1))
 	if err != nil {
 		return err
 	}
 
-	logger.Debug("usernames for review", "usernames", usernames)
-	for _, u := range usernames {
+	logger.Debug("usernames for review", "usernames", result.usernames)
+	for _, u := range result.usernames {
 		if _, err := cache.IncrCount(r.info.ProjectID, u); err != nil {
-			return err
+			logger.Error("can't increment count", "err", err)
 		}
 	}
 
-	if len(usernames) == 0 {
+	if len(result.usernames) == 0 {
 		return nil
 	}
 
-	formatUsernames := make([]string, 0, len(usernames))
-	for _, u := range usernames {
-		formatUsernames = append(formatUsernames, "@"+u)
-	}
-
-	rouletteMessage := fmt.Sprintf("🎲 **Review Roulette** — %d contributors in the pool\nReviewers selected: %s", len(formatUsernames), strings.Join(formatUsernames, ","))
-	if err := r.provider.LeaveComment(r.info.ProjectID, r.info.ID, rouletteMessage); err != nil {
+	if err := r.provider.LeaveComment(r.info.ProjectID, r.info.ID, result.String()); err != nil {
 		return err
 	}
 
-	return r.provider.AssignReviewers(r.info.ProjectID, r.info.ID, usernames)
+	return r.provider.AssignReviewers(r.info.ProjectID, r.info.ID, result.usernames)
 }
 
 func (r Request) AssignReviewers() error {

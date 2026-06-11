@@ -16,11 +16,11 @@ var (
 	redisUrl         string
 	ErrRedisUrlEmpty = errors.New("redis-url is not provided")
 	casScript        = redis.NewScript(`
-	local val = redis.call('JSON.NUMINCRBY', KEYS[1], '$.' .. ARGV[1] , ARGV[2])
+	local val = redis.call('JSON.NUMINCRBY', KEYS[1], '$["' .. ARGV[1] .. '"]' , ARGV[2])
 	local parsed = cjson.decode(val)
 
     if parsed[1] < 0 then
-	    redis.call('JSON.NUMINCRBY', KEYS[1], '$.' .. ARGV[1] , -1 * tonumber(ARGV[2]))
+	    redis.call('JSON.NUMINCRBY', KEYS[1], '$["' .. ARGV[1] .. '"]' , -1 * tonumber(ARGV[2]))
 		return 0
 	end
 	return 1
@@ -141,7 +141,7 @@ func (r *RedisCache) JsonGetMap(key string) (map[string]int, error) {
 }
 
 func (r *RedisCache) JsonExists(key, item string) (bool, error) {
-	val, err := r.client.JSONGet(context.TODO(), key, "$."+item).Result()
+	val, err := r.client.JSONGet(context.TODO(), key, "$[\""+item+"\"]").Result()
 	if err != nil {
 		if err == redis.Nil {
 			return false, nil

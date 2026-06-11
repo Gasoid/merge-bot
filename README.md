@@ -26,6 +26,7 @@ Try the bot on our [demo repository](https://gitlab.com/Gasoid/sugar-test) or in
 - `!check` - Validates whether the MR meets all rules
 - `!update` - Updates the branch from the target branch (e.g., main/master)
 - `!rerun` - Re-run pipeline, e.g. `!rerun #123123333` or `!rerun 123123333`, command will run pipeline against the branch of the merge request with variables of provided pipeline (e.g. 123123333)
+- `!spin` - Assign random reviewers, e.g. `!spin 2` will assign 2 random reviewers, if number is not provided, it will use reviewer_number from config file. Default is 2.
 
 ## Table of Contents
 
@@ -41,6 +42,7 @@ Try the bot on our [demo repository](https://gitlab.com/Gasoid/sugar-test) or in
 - [Features](#features-1)
   - [Stale Branches](#stale-branches)
   - [Greetings](#greetings)
+  - [Review Roulette](#review-roulette)
 - [Demo](#demo)
 
 ## Installation
@@ -95,6 +97,7 @@ export GITLAB_TOKEN="your_token"
 export GITLAB_URL=""  # Optional: for self-hosted GitLab
 export TLS_ENABLED="true"  # Optional
 export TLS_DOMAIN="bot.yourdomain.com"  # Optional
+export REDIS_URL="redis://localhost:6379"  # Optional
 ```
 
 2. **Run the bot**:
@@ -118,6 +121,8 @@ go run ./
         Enable TLS with Let's Encrypt (also via TLS_ENABLED)
   -sentry-enabled
         Enable Sentry error reporting (default: true, also via SENTRY_ENABLED)
+  -redis-url string
+        Redis URL as cache storage, it needs for distributed locking, if you have more than 1 instance (also via REDIS_URL)
   -plugins string
         Comma-separated list of plugin config URLs or paths (also via PLUGINS)
   -version
@@ -160,6 +165,12 @@ greetings:
 
 auto_master_merge: false  # Auto-update branch from target branch
 
+review_roulette:
+  enabled: false  # Randomly assign reviewers
+  use_codeowners: true
+  reviewer_number: 2
+  exclude_usernames: []
+
 stale_branches_deletion:
   enabled: false  # Clean up stale branches after merge
   exclude_branches: [] # List of branch names to exclude from deletion
@@ -197,6 +208,10 @@ greetings:
 
 auto_master_merge: true
 
+review_roulette:
+  enabled: true 
+  reviewer_number: 3
+
 stale_branches_deletion:
   enabled: true
   exclude_branches:
@@ -214,6 +229,9 @@ plugin_vars:
 ## Features
 
 ### Plugin support
+> [!NOTE]
+> Available in 3.8.0+ Bot version
+
 Please read [docs](plugins.md) for more information.
 
 ### Stale Branches
@@ -228,6 +246,15 @@ Customize welcome messages for new merge requests using Go templates. Available 
 - `{{ .Approvers }}`
 
 You can also enable the `resolvable` option to allow the bot to update and resolve the greeting message once all requirements are met. Merge Request will be blocked until requirements are met. (You need to enable "All threads must be resolved" in project settings for this feature to work.)
+
+### Review Roulette
+> [!NOTE]
+> Available in 3.10.0+ Bot version
+
+Enable random reviewer assignment for new merge requests. You can specify the number of reviewers to assign and whether to use CODEOWNERS for selection. Exclude specific usernames from being assigned as reviewers. Also you can use `!spin` command to assign new random reviewers to the merge request.
+
+If user has status: ooo, vacation, travel and parental leave in GitLab, they will be excluded from review roulette.
+Also emoji status is supported, if user has emoji status: 🏖️, 🔴, ⛔, 🌴 they will be excluded from review roulette as well.
 
 ### Labels
 
