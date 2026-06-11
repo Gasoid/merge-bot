@@ -318,6 +318,25 @@ type rouletteResult struct {
 	usernames          []string
 }
 
+func (r rouletteResult) String() string {
+	formatUsernames := make([]string, 0, len(r.usernames))
+	for _, u := range r.usernames {
+		formatUsernames = append(formatUsernames, "@"+u)
+	}
+
+	unavailableMessage := ""
+	if r.unavailablePlayers > 0 {
+		players := english.Plural(r.unavailablePlayers, "player", "")
+		unavailableMessage = fmt.Sprintf(", %s - unavailable", players)
+	}
+
+	return fmt.Sprintf(
+		"🎲 **Review Roulette** — %d contributors in the pool%s\n\n 🧠 Reviewers selected: %s",
+		r.totalPlayers,
+		unavailableMessage,
+		strings.Join(formatUsernames, ","))
+}
+
 func (r Request) spinRoulette(num int) (*rouletteResult, error) {
 	gamblers, err := r.provider.GetContributors(r.info.ProjectID, r.info.ID)
 	if err != nil {
@@ -419,19 +438,7 @@ func (r Request) reviewRoulette(num int) error {
 		return nil
 	}
 
-	formatUsernames := make([]string, 0, len(result.usernames))
-	for _, u := range result.usernames {
-		formatUsernames = append(formatUsernames, "@"+u)
-	}
-
-	unavailableMessage := ""
-	if result.unavailablePlayers > 0 {
-		players := english.Plural(result.unavailablePlayers, "player", "")
-		unavailableMessage = fmt.Sprintf(", %s - unavailable", players)
-	}
-
-	rouletteMessage := fmt.Sprintf("🎲 **Review Roulette** — %d contributors in the pool%s\n\n Reviewers selected: %s", result.totalPlayers, unavailableMessage, strings.Join(formatUsernames, ","))
-	if err := r.provider.LeaveComment(r.info.ProjectID, r.info.ID, rouletteMessage); err != nil {
+	if err := r.provider.LeaveComment(r.info.ProjectID, r.info.ID, result.String()); err != nil {
 		return err
 	}
 

@@ -229,6 +229,9 @@ plugin_vars:
 ## Features
 
 ### Plugin support
+> [!NOTE]
+> Available in 3.8.0+ Bot version
+
 Please read [docs](plugins.md) for more information.
 
 ### Stale Branches
@@ -245,6 +248,9 @@ Customize welcome messages for new merge requests using Go templates. Available 
 You can also enable the `resolvable` option to allow the bot to update and resolve the greeting message once all requirements are met. Merge Request will be blocked until requirements are met. (You need to enable "All threads must be resolved" in project settings for this feature to work.)
 
 ### Review Roulette
+> [!NOTE]
+> Available in 3.10.0+ Bot version
+
 Enable random reviewer assignment for new merge requests. You can specify the number of reviewers to assign and whether to use CODEOWNERS for selection. Exclude specific usernames from being assigned as reviewers. Also you can use `!spin` command to assign new random reviewers to the merge request.
 
 If user has status: ooo, vacation, travel and parental leave in GitLab, they will be excluded from review roulette.
