@@ -311,10 +311,20 @@ func (c Candidate) IsBot() bool {
 	return false
 }
 
-func (r Request) spinRoulette(num int) ([]string, error) {
+type rouletteResult struct {
+	totalPlayers       int
+	unavailablePlayers int
+	usernames          []string
+}
+
+func (r Request) spinRoulette(num int) (*rouletteResult, error) {
 	gamblers, err := r.provider.GetContributors(r.info.ProjectID, r.info.ID)
 	if err != nil {
 		return nil, err
+	}
+
+	result := rouletteResult{
+		totalPlayers: len(gamblers),
 	}
 
 	counts, err := cache.GetCounts(r.info.ProjectID)
@@ -352,6 +362,7 @@ func (r Request) spinRoulette(num int) ([]string, error) {
 
 	for _, g := range gamblers {
 		if !g.IsAvailable() {
+			result.unavailablePlayers++
 			continue
 		}
 
@@ -373,7 +384,9 @@ func (r Request) spinRoulette(num int) ([]string, error) {
 		}
 	}
 
-	return usernames, nil
+	result.usernames = usernames
+
+	return &result, nil
 }
 
 func (r Request) reviewRoulette(num int) error {
@@ -384,28 +397,28 @@ func (r Request) reviewRoulette(num int) error {
 		return nil
 	}
 
-	usernames, err := r.spinRoulette(max(num, 1))
+	result, err := r.spinRoulette(max(num, 1))
 	if err != nil {
 		return err
 	}
 
-	logger.Debug("usernames for review", "usernames", usernames)
-	for _, u := range usernames {
+	logger.Debug("usernames for review", "usernames", result.usernames)
+	for _, u := range result.usernames {
 		if _, err := cache.IncrCount(r.info.ProjectID, u); err != nil {
 			logger.Error("can't increment count", "err", err)
 		}
 	}
 
-	if len(usernames) == 0 {
+	if len(result.usernames) == 0 {
 		return nil
 	}
 
-	formatUsernames := make([]string, 0, len(usernames))
-	for _, u := range usernames {
+	formatUsernames := make([]string, 0, len(result.usernames))
+	for _, u := range result.usernames {
 		formatUsernames = append(formatUsernames, "@"+u)
 	}
 
-	rouletteMessage := fmt.Sprintf("🎲 **Review Roulette** — %d contributors in the pool\n\n Reviewers selected: %s", len(formatUsernames), strings.Join(formatUsernames, ","))
+	rouletteMessage := fmt.Sprintf("🎲 **Review Roulette** — %d contributors in the pool\n\n Reviewers selected: %s", result.totalPlayers, strings.Join(formatUsernames, ","))
 	if err := r.provider.LeaveComment(r.info.ProjectID, r.info.ID, rouletteMessage); err != nil {
 		return err
 	}
