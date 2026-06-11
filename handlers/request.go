@@ -392,7 +392,7 @@ func (r Request) reviewRoulette(num int) error {
 	logger.Debug("usernames for review", "usernames", usernames)
 	for _, u := range usernames {
 		if _, err := cache.IncrCount(r.info.ProjectID, u); err != nil {
-			return err
+			logger.Error("can't increment count", "err", err)
 		}
 	}
 
