@@ -405,7 +405,7 @@ func (r Request) reviewRoulette(num int) error {
 		formatUsernames = append(formatUsernames, "@"+u)
 	}
 
-	rouletteMessage := fmt.Sprintf("🎲 **Review Roulette** — %d contributors in the pool\nReviewers selected: %s", len(formatUsernames), strings.Join(formatUsernames, ","))
+	rouletteMessage := fmt.Sprintf("🎲 **Review Roulette** — %d contributors in the pool\n\n Reviewers selected: %s", len(formatUsernames), strings.Join(formatUsernames, ","))
 	if err := r.provider.LeaveComment(r.info.ProjectID, r.info.ID, rouletteMessage); err != nil {
 		return err
 	}
