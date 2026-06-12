@@ -3,6 +3,7 @@ package cache
 import (
 	"errors"
 	"fmt"
+	"maps"
 	"sync"
 	"time"
 )
@@ -59,7 +60,6 @@ func (m *MemCache) JsonGet(key string) ([]int64, error) {
 		return nil, fmt.Errorf("%w: expected []int64 for key %s", ErrWrongType, key)
 	}
 
-	// Return a copy to avoid data races
 	res := make([]int64, len(data))
 	copy(res, data)
 	return res, nil
@@ -79,11 +79,8 @@ func (m *MemCache) JsonGetMap(key string) (map[string]int, error) {
 		return nil, fmt.Errorf("%w: expected map[string]int for key %s", ErrWrongType, key)
 	}
 
-	// Return a copy to avoid data races
 	res := make(map[string]int, len(data))
-	for k, v := range data {
-		res[k] = v
-	}
+	maps.Copy(res, data)
 	return res, nil
 }
 

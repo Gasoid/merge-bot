@@ -5,6 +5,7 @@ import (
 	"testing"
 )
 
+//nolint:errcheck
 func TestMemCache_Basic(t *testing.T) {
 	m := &MemCache{}
 	m.Connect()
@@ -27,6 +28,7 @@ func TestMemCache_Basic(t *testing.T) {
 	}
 }
 
+//nolint:errcheck
 func TestMemCache_JsonAddIncr(t *testing.T) {
 	m := &MemCache{}
 	m.Connect()
@@ -68,6 +70,7 @@ func TestMemCache_JsonAddIncr(t *testing.T) {
 	}
 }
 
+//nolint:errcheck
 func TestMemCache_Concurrency(t *testing.T) {
 	m := &MemCache{}
 	m.Connect()
@@ -79,14 +82,12 @@ func TestMemCache_Concurrency(t *testing.T) {
 	numGoroutines := 100
 	iterations := 100
 
-	for i := 0; i < numGoroutines; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			for j := 0; j < iterations; j++ {
+	for range numGoroutines {
+		wg.Go(func() {
+			for range iterations {
 				m.JsonIncr(key, "item", 1)
 			}
-		}()
+		})
 	}
 
 	wg.Wait()
@@ -98,6 +99,7 @@ func TestMemCache_Concurrency(t *testing.T) {
 	}
 }
 
+//nolint:errcheck
 func TestMemCache_ConcurrentMapAccess(t *testing.T) {
 	m := &MemCache{}
 	m.Connect()
@@ -108,32 +110,29 @@ func TestMemCache_ConcurrentMapAccess(t *testing.T) {
 	var wg sync.WaitGroup
 	numGoroutines := 100
 
-	for i := 0; i < numGoroutines; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			for j := 0; j < 100; j++ {
+	for range numGoroutines {
+		wg.Go(func() {
+			for range 100 {
 				res, _ := m.JsonGetMap(key)
 				if res != nil {
 					_ = res["item"] // Read
 				}
 			}
-		}()
+		})
 	}
 
-	for i := 0; i < numGoroutines; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			for j := 0; j < 100; j++ {
+	for range numGoroutines {
+		wg.Go(func() {
+			for range 100 {
 				m.JsonIncr(key, "item", 1) // Write (internal to MemCache, but uses the same map)
 			}
-		}()
+		})
 	}
 
 	wg.Wait()
 }
 
+//nolint:errcheck
 func TestMemCache_PanicCheck(t *testing.T) {
 	m := &MemCache{}
 	m.Connect()
@@ -146,7 +145,7 @@ func TestMemCache_PanicCheck(t *testing.T) {
 
 	// 2. Wrong type
 	m.JsonSet("wrong_type", []int64{1, 2, 3})
-	
+
 	// Expect NO panic, but an error
 	res, err := m.JsonGetMap("wrong_type")
 	if err == nil {

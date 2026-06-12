@@ -4,6 +4,7 @@ import (
 	"testing"
 )
 
+//nolint:errcheck
 func TestContributors_Counts(t *testing.T) {
 	// Ensure cache is initialized with MemCache
 	redisUrl = ""
@@ -65,7 +66,7 @@ func TestContributors_Counts(t *testing.T) {
 	}
 
 	// Test DecrCount below zero (should stay at old value and return false based on MemCache implementation)
-	// Actually DecrCount calls JsonIncr(..., -1). 
+	// Actually DecrCount calls JsonIncr(..., -1).
 	// In our MemCache implementation, if it goes below 0, it reverts and returns false.
 	countsZero := map[string]int{"low": 0}
 	SetCounts(id, countsZero)
@@ -78,6 +79,7 @@ func TestContributors_Counts(t *testing.T) {
 	}
 }
 
+//nolint:errcheck
 func TestContributors_Candidates(t *testing.T) {
 	redisUrl = ""
 	Init()
