@@ -102,6 +102,7 @@ func TestContributors_Candidates(t *testing.T) {
 	}
 }
 
+//nolint:errcheck
 func TestContributors_Locks(t *testing.T) {
 	redisUrl = ""
 	Init()
