@@ -1,8 +1,15 @@
 package cache
 
 import (
+	"errors"
+	"fmt"
 	"sync"
 	"time"
+)
+
+var (
+	ErrNotFound  = errors.New("key not found")
+	ErrWrongType = errors.New("wrong type")
 )
 
 type MemCache struct {
@@ -17,15 +24,19 @@ func (m *MemCache) JsonSet(key string, v any) error {
 }
 
 func (m *MemCache) JsonAdd(key string, item string, v int) error {
-	data, err := m.get(key)
-	if err != nil {
-		return err
-	}
-
 	m.memcacheLock.Lock()
 	defer m.memcacheLock.Unlock()
 
-	val := data.(map[string]int)
+	data, ok := m.keys[key]
+	if !ok {
+		return fmt.Errorf("%w: %s", ErrNotFound, key)
+	}
+
+	val, ok := data.(map[string]int)
+	if !ok {
+		return fmt.Errorf("%w: expected map[string]int for key %s", ErrWrongType, key)
+	}
+
 	if v < 0 {
 		v = 0
 	}
@@ -35,38 +46,66 @@ func (m *MemCache) JsonAdd(key string, item string, v int) error {
 }
 
 func (m *MemCache) JsonGet(key string) ([]int64, error) {
-	val, err := m.get(key)
-	if err != nil {
-		return nil, err
+	m.memcacheLock.RLock()
+	defer m.memcacheLock.RUnlock()
+
+	val, ok := m.keys[key]
+	if !ok || val == nil {
+		return nil, nil
 	}
 
-	return val.([]int64), nil
+	data, ok := val.([]int64)
+	if !ok {
+		return nil, fmt.Errorf("%w: expected []int64 for key %s", ErrWrongType, key)
+	}
+
+	// Return a copy to avoid data races
+	res := make([]int64, len(data))
+	copy(res, data)
+	return res, nil
 }
 
 func (m *MemCache) JsonGetMap(key string) (map[string]int, error) {
-	val, err := m.get(key)
-	if err != nil {
-		return nil, err
+	m.memcacheLock.RLock()
+	defer m.memcacheLock.RUnlock()
+
+	val, ok := m.keys[key]
+	if !ok || val == nil {
+		return nil, nil
 	}
 
-	return val.(map[string]int), nil
+	data, ok := val.(map[string]int)
+	if !ok {
+		return nil, fmt.Errorf("%w: expected map[string]int for key %s", ErrWrongType, key)
+	}
+
+	// Return a copy to avoid data races
+	res := make(map[string]int, len(data))
+	for k, v := range data {
+		res[k] = v
+	}
+	return res, nil
 }
 
 func (m *MemCache) JsonIncr(key, item string, v int) (bool, error) {
-	val, err := m.get(key)
-	if err != nil {
-		return false, err
-	}
-
 	m.memcacheLock.Lock()
 	defer m.memcacheLock.Unlock()
 
-	data := val.(map[string]int)
-	if _, ok := data[item]; ok {
-		old := data[item]
-		data[item] += v
-		if data[item] < 0 {
-			data[item] = old
+	data, ok := m.keys[key]
+	if !ok {
+		return false, fmt.Errorf("%w: %s", ErrNotFound, key)
+	}
+
+	val, ok := data.(map[string]int)
+	if !ok {
+		return false, fmt.Errorf("%w: expected map[string]int for key %s", ErrWrongType, key)
+	}
+
+	if _, ok := val[item]; ok {
+		old := val[item]
+		val[item] += v
+		if val[item] < 0 {
+			val[item] = old
 			return false, nil
 		}
 	}
@@ -75,18 +114,21 @@ func (m *MemCache) JsonIncr(key, item string, v int) (bool, error) {
 }
 
 func (m *MemCache) JsonExists(key, item string) (bool, error) {
-	val, err := m.get(key)
-	if err != nil {
-		return false, err
-	}
-
 	m.memcacheLock.RLock()
 	defer m.memcacheLock.RUnlock()
 
-	data := val.(map[string]int)
+	data, ok := m.keys[key]
+	if !ok {
+		return false, nil
+	}
 
-	_, ok := data[item]
-	return ok, nil
+	val, ok := data.(map[string]int)
+	if !ok {
+		return false, nil
+	}
+
+	_, exists := val[item]
+	return exists, nil
 }
 
 func (m *MemCache) ExtendTTL(key string, ttl time.Duration) error {
@@ -97,31 +139,27 @@ func (m *MemCache) set(key string, val any) error {
 	m.memcacheLock.Lock()
 	defer m.memcacheLock.Unlock()
 
+	if m.keys == nil {
+		m.keys = make(map[string]any)
+	}
+
 	m.keys[key] = val
 	return nil
 }
 
-func (m *MemCache) get(key string) (any, error) {
-	m.memcacheLock.RLock()
-	defer m.memcacheLock.RUnlock()
+func (m *MemCache) Connect() error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 
-	if val, ok := m.keys[key]; ok {
-		return val, nil
+	if m.locks == nil {
+		m.locks = make(map[string]bool)
 	}
 
-	return nil, nil
-}
-
-func (m *MemCache) Connect() error {
 	m.memcacheLock.Lock()
 	defer m.memcacheLock.Unlock()
 
 	if m.keys == nil {
 		m.keys = make(map[string]any)
-	}
-
-	if m.locks == nil {
-		m.locks = make(map[string]bool)
 	}
 
 	return nil
