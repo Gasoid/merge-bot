@@ -15,6 +15,7 @@ GITLAB_TOKEN=your_personal_access_token
 # TLS_ENABLED=true
 # TLS_DOMAIN=your-domain.com
 # GITLAB_URL=https://your-gitlab-instance.com
+# REDIS_URL="redis://localhost:6379"
 ```
 
 2. **Run the container**:
@@ -42,6 +43,7 @@ helm install my-merge-bot merge-bot/merge-bot
 - `!check` - Validates whether the MR meets all rules
 - `!update` - Updates the branch from the target branch (e.g., main/master)
 - `!rerun` - Re-run pipeline, e.g. `!rerun #123123333` or `!rerun 123123333`, command will run pipeline against the branch of the merge request with variables of provided pipeline (e.g. 123123333)
+- `!spin` - Assign random reviewers, e.g. `!spin 2` will assign 2 random reviewers, if number is not provided, it will use reviewer_number from config file. Default is 2.
 
 ## Plugin support
 You can extend the functionality of the Merge-Bot by creating and using plugins. Plugins are WebAssembly (WASM) modules that can be loaded at runtime to provide additional features.
