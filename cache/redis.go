@@ -197,6 +197,16 @@ func (r *RedisCache) Unlock(key string) {
 	}
 }
 
+func (r *RedisCache) IsHealthy() bool {
+	err := r.client.Ping(context.TODO()).Err()
+	if err != nil {
+		logger.Error("failed to connect to redis", "err", err)
+		return false
+	}
+
+	return true
+}
+
 var (
 	_ Cache = (*RedisCache)(nil)
 )

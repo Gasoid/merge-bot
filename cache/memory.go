@@ -175,6 +175,10 @@ func (m *MemCache) Unlock(key string) {
 	m.locks[key] = false
 }
 
+func (m *MemCache) IsHealthy() bool {
+	return true
+}
+
 var (
 	_ Cache = (*MemCache)(nil)
 )
