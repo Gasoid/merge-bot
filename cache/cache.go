@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"errors"
 	"fmt"
 	"time"
 )
@@ -17,6 +18,11 @@ type Cache interface {
 	Unlock(key string)
 	Connect() error
 }
+
+var (
+	ErrNotFound  = errors.New("key not found")
+	ErrWrongType = errors.New("wrong type")
+)
 
 type CacheError struct {
 	Operation string

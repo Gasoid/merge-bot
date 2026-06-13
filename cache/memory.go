@@ -1,16 +1,10 @@
 package cache
 
 import (
-	"errors"
 	"fmt"
 	"maps"
 	"sync"
 	"time"
-)
-
-var (
-	ErrNotFound  = errors.New("key not found")
-	ErrWrongType = errors.New("wrong type")
 )
 
 type MemCache struct {

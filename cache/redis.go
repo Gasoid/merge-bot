@@ -105,7 +105,7 @@ func (r *RedisCache) JsonGet(key string) ([]int64, error) {
 	result := [][]int64{}
 
 	if err := json.Unmarshal([]byte(val), &result); err != nil {
-		return nil, fmt.Errorf("json data is invalid %w", err)
+		return nil, fmt.Errorf("%w: expected []int64 for key %s", ErrWrongType, key)
 	}
 
 	if len(result) == 0 {
@@ -131,7 +131,7 @@ func (r *RedisCache) JsonGetMap(key string) (map[string]int, error) {
 	result := []map[string]int{}
 
 	if err := json.Unmarshal([]byte(val), &result); err != nil {
-		return nil, fmt.Errorf("json data is invalid %w", err)
+		return nil, fmt.Errorf("%w: expected map[string]int for key %s", ErrWrongType, key)
 	}
 
 	if len(result) == 0 {
