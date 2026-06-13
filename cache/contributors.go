@@ -124,3 +124,7 @@ func TryAcquireUpdateLock(id int64) bool {
 func UpdateUnlock(id int64) {
 	contributors.Unlock(updateLockKey(id))
 }
+
+func IsHealthy() bool {
+	return contributors.IsHealthy()
+}

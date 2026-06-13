@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/gasoid/merge-bot/v3/cache"
 	"github.com/gasoid/merge-bot/v3/handlers"
 	"github.com/gasoid/merge-bot/v3/logger"
 
@@ -14,10 +15,10 @@ import (
 
 //nolint:errcheck
 func healthcheck(c echo.Context) error {
-	if handlers.IsHealthy() {
-		c.String(http.StatusOK, "ok")
-	} else {
+	if !handlers.IsHealthy() || !cache.IsHealthy() {
 		c.String(http.StatusServiceUnavailable, "not healthy")
+	} else {
+		c.String(http.StatusOK, "healthy")
 	}
 	return nil
 }
