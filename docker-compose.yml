@@ -1,8 +1,12 @@
 services:
+  redis:
+    image: redis:8.8
   bot:
     # github registry
     # image: ghcr.io/gasoid/merge-bot:latest
     # dockerhub registry
+    depends_on:
+      - redis
     image: gasoid/merge-bot:latest
     restart: always
     volumes:
@@ -12,6 +16,8 @@ services:
       - "8080:8080"
     env_file:
       - bot.env
+    environment:
+      REDIS_URL: "redis://redis:6379/0"
     logging:
       options:
         max-size: "10m"
