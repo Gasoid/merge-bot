@@ -1,16 +1,10 @@
 package cache
 
 import (
-	"errors"
 	"fmt"
 	"maps"
 	"sync"
 	"time"
-)
-
-var (
-	ErrNotFound  = errors.New("key not found")
-	ErrWrongType = errors.New("wrong type")
 )
 
 type MemCache struct {
@@ -179,6 +173,10 @@ func (m *MemCache) Unlock(key string) {
 	defer m.mu.Unlock()
 
 	m.locks[key] = false
+}
+
+func (m *MemCache) IsHealthy() bool {
+	return true
 }
 
 var (

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/gasoid/merge-bot/v3/config"
@@ -81,7 +82,7 @@ func (r *RedisCache) JsonAdd(key, item string, v int) error {
 		v = 0
 	}
 
-	if _, err := r.client.JSONSetWithArgs(context.TODO(), key, "$."+item, v, &redis.JSONSetArgsOptions{Mode: "NX"}).Result(); err != nil {
+	if _, err := r.client.JSONSetWithArgs(context.TODO(), key, "$[\""+escapeChars(item)+"\"]", v, &redis.JSONSetArgsOptions{Mode: "NX"}).Result(); err != nil {
 		return &CacheError{Operation: "JsonAdd", Err: err}
 	}
 
@@ -104,7 +105,7 @@ func (r *RedisCache) JsonGet(key string) ([]int64, error) {
 	result := [][]int64{}
 
 	if err := json.Unmarshal([]byte(val), &result); err != nil {
-		return nil, fmt.Errorf("json data is invalid %w", err)
+		return nil, fmt.Errorf("%w: expected []int64 for key %s", ErrWrongType, key)
 	}
 
 	if len(result) == 0 {
@@ -130,7 +131,7 @@ func (r *RedisCache) JsonGetMap(key string) (map[string]int, error) {
 	result := []map[string]int{}
 
 	if err := json.Unmarshal([]byte(val), &result); err != nil {
-		return nil, fmt.Errorf("json data is invalid %w", err)
+		return nil, fmt.Errorf("%w: expected map[string]int for key %s", ErrWrongType, key)
 	}
 
 	if len(result) == 0 {
@@ -140,8 +141,14 @@ func (r *RedisCache) JsonGetMap(key string) (map[string]int, error) {
 	return result[0], nil
 }
 
+func escapeChars(data string) string {
+	data = strings.ReplaceAll(data, "[", "\\[")
+	data = strings.ReplaceAll(data, "]", "\\]")
+	return strings.ReplaceAll(data, "\"", "\\\"")
+}
+
 func (r *RedisCache) JsonExists(key, item string) (bool, error) {
-	val, err := r.client.JSONGet(context.TODO(), key, "$[\""+item+"\"]").Result()
+	val, err := r.client.JSONGet(context.TODO(), key, "$[\""+escapeChars(item)+"\"]").Result()
 	if err != nil {
 		if err == redis.Nil {
 			return false, nil
@@ -157,7 +164,7 @@ func (r *RedisCache) JsonExists(key, item string) (bool, error) {
 }
 
 func (r *RedisCache) JsonIncr(key, item string, v int) (bool, error) {
-	result, err := casScript.Run(context.TODO(), r.client, []string{key}, item, v).Int()
+	result, err := casScript.Run(context.TODO(), r.client, []string{key}, escapeChars(item), v).Int()
 	if err != nil {
 		return false, &CacheError{Operation: "JsonIncr", Err: err}
 	}
@@ -188,6 +195,16 @@ func (r *RedisCache) Unlock(key string) {
 		logger.Info("can't delete a lock", "error", &CacheError{Operation: "Unlock", Err: err})
 		return
 	}
+}
+
+func (r *RedisCache) IsHealthy() bool {
+	err := r.client.Ping(context.TODO()).Err()
+	if err != nil {
+		logger.Error("failed to connect to redis", "err", err)
+		return false
+	}
+
+	return true
 }
 
 var (
