@@ -1,13 +1,19 @@
 services:
   redis:
     image: redis:8.8
+    healthcheck:
+      test: ["CMD", "redis-cli", "PING"]
+      interval: 1m30s
+      timeout: 10s
+      retries: 5
+      start_period: 1s
   bot:
     # github registry
     # image: ghcr.io/gasoid/merge-bot:latest
     # dockerhub registry
     depends_on:
       - redis
-    image: gasoid/merge-bot:latest
+    image: gasoid/merge-bot:3.10.0
     restart: always
     volumes:
       - tls-cache:/tmp/tls/.cache
