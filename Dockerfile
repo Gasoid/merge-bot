@@ -1,4 +1,4 @@
-FROM golang:1.26.5-bookworm AS builder
+FROM golang:1.26.4-bookworm AS builder
 ARG MERGE_BOT_VERSION=dev
 ARG SENTRY_DSN
 WORKDIR /code
