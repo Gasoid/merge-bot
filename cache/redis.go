@@ -186,13 +186,13 @@ func (r *RedisCache) AcquireLease(key string) bool {
 		return false
 	}
 
-	logger.Info("can't aquire a lock", "error", &CacheError{Operation: "AcquireLease", Err: err})
+	logger.Info("can't aquire a lease", "error", &CacheError{Operation: "AcquireLease", Err: err})
 	return false
 }
 
 func (r *RedisCache) ReleaseLease(key string) {
 	if _, err := r.client.Del(context.TODO(), key).Result(); err != nil {
-		logger.Info("can't delete a lock", "error", &CacheError{Operation: "Unlock", Err: err})
+		logger.Info("can't delete a lease", "error", &CacheError{Operation: "ReleaseLease", Err: err})
 		return
 	}
 }
