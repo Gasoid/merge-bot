@@ -15,9 +15,9 @@ type CacheJson interface {
 	JsonIncr(key string, item string, v int) (bool, error)
 }
 
-type CacheLock interface {
-	TryAcquireLock(key string) bool
-	Unlock(key string)
+type CacheLease interface {
+	AcquireLease(key string) bool
+	ReleaseLease(key string)
 }
 
 type CacheBase interface {
@@ -28,7 +28,7 @@ type CacheBase interface {
 
 type Cache interface {
 	CacheJson
-	CacheLock
+	CacheLease
 	CacheBase
 }
 

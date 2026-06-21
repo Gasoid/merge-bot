@@ -156,7 +156,7 @@ func (m *MemCache) Connect() error {
 	return nil
 }
 
-func (m *MemCache) TryAcquireLock(key string) bool {
+func (m *MemCache) AcquireLease(key string) bool {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -168,7 +168,7 @@ func (m *MemCache) TryAcquireLock(key string) bool {
 	}
 }
 
-func (m *MemCache) Unlock(key string) {
+func (m *MemCache) ReleaseLease(key string) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 

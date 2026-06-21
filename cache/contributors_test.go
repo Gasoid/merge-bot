@@ -110,26 +110,26 @@ func TestContributors_Locks(t *testing.T) {
 	id := int64(789)
 
 	// Branch Deletion Lock
-	if !TryAcquireBranchDeletionLock(id) {
+	if !AcquireBranchDeletionLease(id) {
 		t.Error("failed to acquire branch deletion lock")
 	}
-	if TryAcquireBranchDeletionLock(id) {
+	if AcquireBranchDeletionLease(id) {
 		t.Error("should not be able to acquire held branch deletion lock")
 	}
-	BranchDeletionUnlock(id)
-	if !TryAcquireBranchDeletionLock(id) {
+	ReleaseBranchDeletionLease(id)
+	if !AcquireBranchDeletionLease(id) {
 		t.Error("failed to re-acquire branch deletion lock after unlock")
 	}
 
 	// Update Lock
-	if !TryAcquireUpdateLock(id) {
+	if !AcquireUpdateLease(id) {
 		t.Error("failed to acquire update lock")
 	}
-	if TryAcquireUpdateLock(id) {
+	if AcquireUpdateLease(id) {
 		t.Error("should not be able to acquire held update lock")
 	}
-	UpdateUnlock(id)
-	if !TryAcquireUpdateLock(id) {
+	ReleaseUpdateLease(id)
+	if !AcquireUpdateLease(id) {
 		t.Error("failed to re-acquire update lock after unlock")
 	}
 }
