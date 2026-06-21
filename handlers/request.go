@@ -181,11 +181,11 @@ func (r *Request) DeleteStaleBranches() error {
 		return nil
 	}
 
-	if !cache.TryAcquireBranchDeletionLock(r.info.ProjectID) {
+	if !cache.AcquireBranchDeletionLease(r.info.ProjectID) {
 		return nil
 	}
 
-	defer cache.BranchDeletionUnlock(r.info.ProjectID)
+	defer cache.ReleaseBranchDeletionLease(r.info.ProjectID)
 
 	metrics.BackgroundRunInc("clean_stale_merge_requests")
 
@@ -233,11 +233,11 @@ func (r Request) UpdateBranches() error {
 		return err
 	}
 
-	if !cache.TryAcquireUpdateLock(r.info.ProjectID) {
+	if !cache.AcquireUpdateLease(r.info.ProjectID) {
 		return nil
 	}
 
-	defer cache.UpdateUnlock(r.info.ProjectID)
+	defer cache.ReleaseUpdateLease(r.info.ProjectID)
 
 	for _, mr := range listMr {
 		metrics.BackgroundRunInc("update_branch")

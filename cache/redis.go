@@ -176,7 +176,7 @@ func (r *RedisCache) JsonIncr(key, item string, v int) (bool, error) {
 	return true, nil
 }
 
-func (r *RedisCache) TryAcquireLock(key string) bool {
+func (r *RedisCache) AcquireLease(key string) bool {
 	_, err := r.client.SetArgs(context.TODO(), key, true, redis.SetArgs{Mode: "NX", TTL: lockTTL}).Result()
 	if err == nil {
 		return true
@@ -186,13 +186,13 @@ func (r *RedisCache) TryAcquireLock(key string) bool {
 		return false
 	}
 
-	logger.Info("can't aquire a lock", "error", &CacheError{Operation: "TryAcquireLock", Err: err})
+	logger.Info("can't aquire a lease", "error", &CacheError{Operation: "AcquireLease", Err: err})
 	return false
 }
 
-func (r *RedisCache) Unlock(key string) {
+func (r *RedisCache) ReleaseLease(key string) {
 	if _, err := r.client.Del(context.TODO(), key).Result(); err != nil {
-		logger.Info("can't delete a lock", "error", &CacheError{Operation: "Unlock", Err: err})
+		logger.Info("can't delete a lease", "error", &CacheError{Operation: "ReleaseLease", Err: err})
 		return
 	}
 }

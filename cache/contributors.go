@@ -109,20 +109,20 @@ func SetContributors(id int64, candidates []int64) error {
 	return contributors.ExtendTTL(contributorsKey(id), contributorsTTL)
 }
 
-func TryAcquireBranchDeletionLock(id int64) bool {
-	return contributors.TryAcquireLock(locksKey(id))
+func AcquireBranchDeletionLease(id int64) bool {
+	return contributors.AcquireLease(locksKey(id))
 }
 
-func BranchDeletionUnlock(id int64) {
-	contributors.Unlock(locksKey(id))
+func ReleaseBranchDeletionLease(id int64) {
+	contributors.ReleaseLease(locksKey(id))
 }
 
-func TryAcquireUpdateLock(id int64) bool {
-	return contributors.TryAcquireLock(updateLockKey(id))
+func AcquireUpdateLease(id int64) bool {
+	return contributors.AcquireLease(updateLockKey(id))
 }
 
-func UpdateUnlock(id int64) {
-	contributors.Unlock(updateLockKey(id))
+func ReleaseUpdateLease(id int64) {
+	contributors.ReleaseLease(updateLockKey(id))
 }
 
 func IsHealthy() bool {
