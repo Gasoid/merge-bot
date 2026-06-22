@@ -325,13 +325,14 @@ func (r rouletteResult) String() string {
 Roulette rules:
 </summary>
 <pre>
-- Fetched all MR authors for 3 months
+- Fetched all MR authors for last 3 months
 - Filtered only users with contributors permissions
-- Excluded usernames from .mrbot.yaml config
-- Excluded inactive users and bots
-- Excluded users with emoji status: 🏖️, 🔴, ⛔, 🌴
-- Excluded users with status: ooo, vacation, travel and parental leave
-- CODEOWNERS have more priority
+- Excluded:
+  - usernames from .mrbot.yaml config
+  - inactive users and bots
+  - users with emoji status: 🏖️, 🔴, ⛔, 🌴
+  - users with status: ooo, vacation, travel and parental leave
+- CODEOWNERS have higher priority
 </pre>
 </details>
 `
