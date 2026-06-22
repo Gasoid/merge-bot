@@ -319,6 +319,24 @@ type rouletteResult struct {
 }
 
 func (r rouletteResult) String() string {
+	const rules string = `
+<details>
+<summary>
+Roulette rules:
+</summary>
+<pre>
+- Fetched all MR authors for last 3 months
+- Filtered only users with contributors permissions
+- Excluded:
+  - usernames from .mrbot.yaml config
+  - inactive users and bots
+  - users with emoji status: 🏖️, 🔴, ⛔, 🌴
+  - users with status: ooo, vacation, travel and parental leave
+- CODEOWNERS have higher priority
+</pre>
+</details>
+`
+
 	formatUsernames := make([]string, 0, len(r.usernames))
 	for _, u := range r.usernames {
 		formatUsernames = append(formatUsernames, "@"+u)
@@ -331,10 +349,12 @@ func (r rouletteResult) String() string {
 	}
 
 	return fmt.Sprintf(
-		"🎲 **Review Roulette** — %d contributors in the pool%s\n\n 🧠 Reviewers selected: %s",
+		"🎲 **Review Roulette** — %d contributors in the pool%s\n\n 🧠 Reviewers selected: %s\n\n %s",
 		r.totalPlayers,
 		unavailableMessage,
-		strings.Join(formatUsernames, ","))
+		strings.Join(formatUsernames, ","),
+		rules,
+	)
 }
 
 func (r Request) spinRoulette(num int) (*rouletteResult, error) {
