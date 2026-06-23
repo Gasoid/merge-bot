@@ -1,8 +1,13 @@
 package handlers
 
 import (
+	"fmt"
 	"iter"
+	"slices"
+	"strings"
 	"sync"
+
+	"github.com/dustin/go-humanize/english"
 )
 
 const (
@@ -13,12 +18,13 @@ var (
 	providers   = map[string]func() RequestProvider{}
 	providersMu sync.RWMutex
 
-	StatusError         = &Error{"Is it opened?"}
-	ValidError          = &Error{"Your request can't be merged, because either it has conflicts or state is not opened"}
-	RepoSizeError       = &Error{"Repository size is greater than allowed size"}
-	NotFoundError       = &Error{"Resource is not found"}
-	DiscussionError     = &Error{"Could not find resolvable discussion for merge request"}
-	CommitNotFoundError = &Error{"Commit was not found"}
+	StatusError            = &Error{"Is it opened?"}
+	ValidError             = &Error{"Your request can't be merged, because either it has conflicts or state is not opened"}
+	RepoSizeError          = &Error{"Repository size is greater than allowed size"}
+	NotFoundError          = &Error{"Resource is not found"}
+	DiscussionError        = &Error{"Could not find resolvable discussion for merge request"}
+	CommitNotFoundError    = &Error{"Commit was not found"}
+	ReviewersAssignedError = &Error{"MR has reviewers"}
 )
 
 type Error struct {
@@ -50,6 +56,81 @@ type MrInfo struct {
 	Description     string
 	ConfigContent   string
 	IsValid         bool
+}
+
+type Candidate struct {
+	Username    string
+	Count       int
+	StatusEmoji string
+	Status      string
+	Timezone    string
+	IsCodeOwner bool
+}
+
+func (c Candidate) IsAvailable() bool {
+	status := strings.ToLower(c.Status)
+
+	for _, s := range vacationStatuses {
+		if strings.Contains(status, s) {
+			return false
+		}
+	}
+
+	return !slices.Contains(emojiStatuses, c.StatusEmoji)
+}
+
+func (c Candidate) IsBot() bool {
+	for _, s := range botNicks {
+		if strings.Contains(strings.ToLower(c.Username), s) {
+			return true
+		}
+	}
+	return false
+}
+
+type RouletteResult struct {
+	TotalPlayers       int
+	UnavailablePlayers int
+	Winners            []string
+}
+
+func (r RouletteResult) String() string {
+	const rules string = `
+<details>
+<summary>
+Roulette rules:
+</summary>
+<pre>
+- Fetched all MR authors for last 3 months
+- Filtered only users with contributors permissions
+- Excluded:
+  - usernames from .mrbot.yaml config
+  - inactive users and bots
+  - users with emoji status: 🏖️, 🔴, ⛔, 🌴
+  - users with status: ooo, vacation, travel and parental leave
+- CODEOWNERS have higher priority
+</pre>
+</details>
+`
+
+	formatUsernames := make([]string, 0, len(r.Winners))
+	for _, u := range r.Winners {
+		formatUsernames = append(formatUsernames, "@"+u)
+	}
+
+	unavailableMessage := ""
+	if r.UnavailablePlayers > 0 {
+		players := english.Plural(r.UnavailablePlayers, "player", "")
+		unavailableMessage = fmt.Sprintf(", %s - unavailable", players)
+	}
+
+	return fmt.Sprintf(
+		"🎲 **Review Roulette** — %d contributors in the pool%s\n\n 🧠 Reviewers selected: %s\n\n %s",
+		r.TotalPlayers,
+		unavailableMessage,
+		strings.Join(formatUsernames, ", "),
+		rules,
+	)
 }
 
 type Branches interface {

@@ -9,7 +9,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/dustin/go-humanize/english"
 	"github.com/gasoid/merge-bot/v3/cache"
 	"github.com/gasoid/merge-bot/v3/logger"
 	"github.com/gasoid/merge-bot/v3/metrics"
@@ -282,89 +281,14 @@ func (r Request) AwardEmoji(noteID int64, emoji string) error {
 	return r.provider.AwardEmoji(r.info.ProjectID, r.info.ID, noteID, emoji)
 }
 
-type Candidate struct {
-	Username    string
-	Count       int
-	StatusEmoji string
-	Status      string
-	Timezone    string
-	IsCodeOwner bool
-}
-
-func (c Candidate) IsAvailable() bool {
-	status := strings.ToLower(c.Status)
-
-	for _, s := range vacationStatuses {
-		if strings.Contains(status, s) {
-			return false
-		}
-	}
-
-	return !slices.Contains(emojiStatuses, c.StatusEmoji)
-}
-
-func (c Candidate) IsBot() bool {
-	for _, s := range botNicks {
-		if strings.Contains(strings.ToLower(c.Username), s) {
-			return true
-		}
-	}
-	return false
-}
-
-type rouletteResult struct {
-	totalPlayers       int
-	unavailablePlayers int
-	usernames          []string
-}
-
-func (r rouletteResult) String() string {
-	const rules string = `
-<details>
-<summary>
-Roulette rules:
-</summary>
-<pre>
-- Fetched all MR authors for last 3 months
-- Filtered only users with contributors permissions
-- Excluded:
-  - usernames from .mrbot.yaml config
-  - inactive users and bots
-  - users with emoji status: 🏖️, 🔴, ⛔, 🌴
-  - users with status: ooo, vacation, travel and parental leave
-- CODEOWNERS have higher priority
-</pre>
-</details>
-`
-
-	formatUsernames := make([]string, 0, len(r.usernames))
-	for _, u := range r.usernames {
-		formatUsernames = append(formatUsernames, "@"+u)
-	}
-
-	unavailableMessage := ""
-	if r.unavailablePlayers > 0 {
-		players := english.Plural(r.unavailablePlayers, "player", "")
-		unavailableMessage = fmt.Sprintf(", %s - unavailable", players)
-	}
-
-	return fmt.Sprintf(
-		"🎲 **Review Roulette** — %d contributors in the pool%s\n\n 🧠 Reviewers selected: %s\n\n %s",
-		r.totalPlayers,
-		unavailableMessage,
-		strings.Join(formatUsernames, ","),
-		rules,
-	)
-}
-
-func (r Request) spinRoulette(num int) (*rouletteResult, error) {
+func (r Request) spinRoulette(num int) (*RouletteResult, error) {
 	gamblers, err := r.provider.GetContributors(r.info.ProjectID, r.info.ID)
 	if err != nil {
 		return nil, err
 	}
 
-	result := rouletteResult{
-		totalPlayers: len(gamblers),
+	result := RouletteResult{
+		TotalPlayers: len(gamblers),
 	}
 
 	counts, err := cache.GetCounts(r.info.ProjectID)
@@ -382,7 +306,7 @@ func (r Request) spinRoulette(num int) (*rouletteResult, error) {
 
 	for i := range gamblers {
 		if !gamblers[i].IsAvailable() {
-			result.unavailablePlayers++
+			result.UnavailablePlayers++
 		}
 	}
 
@@ -429,43 +353,36 @@ func (r Request) spinRoulette(num int) (*rouletteResult, error) {
 		}
 	}
 
-	result.usernames = usernames
+	result.Winners = usernames
 
 	return &result, nil
 }
 
-func (r Request) reviewRoulette(num int) error {
+func (r Request) reviewRoulette(num int) (*RouletteResult, error) {
 	if len(r.info.Reviewers) != 0 {
-		if err := r.provider.LeaveComment(r.info.ProjectID, r.info.ID, "🎲 Merge Request has assigned reviewers already"); err != nil {
-			return err
-		}
-		return nil
+		return nil, ReviewersAssignedError
 	}
 
 	result, err := r.spinRoulette(max(num, 1))
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	logger.Debug("usernames for review", "usernames", result.usernames)
-	for _, u := range result.usernames {
+	logger.Debug("usernames for review", "usernames", result.Winners)
+	for _, u := range result.Winners {
 		if _, err := cache.IncrCount(r.info.ProjectID, u); err != nil {
 			logger.Error("can't increment count", "err", err)
 		}
 	}
 
-	if len(result.usernames) == 0 {
-		return nil
-	}
-
-	if err := r.provider.LeaveComment(r.info.ProjectID, r.info.ID, result.String()); err != nil {
-		return err
-	}
-
-	return r.provider.AssignReviewers(r.info.ProjectID, r.info.ID, result.usernames)
+	return result, nil
 }
 
-func (r Request) AssignReviewers() error {
+func (r Request) AssignReviewers(usernames []string) error {
+	return r.provider.AssignReviewers(r.info.ProjectID, r.info.ID, usernames)
+}
+
+func (r Request) AutoAssignReviewers() error {
 	if !r.config.AssignReviewers.Enabled {
 		return nil
 	}
@@ -476,13 +393,22 @@ func (r Request) AssignReviewers() error {
 	}
 
 	if ok {
-		return r.reviewRoulette(r.config.AssignReviewers.ReviewerNumber)
+		result, err := r.reviewRoulette(r.config.AssignReviewers.ReviewerNumber)
+		if err != nil {
+			return err
+		}
+
+		if len(result.Winners) == 0 {
+			return nil
+		}
+
+		return r.AssignReviewers(result.Winners)
 	} else {
 		return nil
 	}
 }
 
-func (r Request) ReviewRoulette(num int) error {
+func (r Request) ReviewRoulette(num int) (*RouletteResult, error) {
 	if num == 0 {
 		num = r.config.AssignReviewers.ReviewerNumber
 	}
