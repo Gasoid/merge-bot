@@ -108,17 +108,14 @@ func ReviewRouletteCmd(command *handlers.Request, args string) error {
 	result, err := command.ReviewRoulette(num)
 	if err != nil {
 		if errors.Is(err, handlers.ReviewersAssignedError) {
-			if err := command.LeaveComment("🎲 Merge Request has assigned reviewers already"); err != nil {
-				return err
-			}
+			return command.LeaveComment("🎲 Merge Request has assigned reviewers already")
 		}
+
 		return fmt.Errorf("command.ReviewRoulette returns err: %w", err)
 	}
 
 	if len(result.Winners) == 0 {
-		if err := command.LeaveComment("🎲 No available players"); err != nil {
-			return err
-		}
+		return command.LeaveComment("🎲 No available players")
 	}
 
 	if err := command.LeaveComment(result.String()); err != nil {
