@@ -135,6 +135,10 @@ func NewMREvent(command *handlers.Request, args string) error {
 	}
 
 	if err := command.AutoAssignReviewers(); err != nil {
+		if errors.Is(err, handlers.ReviewersAssignedError) {
+			return nil
+		}
+
 		return fmt.Errorf("command.AssignReviewers returns err: %w", err)
 	}
 

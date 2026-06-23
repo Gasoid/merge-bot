@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"html/template"
 	"math/rand"
@@ -396,10 +395,6 @@ func (r Request) AutoAssignReviewers() error {
 	if ok {
 		result, err := r.reviewRoulette(r.config.AssignReviewers.ReviewerNumber)
 		if err != nil {
-			if errors.Is(err, ReviewersAssignedError) {
-				return nil
-			}
-
 			return err
 		}
 

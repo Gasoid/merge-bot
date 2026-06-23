@@ -128,7 +128,7 @@ Roulette rules:
 		"🎲 **Review Roulette** — %d contributors in the pool%s\n\n 🧠 Reviewers selected: %s\n\n %s",
 		r.TotalPlayers,
 		unavailableMessage,
-		strings.Join(formatUsernames, ","),
+		strings.Join(formatUsernames, ", "),
 		rules,
 	)
 }
