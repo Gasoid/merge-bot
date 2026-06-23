@@ -105,8 +105,28 @@ func ReviewRouletteCmd(command *handlers.Request, args string) error {
 		}
 	}
 
-	if err := command.ReviewRoulette(num); err != nil {
+	result, err := command.ReviewRoulette(num)
+	if err != nil {
+		if errors.Is(err, handlers.ReviewersAssignedError) {
+			if err := command.LeaveComment("🎲 Merge Request has assigned reviewers already"); err != nil {
+				return err
+			}
+		}
 		return fmt.Errorf("command.ReviewRoulette returns err: %w", err)
+	}
+
+	if len(result.Winners) == 0 {
+		if err := command.LeaveComment("🎲 No available players"); err != nil {
+			return err
+		}
+	}
+
+	if err := command.LeaveComment(result.String()); err != nil {
+		return err
+	}
+
+	if err := command.AssignReviewers(result.Winners); err != nil {
+		return err
 	}
 
 	return nil
@@ -117,7 +137,7 @@ func NewMREvent(command *handlers.Request, args string) error {
 		return fmt.Errorf("command.Greetings returns err: %w", err)
 	}
 
-	if err := command.AssignReviewers(); err != nil {
+	if err := command.AutoAssignReviewers(); err != nil {
 		return fmt.Errorf("command.AssignReviewers returns err: %w", err)
 	}
 

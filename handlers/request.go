@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"html/template"
 	"math/rand"
@@ -312,13 +313,13 @@ func (c Candidate) IsBot() bool {
 	return false
 }
 
-type rouletteResult struct {
-	totalPlayers       int
-	unavailablePlayers int
-	usernames          []string
+type RouletteResult struct {
+	TotalPlayers       int
+	UnavailablePlayers int
+	Winners            []string
 }
 
-func (r rouletteResult) String() string {
+func (r RouletteResult) String() string {
 	const rules string = `
 <details>
 <summary>
@@ -337,34 +338,34 @@ Roulette rules:
 </details>
 `
 
-	formatUsernames := make([]string, 0, len(r.usernames))
-	for _, u := range r.usernames {
+	formatUsernames := make([]string, 0, len(r.Winners))
+	for _, u := range r.Winners {
 		formatUsernames = append(formatUsernames, "@"+u)
 	}
 
 	unavailableMessage := ""
-	if r.unavailablePlayers > 0 {
-		players := english.Plural(r.unavailablePlayers, "player", "")
+	if r.UnavailablePlayers > 0 {
+		players := english.Plural(r.UnavailablePlayers, "player", "")
 		unavailableMessage = fmt.Sprintf(", %s - unavailable", players)
 	}
 
 	return fmt.Sprintf(
 		"🎲 **Review Roulette** — %d contributors in the pool%s\n\n 🧠 Reviewers selected: %s\n\n %s",
-		r.totalPlayers,
+		r.TotalPlayers,
 		unavailableMessage,
 		strings.Join(formatUsernames, ","),
 		rules,
 	)
 }
 
-func (r Request) spinRoulette(num int) (*rouletteResult, error) {
+func (r Request) spinRoulette(num int) (*RouletteResult, error) {
 	gamblers, err := r.provider.GetContributors(r.info.ProjectID, r.info.ID)
 	if err != nil {
 		return nil, err
 	}
 
-	result := rouletteResult{
-		totalPlayers: len(gamblers),
+	result := RouletteResult{
+		TotalPlayers: len(gamblers),
 	}
 
 	counts, err := cache.GetCounts(r.info.ProjectID)
@@ -382,7 +383,7 @@ func (r Request) spinRoulette(num int) (*rouletteResult, error) {
 
 	for i := range gamblers {
 		if !gamblers[i].IsAvailable() {
-			result.unavailablePlayers++
+			result.UnavailablePlayers++
 		}
 	}
 
@@ -429,43 +430,36 @@ func (r Request) spinRoulette(num int) (*rouletteResult, error) {
 		}
 	}
 
-	result.usernames = usernames
+	result.Winners = usernames
 
 	return &result, nil
 }
 
-func (r Request) reviewRoulette(num int) error {
+func (r Request) reviewRoulette(num int) (*RouletteResult, error) {
 	if len(r.info.Reviewers) != 0 {
-		if err := r.provider.LeaveComment(r.info.ProjectID, r.info.ID, "🎲 Merge Request has assigned reviewers already"); err != nil {
-			return err
-		}
-		return nil
+		return nil, ReviewersAssignedError
 	}
 
 	result, err := r.spinRoulette(max(num, 1))
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	logger.Debug("usernames for review", "usernames", result.usernames)
-	for _, u := range result.usernames {
+	logger.Debug("usernames for review", "usernames", result.Winners)
+	for _, u := range result.Winners {
 		if _, err := cache.IncrCount(r.info.ProjectID, u); err != nil {
 			logger.Error("can't increment count", "err", err)
 		}
 	}
 
-	if len(result.usernames) == 0 {
-		return nil
-	}
-
-	if err := r.provider.LeaveComment(r.info.ProjectID, r.info.ID, result.String()); err != nil {
-		return err
-	}
-
-	return r.provider.AssignReviewers(r.info.ProjectID, r.info.ID, result.usernames)
+	return result, nil
 }
 
-func (r Request) AssignReviewers() error {
+func (r Request) AssignReviewers(usernames []string) error {
+	return r.provider.AssignReviewers(r.info.ProjectID, r.info.ID, usernames)
+}
+
+func (r Request) AutoAssignReviewers() error {
 	if !r.config.AssignReviewers.Enabled {
 		return nil
 	}
@@ -476,13 +470,26 @@ func (r Request) AssignReviewers() error {
 	}
 
 	if ok {
-		return r.reviewRoulette(r.config.AssignReviewers.ReviewerNumber)
+		result, err := r.reviewRoulette(r.config.AssignReviewers.ReviewerNumber)
+		if err != nil {
+			if errors.Is(err, ReviewersAssignedError) {
+				return nil
+			}
+
+			return err
+		}
+
+		if len(result.Winners) == 0 {
+			return nil
+		}
+
+		return r.AssignReviewers(result.Winners)
 	} else {
 		return nil
 	}
 }
 
-func (r Request) ReviewRoulette(num int) error {
+func (r Request) ReviewRoulette(num int) (*RouletteResult, error) {
 	if num == 0 {
 		num = r.config.AssignReviewers.ReviewerNumber
 	}
