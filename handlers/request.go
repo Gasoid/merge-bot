@@ -10,7 +10,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/dustin/go-humanize/english"
 	"github.com/gasoid/merge-bot/v3/cache"
 	"github.com/gasoid/merge-bot/v3/logger"
 	"github.com/gasoid/merge-bot/v3/metrics"
@@ -281,81 +280,6 @@ func (r Request) ValidateSecret(secret string) bool {
 
 func (r Request) AwardEmoji(noteID int64, emoji string) error {
 	return r.provider.AwardEmoji(r.info.ProjectID, r.info.ID, noteID, emoji)
-}
-
-type Candidate struct {
-	Username    string
-	Count       int
-	StatusEmoji string
-	Status      string
-	Timezone    string
-	IsCodeOwner bool
-}
-
-func (c Candidate) IsAvailable() bool {
-	status := strings.ToLower(c.Status)
-
-	for _, s := range vacationStatuses {
-		if strings.Contains(status, s) {
-			return false
-		}
-	}
-
-	return !slices.Contains(emojiStatuses, c.StatusEmoji)
-}
-
-func (c Candidate) IsBot() bool {
-	for _, s := range botNicks {
-		if strings.Contains(strings.ToLower(c.Username), s) {
-			return true
-		}
-	}
-	return false
-}
-
-type RouletteResult struct {
-	TotalPlayers       int
-	UnavailablePlayers int
-	Winners            []string
-}
-
-func (r RouletteResult) String() string {
-	const rules string = `
-<details>
-<summary>
-Roulette rules:
-</summary>
-<pre>
-- Fetched all MR authors for last 3 months
-- Filtered only users with contributors permissions
-- Excluded:
-  - usernames from .mrbot.yaml config
-  - inactive users and bots
-  - users with emoji status: 🏖️, 🔴, ⛔, 🌴
-  - users with status: ooo, vacation, travel and parental leave
-- CODEOWNERS have higher priority
-</pre>
-</details>
-`
-
-	formatUsernames := make([]string, 0, len(r.Winners))
-	for _, u := range r.Winners {
-		formatUsernames = append(formatUsernames, "@"+u)
-	}
-
-	unavailableMessage := ""
-	if r.UnavailablePlayers > 0 {
-		players := english.Plural(r.UnavailablePlayers, "player", "")
-		unavailableMessage = fmt.Sprintf(", %s - unavailable", players)
-	}
-
-	return fmt.Sprintf(
-		"🎲 **Review Roulette** — %d contributors in the pool%s\n\n 🧠 Reviewers selected: %s\n\n %s",
-		r.TotalPlayers,
-		unavailableMessage,
-		strings.Join(formatUsernames, ","),
-		rules,
-	)
 }
 
 func (r Request) spinRoulette(num int) (*RouletteResult, error) {
