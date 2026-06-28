@@ -21,7 +21,7 @@ MergeBot is an automated merge request bot for GitLab that enforces repository-s
 
 - [Installation](#installation)
   - [Docker Compose](#docker-compose)
-  - [Helm](#helm)
+  - [Helm / Kubernetes](#helm-kubernetes)
   - [CLI](#cli)
   - [Webhook Configuration](#webhook-configuration)
 - [Configuration](#configuration)
