@@ -1,5 +1,39 @@
 {{ range .Versions }}
 
+{{ range .CommitGroups -}}
+### {{ .Title }}
+
+{{ range .Commits -}}
+* {{ .Subject }}
+{{ end }}
+{{ end -}}
+
+{{- if .RevertCommits -}}
+### Reverts
+
+{{ range .RevertCommits -}}
+* {{ .Revert.Header }}
+{{ end }}
+{{ end -}}
+
+{{- if .MergeCommits -}}
+### Pull Requests
+
+{{ range .MergeCommits -}}
+* {{ .Header }}
+{{ end }}
+{{ end -}}
+
+{{- if .NoteGroups -}}
+{{ range .NoteGroups -}}
+### {{ .Title }}
+
+{{ range .Notes }}
+{{ .Body }}
+{{ end }}
+{{ end -}}
+{{ end -}}
+
 MergeBot is an automated merge request bot for GitLab.
 
 ![screen](screen.webp)
@@ -51,37 +85,4 @@ You can extend the functionality of the Merge-Bot by creating and using plugins.
 See [docs](plugins.md)
 
 
-{{ range .CommitGroups -}}
-### {{ .Title }}
-
-{{ range .Commits -}}
-* {{ .Subject }}
-{{ end }}
-{{ end -}}
-
-{{- if .RevertCommits -}}
-### Reverts
-
-{{ range .RevertCommits -}}
-* {{ .Revert.Header }}
-{{ end }}
-{{ end -}}
-
-{{- if .MergeCommits -}}
-### Pull Requests
-
-{{ range .MergeCommits -}}
-* {{ .Header }}
-{{ end }}
-{{ end -}}
-
-{{- if .NoteGroups -}}
-{{ range .NoteGroups -}}
-### {{ .Title }}
-
-{{ range .Notes }}
-{{ .Body }}
-{{ end }}
-{{ end -}}
-{{ end -}}
 {{ end -}}
