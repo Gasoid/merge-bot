@@ -8,17 +8,6 @@
 
 MergeBot is an automated merge request bot for GitLab that enforces repository-specific rules and helps streamline your code review process.
 
-## Features
-
-- ✅ **Title validation** - Enforce naming conventions with regex patterns
-- ✅ **Automated merging** - Merge on command when rules are met
-- ✅ **Branch updates** - Automatically pull changes from target branch
-- ✅ **Stale branch cleanup** - Remove outdated branches automatically
-- ✅ **Customizable rules** - Per-repository configuration via `.mrbot.yaml`
-
-## Quick Start
-
-Try the bot on our [demo repository](https://gitlab.com/Gasoid/sugar-test) or invite [@mergeapprovebot](https://gitlab.com/mergeapprovebot) to your project.
 
 ### Available Commands
 
@@ -31,10 +20,10 @@ Try the bot on our [demo repository](https://gitlab.com/Gasoid/sugar-test) or in
 ## Table of Contents
 
 - [Installation](#installation)
-  - [GitLab Cloud](#gitlab-cloud)
   - [Docker Compose](#docker-compose)
   - [Helm](#helm)
   - [CLI](#cli)
+  - [Webhook Configuration](#webhook-configuration)
 - [Configuration](#configuration)
   - [Required Bot Permissions](#required-bot-permissions)
   - [Webhook Secret](#webhook-secret)
@@ -46,15 +35,6 @@ Try the bot on our [demo repository](https://gitlab.com/Gasoid/sugar-test) or in
 - [Demo](#demo)
 
 ## Installation
-
-### GitLab Cloud
-
-1. **Invite the bot**: Add [@mergeapprovebot](https://gitlab.com/mergeapprovebot) to your repository with **Maintainer** role
-2. **Configure webhook**: 
-   - URL: `https://mergebot.tools/mergebot/webhook/gitlab/`
-   - Trigger events: Comments and Merge Request events
-3. **Create configuration**: Add `.mrbot.yaml` to your repository root (see [Config File](#config-file))
-4. **Start using**: Create an MR and use commands like `!check` and `!merge`
 
 ### Docker Compose
 
@@ -72,9 +52,9 @@ GITLAB_TOKEN=your_personal_access_token
 docker-compose up -d
 ```
 
-3. **Configure webhook**: Follow the [GitLab Cloud](#gitlab-cloud) instructions, but use your own bot URL
+3. **Configure webhook**: Follow the [Webhook Configuration](#webhook-configuration) instructions, but use your own bot URL
 
-### Helm
+### Helm / Kubernetes
 
 Add the Helm repository:
 ```bash
@@ -87,7 +67,7 @@ Install the chart:
 helm install my-merge-bot merge-bot/merge-bot
 ```
 
-For webhook configuration, follow the [GitLab Cloud](#gitlab-cloud) instructions.
+For webhook configuration, follow the [Webhook Configuration](#webhook-configuration) instructions.
 
 ### CLI
 
@@ -128,6 +108,16 @@ go run ./
   -version
       	Shows version and build time
 ```
+
+### Webhook Configuration
+
+1. **Invite the bot**: Add a bot to your repository with **Maintainer** role
+2. **Configure webhook**: 
+   - URL: `https://merge-bot-url/mergebot/webhook/gitlab/`
+   - Trigger events: Comments and Merge Request events
+3. **Create configuration**: Add `.mrbot.yaml` to your repository root (see [Config File](#config-file))
+4. **Start using**: Create an MR and use commands like `!check` and `!spin` in comments to interact with the bot
+
 
 ## Configuration
 
