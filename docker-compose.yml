@@ -13,7 +13,7 @@ services:
     # dockerhub registry
     depends_on:
       - redis
-    image: gasoid/merge-bot:3.10.0
+    image: gasoid/merge-bot:3.10.2
     restart: always
     volumes:
       - tls-cache:/tmp/tls/.cache
