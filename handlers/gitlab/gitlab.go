@@ -606,7 +606,7 @@ func (g GitlabProvider) GetContributors(projectID, mergeID int64) ([]handlers.Ca
 		return nil, err
 	}
 
-	counts := map[string]int{}
+	// counts := map[string]int{}
 
 	if len(userIDs) == 0 {
 		now := time.Now()
@@ -616,9 +616,9 @@ func (g GitlabProvider) GetContributors(projectID, mergeID int64) ([]handlers.Ca
 			UpdatedAfter: &months3back,
 		}) {
 			userIDs = append(userIDs, mr.Author.ID)
-			for _, r := range mr.Reviewers {
-				counts[r.Username]++
-			}
+			// for _, r := range mr.Reviewers {
+			// 	counts[r.Username]++
+			// }
 		}
 
 		seen := make(map[int64]struct{}, 10)
@@ -673,7 +673,7 @@ func (g GitlabProvider) GetContributors(projectID, mergeID int64) ([]handlers.Ca
 			Username:    m.Username,
 			StatusEmoji: status.Emoji,
 			Status:      status.Message,
-			Count:       counts[m.Username],
+			Count:       0, //counts[m.Username],
 			// Timezone:    user.Location,
 			IsCodeOwner: isCodeOwner})
 	}

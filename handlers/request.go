@@ -387,12 +387,7 @@ func (r Request) AutoAssignReviewers() error {
 		return nil
 	}
 
-	ok, _, err := r.IsValid()
-	if err != nil {
-		return err
-	}
-
-	if ok {
+	if r.info.IsValid {
 		result, err := r.reviewRoulette(r.config.AssignReviewers.ReviewerNumber)
 		if err != nil {
 			return err
@@ -402,7 +397,11 @@ func (r Request) AutoAssignReviewers() error {
 			return nil
 		}
 
-		return r.AssignReviewers(result.Winners)
+		if err := r.AssignReviewers(result.Winners); err != nil {
+			return err
+		}
+
+		return r.LeaveComment(result.String())
 	} else {
 		return nil
 	}
@@ -436,7 +435,7 @@ func (r Request) UpdateReviewRouletteCounts() error {
 	counts = make(map[string]int, len(gamblers))
 
 	for _, c := range gamblers {
-		counts[c.Username] = c.Count
+		counts[c.Username] = 0
 	}
 
 	if err := cache.SetCounts(r.info.ProjectID, counts); err != nil {
