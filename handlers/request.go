@@ -397,11 +397,11 @@ func (r Request) AutoAssignReviewers() error {
 			return nil
 		}
 
-		if err := r.LeaveComment(result.String()); err != nil {
+		if err := r.AssignReviewers(result.Winners); err != nil {
 			return err
 		}
 
-		return r.AssignReviewers(result.Winners)
+		return r.LeaveComment(result.String())
 	} else {
 		return nil
 	}
