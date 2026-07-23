@@ -16,8 +16,8 @@ const (
 	contributorsPrefix = "mergebot:contributors"
 	updateLocksPrefix  = "mergebot:update:locks"
 	locksPrefix        = "mergebot:locks"
-	countsTTL          = time.Hour * 12
-	contributorsTTL    = time.Hour * 12
+	countsTTL          = time.Hour * 24 * 4
+	contributorsTTL    = time.Hour * 24 * 4
 )
 
 func contributorsKey(id int64) string {
