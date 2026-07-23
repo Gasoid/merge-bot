@@ -310,7 +310,7 @@ func (r Request) spinRoulette(num int) (*RouletteResult, error) {
 		}
 	}
 
-	rand.Shuffle(len(gamblers)/2, func(i, j int) {
+	rand.Shuffle(len(gamblers), func(i, j int) {
 		gamblers[i], gamblers[j] = gamblers[j], gamblers[i]
 	})
 
