@@ -178,6 +178,7 @@ type RequestProvider interface {
 }
 
 type Rules struct {
+	Enabled               bool     `yaml:"enabled"`
 	MinApprovals          int      `yaml:"min_approvals"`
 	Approvers             []string `yaml:"approvers"`
 	AllowFailingPipelines bool     `yaml:"allow_failing_pipelines"`
