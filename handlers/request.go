@@ -87,7 +87,7 @@ func (r *Request) IsValid() (bool, string, error) {
 func (r *Request) ParseConfig(content string) (*Config, error) {
 	mrConfig := &Config{
 		Rules: Rules{
-			Enabled:               false,
+			Enabled:               true,
 			MinApprovals:          1,
 			AllowFailingPipelines: true,
 			AllowFailingTests:     true,
