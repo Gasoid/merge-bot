@@ -21,9 +21,9 @@ type PluginInput struct {
 	Title       string            `json:"title"`
 	Description string            `json:"description"`
 	Author      string            `json:"author"`
-	ProjectID   int64             `json:project_id`
-	Branch      string            `json:branch`
-	ID          int64             `json:mr_id`
+	ProjectID   int64             `json:"project_id"`
+	Branch      string            `json:"branch"`
+	ID          int64             `json:"mr_id"`
 	Diffs       []byte            `json:"diffs"`
 	Vars        map[string]string `json:"vars"`
 }
