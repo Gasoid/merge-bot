@@ -18,14 +18,15 @@ const (
 type PluginCall func([]byte) ([]byte, error)
 
 type PluginInput struct {
-	Title       string            `json:"title"`
-	Description string            `json:"description"`
-	Author      string            `json:"author"`
-	ProjectID   int64             `json:"project_id"`
-	Branch      string            `json:"branch"`
-	ID          int64             `json:"mr_id"`
-	Diffs       []byte            `json:"diffs"`
-	Vars        map[string]string `json:"vars"`
+	Title        string            `json:"title"`
+	Description  string            `json:"description"`
+	Author       string            `json:"author"`
+	ProjectID    int64             `json:"project_id"`
+	Branch       string            `json:"branch"`
+	TargetBranch string            `json:"target_branch"`
+	ID           int64             `json:"mr_id"`
+	Diffs        []byte            `json:"diffs"`
+	Vars         map[string]string `json:"vars"`
 }
 
 type Thread struct {
@@ -85,14 +86,15 @@ func (r Request) RunWithContext(call PluginCall, vars map[string][]string) error
 	}
 
 	input := PluginInput{
-		Title:       r.info.Title,
-		Description: r.info.Description,
-		Author:      r.info.Author,
-		Diffs:       rawDiffs,
-		Vars:        pluginVars,
-		ProjectID:   r.info.ProjectID,
-		ID:          r.info.ID,
-		Branch:      r.info.SourceBranch,
+		Title:        r.info.Title,
+		Description:  r.info.Description,
+		Author:       r.info.Author,
+		Diffs:        rawDiffs,
+		Vars:         pluginVars,
+		ProjectID:    r.info.ProjectID,
+		ID:           r.info.ID,
+		Branch:       r.info.SourceBranch,
+		TargetBranch: r.info.TargetBranch,
 	}
 
 	data, err := json.Marshal(input)
