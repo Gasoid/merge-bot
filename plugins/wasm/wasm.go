@@ -35,7 +35,7 @@ var (
 		func(ctx context.Context, p *extism.CurrentPlugin, stack []uint64) {
 			provider, err := p.ReadString(stack[0])
 			if err != nil {
-				logger.Info("getGitFile can't read bytes", "error", err)
+				logger.Info("getGitFile can't read provider", "error", err)
 				return
 			}
 
@@ -52,13 +52,19 @@ var (
 				return
 			}
 
-			filePath, err := p.ReadString(stack[3])
+			branch, err := p.ReadString(stack[3])
 			if err != nil {
-				logger.Info("getGitFile can't read bytes", "error", err)
+				logger.Info("getGitFile can't read branch", "error", err)
 				return
 			}
 
-			data, err := command.GetFile(filePath)
+			filePath, err := p.ReadString(stack[4])
+			if err != nil {
+				logger.Info("getGitFile can't read filePath", "error", err)
+				return
+			}
+
+			data, err := command.GetFile(branch, filePath)
 			if err != nil {
 				logger.Info("getGitFile can't receive file", "error", err, "filePath", filePath)
 				return
@@ -70,7 +76,7 @@ var (
 				return
 			}
 		},
-		[]extism.ValueType{extism.ValueTypePTR, extism.ValueTypeI64, extism.ValueTypeI64, extism.ValueTypePTR},
+		[]extism.ValueType{extism.ValueTypePTR, extism.ValueTypeI64, extism.ValueTypeI64, extism.ValueTypePTR, extism.ValueTypePTR},
 		[]extism.ValueType{extism.ValueTypePTR},
 	)
 )

@@ -454,6 +454,6 @@ func (r Request) UpdateReviewRouletteCounts() error {
 	return nil
 }
 
-func (r Request) GetFile(path string) ([]byte, error) {
-	return r.provider.GetFile(r.info.ProjectID, path)
+func (r Request) GetFile(branch, path string) ([]byte, error) {
+	return r.provider.GetBranchFile(r.info.ProjectID, branch, path)
 }

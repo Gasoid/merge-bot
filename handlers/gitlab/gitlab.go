@@ -256,7 +256,15 @@ func (g *GitlabProvider) GetFile(projectID int64, path string) ([]byte, error) {
 		return nil, err
 	}
 
-	gitlabFile, _, err := g.client.RepositoryFiles.GetFile(projectID, path, &gitlab.GetFileOptions{Ref: &project.DefaultBranch})
+	return g.getFile(projectID, project.DefaultBranch, path)
+}
+
+func (g *GitlabProvider) GetBranchFile(projectID int64, branch, path string) ([]byte, error) {
+	return g.getFile(projectID, branch, path)
+}
+
+func (g *GitlabProvider) getFile(projectID int64, branch, path string) ([]byte, error) {
+	gitlabFile, _, err := g.client.RepositoryFiles.GetFile(projectID, path, &gitlab.GetFileOptions{Ref: &branch})
 	if err != nil {
 		return nil, err
 	}

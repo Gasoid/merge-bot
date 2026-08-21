@@ -124,6 +124,10 @@ func (p *testProvider) GetFile(projectID int64, path string) ([]byte, error) {
 	return nil, p.err
 }
 
+func (p *testProvider) GetBranchFile(projectID int64, branch, path string) ([]byte, error) {
+	return nil, p.err
+}
+
 func (p *testProvider) GetChangedFiles(projectID, mergeID int64) ([]string, error) {
 	return nil, p.err
 }

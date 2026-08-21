@@ -165,6 +165,7 @@ type Project interface {
 	GetVar(projectID int64, varName string) (string, error)
 	RerunPipeline(projectID, pipelineID int64, ref string) (string, error)
 	GetFile(projectID int64, path string) ([]byte, error)
+	GetBranchFile(projectID int64, branch, path string) ([]byte, error)
 	IsHealthy() bool
 	GetContributors(projectID, mergeID int64) ([]Candidate, error)
 }
