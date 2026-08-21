@@ -21,6 +21,9 @@ type PluginInput struct {
 	Title       string            `json:"title"`
 	Description string            `json:"description"`
 	Author      string            `json:"author"`
+	ProjectID   int64             `json:project_id`
+	Branch      string            `json:branch`
+	ID          int64             `json:mr_id`
 	Diffs       []byte            `json:"diffs"`
 	Vars        map[string]string `json:"vars"`
 }
@@ -87,6 +90,9 @@ func (r Request) RunWithContext(call PluginCall, vars map[string][]string) error
 		Author:      r.info.Author,
 		Diffs:       rawDiffs,
 		Vars:        pluginVars,
+		ProjectID:   r.info.ProjectID,
+		ID:          r.info.ID,
+		Branch:      r.info.SourceBranch,
 	}
 
 	data, err := json.Marshal(input)

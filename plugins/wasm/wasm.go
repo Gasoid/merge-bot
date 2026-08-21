@@ -33,25 +33,32 @@ var (
 	getGitFile = extism.NewHostFunctionWithStack(
 		"get_git_file",
 		func(ctx context.Context, p *extism.CurrentPlugin, stack []uint64) {
-			provider, err := p.ReadBytes(stack[0])
+			provider, err := p.ReadString(stack[0])
 			if err != nil {
 				logger.Info("getGitFile can't read bytes", "error", err)
 				return
 			}
 
-			command, err := handlers.New(string(provider))
+			command, err := handlers.New(provider)
 			if err != nil {
 				logger.Info("getGitFile can't create Request instance", "error", err)
 				return
 			}
 
-			filePath, err := p.ReadBytes(stack[1])
+			projectID, ID := int64(stack[1]), int64(stack[2])
+
+			if err := command.LoadInfoAndConfig(projectID, ID); err != nil {
+				logger.Error("can't load repo config", "provider", provider, "command", command, "err", err)
+				return
+			}
+
+			filePath, err := p.ReadString(stack[3])
 			if err != nil {
 				logger.Info("getGitFile can't read bytes", "error", err)
 				return
 			}
 
-			data, err := command.GetFile(string(filePath))
+			data, err := command.GetFile(filePath)
 			if err != nil {
 				logger.Info("getGitFile can't receive file", "error", err, "filePath", filePath)
 				return
@@ -63,7 +70,7 @@ var (
 				return
 			}
 		},
-		[]extism.ValueType{extism.ValueTypePTR, extism.ValueTypePTR},
+		[]extism.ValueType{extism.ValueTypePTR, extism.ValueTypeI64, extism.ValueTypeI64, extism.ValueTypePTR},
 		[]extism.ValueType{extism.ValueTypePTR},
 	)
 )
