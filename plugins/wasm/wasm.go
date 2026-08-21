@@ -7,6 +7,7 @@ import (
 
 	extism "github.com/extism/go-sdk"
 	"github.com/gasoid/merge-bot/v3/handlers"
+	"github.com/gasoid/merge-bot/v3/logger"
 	"github.com/gasoid/merge-bot/v3/plugins"
 	"github.com/stretchr/testify/assert/yaml"
 )
@@ -27,6 +28,45 @@ type PluginManifest struct {
 func init() {
 	plugins.Register("wasm", BuildWasmPlugin)
 }
+
+var (
+	getGitFile = extism.NewHostFunctionWithStack(
+		"get_git_file",
+		func(ctx context.Context, p *extism.CurrentPlugin, stack []uint64) {
+			provider, err := p.ReadBytes(stack[0])
+			if err != nil {
+				logger.Info("getGitFile can't read bytes", "error", err)
+				return
+			}
+
+			command, err := handlers.New(string(provider))
+			if err != nil {
+				logger.Info("getGitFile can't create Request instance", "error", err)
+				return
+			}
+
+			filePath, err := p.ReadBytes(stack[1])
+			if err != nil {
+				logger.Info("getGitFile can't read bytes", "error", err)
+				return
+			}
+
+			data, err := command.GetFile(string(filePath))
+			if err != nil {
+				logger.Info("getGitFile can't receive file", "error", err, "filePath", filePath)
+				return
+			}
+
+			stack[0], err = p.WriteBytes(data)
+			if err != nil {
+				logger.Info("getGitFile can't write data", "error", err, "filePath", filePath)
+				return
+			}
+		},
+		[]extism.ValueType{extism.ValueTypePTR, extism.ValueTypePTR},
+		[]extism.ValueType{extism.ValueTypePTR},
+	)
+)
 
 func BuildWasmPlugin(manifestFile []byte, vars map[string][]string) (plugins.HandlerFunc, error) {
 	manifest := PluginManifest{}
@@ -64,7 +104,7 @@ func BuildWasmPlugin(manifestFile []byte, vars map[string][]string) (plugins.Han
 		EnableWasi: true,
 	}
 
-	compiledPlugin, err := extism.NewCompiledPlugin(ctx, extismManifest, config, []extism.HostFunction{})
+	compiledPlugin, err := extism.NewCompiledPlugin(ctx, extismManifest, config, []extism.HostFunction{getGitFile})
 	if err != nil {
 		return nil, err
 	}

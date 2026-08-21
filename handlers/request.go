@@ -453,3 +453,7 @@ func (r Request) UpdateReviewRouletteCounts() error {
 
 	return nil
 }
+
+func (r Request) GetFile(path string) ([]byte, error) {
+	return r.provider.GetFile(r.info.ProjectID, path)
+}
