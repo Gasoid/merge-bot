@@ -78,7 +78,9 @@ func BuildWasmPlugin(manifestFile []byte, vars map[string][]string) (plugins.Han
 		defer plugin.Close(ctx)
 
 		return command.RunWithContext(func(input []byte) ([]byte, error) {
-			exit, output, err := plugin.Call(manifest.WasmConfig.ExportedFunction, input)
+			ctx := context.WithValue(context.Background(), commandCtxKey, command)
+
+			exit, output, err := plugin.CallWithContext(ctx, manifest.WasmConfig.ExportedFunction, input)
 			if err != nil {
 				return nil, fmt.Errorf("plugin %s returns error: %w", manifest.Name, err)
 			}

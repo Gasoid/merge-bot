@@ -14,15 +14,16 @@ import (
 	html2md "github.com/JohannesKaufmann/html-to-markdown/v2"
 )
 
+const (
+	commandCtxKey = "command"
+)
+
 type baseParams struct {
-	Provider  string `json:"provider"`
-	ProjectID int64  `json:"project_id"`
-	ID        int64  `json:"id"`
-	Branch    string `json:"branch"`
+	Branch string `json:"branch"`
 }
 
 func (b baseParams) isValid() bool {
-	if b.Provider != "" && b.ProjectID > 0 && b.ID > 0 && b.Branch != "" {
+	if b.Branch != "" {
 		return true
 	}
 
@@ -124,6 +125,21 @@ var (
 	getGitFile = extism.NewHostFunctionWithStack(
 		"get_git_file",
 		func(ctx context.Context, p *extism.CurrentPlugin, stack []uint64) {
+			var (
+				command *handlers.Request
+				ok      bool
+			)
+
+			if v := ctx.Value(commandCtxKey); v == nil {
+				exitWithError(p, stack, "getGitFile can't get command from context")
+				return
+			} else {
+				if command, ok = v.(*handlers.Request); !ok {
+					exitWithError(p, stack, "getGitFile can't get command from context")
+					return
+				}
+			}
+
 			paramsBytes, err := p.ReadBytes(stack[0])
 			if err != nil {
 				exitWithError(p, stack, "getGitFile can't read paramsBytes", "error", err)
@@ -142,17 +158,6 @@ var (
 				return
 			}
 
-			command, err := handlers.New(params.Provider)
-			if err != nil {
-				exitWithError(p, stack, "getGitFile can't create Request instance", "error", err)
-				return
-			}
-
-			if err := command.LoadInfoAndConfig(params.ProjectID, params.ID); err != nil {
-				exitWithError(p, stack, "can't load repo config", "provider", params.Provider, "err", err)
-				return
-			}
-
 			data, err := command.GetFile(params.Branch, params.FilePath)
 			if err != nil {
 				exitWithError(p, stack, "getGitFile can't receive file", "error", err, "filePath", params.FilePath)
@@ -168,6 +173,21 @@ var (
 	searchCode = extism.NewHostFunctionWithStack(
 		"search_code",
 		func(ctx context.Context, p *extism.CurrentPlugin, stack []uint64) {
+			var (
+				command *handlers.Request
+				ok      bool
+			)
+
+			if v := ctx.Value(commandCtxKey); v == nil {
+				exitWithError(p, stack, "getGitFile can't get command from context")
+				return
+			} else {
+				if command, ok = v.(*handlers.Request); !ok {
+					exitWithError(p, stack, "getGitFile can't get command from context")
+					return
+				}
+			}
+
 			paramsBytes, err := p.ReadBytes(stack[0])
 			if err != nil {
 				exitWithError(p, stack, "searchCode can't read paramsBytes", "error", err)
@@ -183,17 +203,6 @@ var (
 
 			if !params.isValid() {
 				exitWithError(p, stack, "params of searchCode are invalid")
-				return
-			}
-
-			command, err := handlers.New(params.Provider)
-			if err != nil {
-				exitWithError(p, stack, "searchCode can't create Request instance", "error", err)
-				return
-			}
-
-			if err := command.LoadInfoAndConfig(params.ProjectID, params.ID); err != nil {
-				exitWithError(p, stack, "searchCode can't load repo config", "provider", params.Provider, "err", err)
 				return
 			}
 
