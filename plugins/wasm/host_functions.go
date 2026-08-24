@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	extism "github.com/extism/go-sdk"
@@ -72,11 +73,17 @@ func (g fetchWebContentParams) isValid() bool {
 	}
 
 	parsedURL, err := url.Parse(g.Url)
-	if err != nil || !allowedDomains[parsedURL.Host] {
+	if err != nil {
 		return false
 	}
 
-	return true
+	for _, suffix := range allowedDomains {
+		if parsedURL.Host == suffix || strings.HasSuffix(parsedURL.Host, "."+suffix) {
+			return true
+		}
+	}
+
+	return false
 }
 
 type fetchWebContentResult struct {
@@ -205,11 +212,30 @@ var (
 		[]extism.ValueType{extism.ValueTypePTR},
 	)
 
-	allowedDomains = map[string]bool{
-		"pkg.go.dev":            true,
-		"docs.python.org":       true,
-		"developer.mozilla.org": true,
-		"golang.org":            true,
+	allowedDomains = []string{
+		"go.dev",
+		"golang.org",
+		"docs.python.org",
+		"developer.mozilla.org",
+		"github.com",
+		"gitlab.com",
+		"docs.rs",
+		"crates.io",
+		"doc.rust-lang.org",
+		"npmjs.com",
+		"nodejs.org",
+		"pypi.org",
+		"kubernetes.io",
+		"helm.sh",
+		"grpc.io",
+		"protobuf.dev",
+		"postgresql.org",
+		"redis.io",
+		"learn.microsoft.com",
+		"aws.amazon.com",
+		"spec.openapis.org",
+		"graphql.org",
+		"swagger.io",
 	}
 
 	//nolint:errcheck
