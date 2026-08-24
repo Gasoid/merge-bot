@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"net/url"
+	"time"
 
 	extism "github.com/extism/go-sdk"
 	"github.com/gasoid/merge-bot/v3/handlers"
@@ -74,6 +76,11 @@ type fetchWebContentParams struct {
 
 func (g fetchWebContentParams) isValid() bool {
 	if g.Url == "" {
+		return false
+	}
+
+	parsedURL, err := url.Parse(g.Url)
+	if err != nil || !allowedDomains[parsedURL.Host] {
 		return false
 	}
 
@@ -198,6 +205,13 @@ var (
 		[]extism.ValueType{extism.ValueTypePTR},
 	)
 
+	allowedDomains = map[string]bool{
+		"pkg.go.dev":            true,
+		"docs.python.org":       true,
+		"developer.mozilla.org": true,
+		"golang.org":            true,
+	}
+
 	//nolint:errcheck
 	fetchWebContent = extism.NewHostFunctionWithStack(
 		"fetch_web_content",
@@ -231,13 +245,26 @@ var (
 				return
 			}
 
-			res, err := http.Get(params.Url)
+			req, err := http.NewRequestWithContext(ctx, http.MethodGet, params.Url, nil)
+			if err != nil {
+				exitWithError(p, stack, "fetchWebContent can't build request", "err", err, "url", params.Url)
+				return
+			}
+
+			client := &http.Client{Timeout: 15 * time.Second}
+
+			res, err := client.Do(req)
 			if err != nil {
 				exitWithError(p, stack, "fetchWebContent can't get url", "err", err, "url", params.Url)
 				return
 			}
 
 			defer res.Body.Close()
+
+			if res.StatusCode != http.StatusOK {
+				exitWithError(p, stack, "fetchWebContent got bad status", "status", res.StatusCode, "url", params.Url)
+				return
+			}
 
 			content, err := html2md.ConvertReader(res.Body)
 			if err != nil {
