@@ -189,7 +189,7 @@ var (
 
 			command, err := handlers.New(params.Provider)
 			if err != nil {
-				logger.Info("searchCode can't create Request instance", "error", err)
+				exitWithError(p, stack, "searchCode can't create Request instance", "error", err)
 				return
 			}
 
@@ -236,7 +236,7 @@ var (
 
 			command, err := handlers.New(params.Provider)
 			if err != nil {
-				logger.Info("fetchWebContent can't create Request instance", "error", err)
+				exitWithError(p, stack, "fetchWebContent can't create Request instance", "error", err)
 				return
 			}
 
