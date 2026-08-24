@@ -248,7 +248,12 @@ var (
 				return
 			}
 
-			client := &http.Client{Timeout: 15 * time.Second}
+			client := &http.Client{
+				Timeout: 15 * time.Second,
+				CheckRedirect: func(req *http.Request, via []*http.Request) error {
+					return http.ErrUseLastResponse
+				},
+			}
 
 			res, err := client.Do(req)
 			if err != nil {
