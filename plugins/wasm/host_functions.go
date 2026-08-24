@@ -198,6 +198,7 @@ var (
 		[]extism.ValueType{extism.ValueTypePTR},
 	)
 
+	//nolint:errcheck
 	fetchWebContent = extism.NewHostFunctionWithStack(
 		"fetch_web_content",
 		func(ctx context.Context, p *extism.CurrentPlugin, stack []uint64) {
