@@ -171,11 +171,11 @@ var (
 			)
 
 			if v := ctx.Value(commandCtxKey); v == nil {
-				exitWithError(p, stack, "getGitFile can't get command from context")
+				exitWithError(p, stack, "searchCode can't get command from context")
 				return
 			} else {
 				if command, ok = v.(*handlers.Request); !ok {
-					exitWithError(p, stack, "getGitFile can't get command from context")
+					exitWithError(p, stack, "searchCode can't get command from context")
 					return
 				}
 			}
