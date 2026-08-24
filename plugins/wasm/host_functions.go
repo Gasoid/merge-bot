@@ -23,11 +23,7 @@ type baseParams struct {
 }
 
 func (b baseParams) isValid() bool {
-	if b.Branch != "" {
-		return true
-	}
-
-	return false
+	return b.Branch != ""
 }
 
 type baseResult struct {

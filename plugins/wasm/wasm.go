@@ -24,6 +24,8 @@ type PluginManifest struct {
 	WasmConfig PluginWasmConfig `yaml:"wasm_config"`
 }
 
+type commandContext string
+
 func init() {
 	plugins.Register("wasm", BuildWasmPlugin)
 }
@@ -78,7 +80,7 @@ func BuildWasmPlugin(manifestFile []byte, vars map[string][]string) (plugins.Han
 		defer plugin.Close(ctx)
 
 		return command.RunWithContext(func(input []byte) ([]byte, error) {
-			ctx := context.WithValue(context.Background(), commandCtxKey, command)
+			ctx := context.WithValue(context.Background(), commandContext(commandCtxKey), command)
 
 			exit, output, err := plugin.CallWithContext(ctx, manifest.WasmConfig.ExportedFunction, input)
 			if err != nil {
