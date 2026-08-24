@@ -301,7 +301,12 @@ func (g *GitlabProvider) GetMRInfo(projectID, mergeID int64, configPath string) 
 		info.Reviewers = append(info.Reviewers, r.Username)
 	}
 
-	b, err := g.getFile(projectID, g.mr.SourceBranch, configPath)
+	project, _, err := g.client.Projects.GetProject(projectID, &gitlab.GetProjectOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	b, err := g.getFile(projectID, project.DefaultBranch, configPath)
 	if err != nil {
 		logger.Debug("i am using default config to validate a request")
 		info.ConfigContent = ""
