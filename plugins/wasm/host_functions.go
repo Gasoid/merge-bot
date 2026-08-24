@@ -22,7 +22,7 @@ type baseParams struct {
 }
 
 func (b baseParams) isValid() bool {
-	if b.Provider != "" && b.ProjectID >= 0 && b.ID >= 0 && b.Branch != "" {
+	if b.Provider != "" && b.ProjectID > 0 && b.ID > 0 && b.Branch != "" {
 		return true
 	}
 
@@ -70,7 +70,6 @@ type searchCodeResult struct {
 }
 
 type fetchWebContentParams struct {
-	baseParams
 	Url string `json:"url"`
 }
 
@@ -84,7 +83,7 @@ func (g fetchWebContentParams) isValid() bool {
 		return false
 	}
 
-	return g.baseParams.isValid()
+	return true
 }
 
 type fetchWebContentResult struct {
@@ -231,17 +230,6 @@ var (
 
 			if !params.isValid() {
 				exitWithError(p, stack, "params of fetchWebContent are invalid")
-				return
-			}
-
-			command, err := handlers.New(params.Provider)
-			if err != nil {
-				exitWithError(p, stack, "fetchWebContent can't create Request instance", "error", err)
-				return
-			}
-
-			if err := command.LoadInfoAndConfig(params.ProjectID, params.ID); err != nil {
-				exitWithError(p, stack, "fetchWebContent can't load repo config", "provider", params.Provider, "err", err)
 				return
 			}
 
