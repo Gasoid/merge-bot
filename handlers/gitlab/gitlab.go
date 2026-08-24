@@ -35,9 +35,10 @@ var (
 )
 
 const (
-	tokenUsername = "oauth2"
-	findMRSize    = 10
-	maxSearch     = 500
+	tokenUsername  = "oauth2"
+	findMRSize     = 10
+	maxSearch      = 100
+	searchCodeSize = 10
 )
 
 type GitlabProvider struct {
@@ -270,8 +271,9 @@ func (g GitlabProvider) getFile(projectID int64, branch, path string) ([]byte, e
 
 func (g GitlabProvider) SearchCode(projectID int64, branch, query string) []handlers.Search {
 	result := []handlers.Search{}
-	for blob := range g.listSearch(projectID, 10, query, branch) {
+	for blob := range g.listSearch(projectID, searchCodeSize, query, branch) {
 		result = append(result, handlers.Search{Path: blob.Path, Line: blob.Startline})
+		// searchCode results is limited, because it can consume a lot of memory
 		if len(result) >= maxSearch {
 			break
 		}
