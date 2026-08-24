@@ -457,3 +457,12 @@ func (r Request) UpdateReviewRouletteCounts() error {
 func (r Request) GetFile(branch, path string) ([]byte, error) {
 	return r.provider.GetBranchFile(r.info.ProjectID, branch, path)
 }
+
+type Search struct {
+	Path string `json:"path"`
+	Line int64  `json:"line"`
+}
+
+func (r Request) SearchCode(branch, query string) []Search {
+	return r.provider.SearchCode(r.info.ProjectID, branch, query)
+}

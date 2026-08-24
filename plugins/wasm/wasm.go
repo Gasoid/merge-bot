@@ -7,7 +7,6 @@ import (
 
 	extism "github.com/extism/go-sdk"
 	"github.com/gasoid/merge-bot/v3/handlers"
-	"github.com/gasoid/merge-bot/v3/logger"
 	"github.com/gasoid/merge-bot/v3/plugins"
 	"github.com/stretchr/testify/assert/yaml"
 )
@@ -28,58 +27,6 @@ type PluginManifest struct {
 func init() {
 	plugins.Register("wasm", BuildWasmPlugin)
 }
-
-var (
-	getGitFile = extism.NewHostFunctionWithStack(
-		"get_git_file",
-		func(ctx context.Context, p *extism.CurrentPlugin, stack []uint64) {
-			provider, err := p.ReadString(stack[0])
-			if err != nil {
-				logger.Info("getGitFile can't read provider", "error", err)
-				return
-			}
-
-			command, err := handlers.New(provider)
-			if err != nil {
-				logger.Info("getGitFile can't create Request instance", "error", err)
-				return
-			}
-
-			projectID, ID := int64(stack[1]), int64(stack[2])
-
-			if err := command.LoadInfoAndConfig(projectID, ID); err != nil {
-				logger.Error("can't load repo config", "provider", provider, "command", command, "err", err)
-				return
-			}
-
-			branch, err := p.ReadString(stack[3])
-			if err != nil {
-				logger.Info("getGitFile can't read branch", "error", err)
-				return
-			}
-
-			filePath, err := p.ReadString(stack[4])
-			if err != nil {
-				logger.Info("getGitFile can't read filePath", "error", err)
-				return
-			}
-
-			data, err := command.GetFile(branch, filePath)
-			if err != nil {
-				logger.Info("getGitFile can't receive file", "error", err, "filePath", filePath)
-				return
-			}
-
-			stack[0], err = p.WriteBytes(data)
-			if err != nil {
-				logger.Info("getGitFile can't write data", "error", err, "filePath", filePath)
-				return
-			}
-		},
-		[]extism.ValueType{extism.ValueTypePTR, extism.ValueTypeI64, extism.ValueTypeI64, extism.ValueTypePTR, extism.ValueTypePTR},
-		[]extism.ValueType{extism.ValueTypePTR},
-	)
-)
 
 func BuildWasmPlugin(manifestFile []byte, vars map[string][]string) (plugins.HandlerFunc, error) {
 	manifest := PluginManifest{}
@@ -117,7 +64,7 @@ func BuildWasmPlugin(manifestFile []byte, vars map[string][]string) (plugins.Han
 		EnableWasi: true,
 	}
 
-	compiledPlugin, err := extism.NewCompiledPlugin(ctx, extismManifest, config, []extism.HostFunction{getGitFile})
+	compiledPlugin, err := extism.NewCompiledPlugin(ctx, extismManifest, config, []extism.HostFunction{getGitFile, searchCode, fetchWebContent})
 	if err != nil {
 		return nil, err
 	}

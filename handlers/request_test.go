@@ -120,8 +120,8 @@ func (p *testProvider) AwardEmoji(projectID, mergeID, noteID int64, emoji string
 	return p.err
 }
 
-func (p *testProvider) GetFile(projectID int64, path string) ([]byte, error) {
-	return nil, p.err
+func (p *testProvider) SearchCode(projectID int64, branch, query string) []Search {
+	return nil
 }
 
 func (p *testProvider) GetBranchFile(projectID int64, branch, path string) ([]byte, error) {
