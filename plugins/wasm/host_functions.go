@@ -14,10 +14,6 @@ import (
 	html2md "github.com/JohannesKaufmann/html-to-markdown/v2"
 )
 
-const (
-	commandCtxKey = "command"
-)
-
 type baseParams struct {
 	Branch string `json:"branch"`
 }
