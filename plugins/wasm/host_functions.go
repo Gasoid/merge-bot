@@ -22,7 +22,7 @@ type baseParams struct {
 }
 
 func (b baseParams) isValid() bool {
-	if b.Provider != "" && b.ProjectID <= 0 && b.ID <= 0 && b.Branch != "" {
+	if b.Provider != "" && b.ProjectID >= 0 && b.ID >= 0 && b.Branch != "" {
 		return true
 	}
 
