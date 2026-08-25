@@ -53,6 +53,10 @@ func (r *Request) LoadInfoAndConfig(projectId, id int64) error {
 }
 
 func (r *Request) IsValid() (bool, string, error) {
+	if !r.config.Rules.Enabled {
+		return false, "Rules are disabled", nil
+	}
+
 	if !r.info.IsValid {
 		return false, ValidError.Error(), nil
 	}
@@ -83,6 +87,7 @@ func (r *Request) IsValid() (bool, string, error) {
 func (r *Request) ParseConfig(content string) (*Config, error) {
 	mrConfig := &Config{
 		Rules: Rules{
+			Enabled:               true,
 			MinApprovals:          1,
 			AllowFailingPipelines: true,
 			AllowFailingTests:     true,
@@ -202,6 +207,10 @@ func (r *Request) DeleteStaleBranches() error {
 }
 
 func (r *Request) Merge() (bool, string, error) {
+	if !r.config.Rules.Enabled {
+		return false, "Rules are disabled", nil
+	}
+
 	if r.config.AutoMasterMerge {
 		err := r.provider.UpdateFromMaster(r.info.ProjectID, r.info.ID)
 		if err != nil {
@@ -443,4 +452,17 @@ func (r Request) UpdateReviewRouletteCounts() error {
 	}
 
 	return nil
+}
+
+func (r Request) GetFile(branch, path string) ([]byte, error) {
+	return r.provider.GetBranchFile(r.info.ProjectID, branch, path)
+}
+
+type Search struct {
+	Path string `json:"path"`
+	Line int64  `json:"line"`
+}
+
+func (r Request) SearchCode(branch, query string) []Search {
+	return r.provider.SearchCode(r.info.ProjectID, branch, query)
 }

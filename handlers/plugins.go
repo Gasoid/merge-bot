@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"strings"
 
@@ -18,11 +19,15 @@ const (
 type PluginCall func([]byte) ([]byte, error)
 
 type PluginInput struct {
-	Title       string            `json:"title"`
-	Description string            `json:"description"`
-	Author      string            `json:"author"`
-	Diffs       []byte            `json:"diffs"`
-	Vars        map[string]string `json:"vars"`
+	Title        string            `json:"title"`
+	Description  string            `json:"description"`
+	Author       string            `json:"author"`
+	ProjectID    int64             `json:"project_id"`
+	Branch       string            `json:"branch"`
+	TargetBranch string            `json:"target_branch"`
+	ID           int64             `json:"mr_id"`
+	Diffs        []byte            `json:"diffs"`
+	Vars         map[string]string `json:"vars"`
 }
 
 type Thread struct {
@@ -82,11 +87,15 @@ func (r Request) RunWithContext(call PluginCall, vars map[string][]string) error
 	}
 
 	input := PluginInput{
-		Title:       r.info.Title,
-		Description: r.info.Description,
-		Author:      r.info.Author,
-		Diffs:       rawDiffs,
-		Vars:        pluginVars,
+		Title:        r.info.Title,
+		Description:  r.info.Description,
+		Author:       r.info.Author,
+		Diffs:        rawDiffs,
+		Vars:         pluginVars,
+		ProjectID:    r.info.ProjectID,
+		ID:           r.info.ID,
+		Branch:       r.info.SourceBranch,
+		TargetBranch: r.info.TargetBranch,
 	}
 
 	data, err := json.Marshal(input)
@@ -117,8 +126,29 @@ func (r Request) RunWithContext(call PluginCall, vars map[string][]string) error
 			r.info.ID,
 			t); err != nil {
 			logger.Info("CreateThreadInLine returns error", "err", err, "thread", t)
+
+			if err := r.LeaveComment(threadFallback(t)); err != nil {
+				return err
+			}
 		}
 	}
 
 	return nil
+}
+
+func threadFallback(t Thread) string {
+	path, line := t.NewPath, t.NewLine
+	if line == 0 && t.OldLine != 0 {
+		path, line = t.OldPath, t.OldLine
+	}
+	if path == "" {
+		path = t.OldPath
+	}
+
+	location := path
+	if line != 0 {
+		location = fmt.Sprintf("%s:%d", path, line)
+	}
+
+	return fmt.Sprintf("> [!note]\n> **%s**\n\n%s", location, t.Body)
 }

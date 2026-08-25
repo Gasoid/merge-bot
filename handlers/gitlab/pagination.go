@@ -62,3 +62,11 @@ func (g GitlabProvider) listAllProjectMembers(projectID, size int64, options *gi
 		return g.client.ProjectMembers.ListAllProjectMembers(projectID, options)
 	}, size)
 }
+
+func (g GitlabProvider) listSearch(projectID, size int64, query, branch string) iter.Seq[*gitlab.Blob] {
+	return paginate(func(page, perPage int64) ([]*gitlab.Blob, *gitlab.Response, error) {
+		options := &gitlab.SearchOptions{Ref: new(branch)}
+		options.ListOptions = gitlab.ListOptions{Page: page, PerPage: perPage}
+		return g.client.Search.BlobsByProject(projectID, query, options)
+	}, size)
+}

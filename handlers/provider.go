@@ -164,9 +164,10 @@ type Project interface {
 	CreateLabel(projectID int64, name, color string) error
 	GetVar(projectID int64, varName string) (string, error)
 	RerunPipeline(projectID, pipelineID int64, ref string) (string, error)
-	GetFile(projectID int64, path string) ([]byte, error)
+	GetBranchFile(projectID int64, branch, path string) ([]byte, error)
 	IsHealthy() bool
 	GetContributors(projectID, mergeID int64) ([]Candidate, error)
+	SearchCode(projectID int64, branch, query string) []Search
 }
 
 type RequestProvider interface {
@@ -178,6 +179,7 @@ type RequestProvider interface {
 }
 
 type Rules struct {
+	Enabled               bool     `yaml:"enabled"`
 	MinApprovals          int      `yaml:"min_approvals"`
 	Approvers             []string `yaml:"approvers"`
 	AllowFailingPipelines bool     `yaml:"allow_failing_pipelines"`

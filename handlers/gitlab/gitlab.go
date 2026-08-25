@@ -3,6 +3,7 @@ package gitlab
 import (
 	"bytes"
 	b64 "encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"iter"
@@ -35,9 +36,10 @@ var (
 )
 
 const (
-	tokenUsername = "oauth2"
-	findMRSize    = 10
-	// sortDesc              = "desc"
+	tokenUsername  = "oauth2"
+	findMRSize     = 10
+	maxSearch      = 100
+	searchCodeSize = 10
 )
 
 type GitlabProvider struct {
@@ -250,13 +252,12 @@ func (g *GitlabProvider) IsValid(projectID, mergeID int64) (bool, error) {
 	return !g.mr.HasConflicts, nil
 }
 
-func (g *GitlabProvider) GetFile(projectID int64, path string) ([]byte, error) {
-	project, _, err := g.client.Projects.GetProject(projectID, &gitlab.GetProjectOptions{})
-	if err != nil {
-		return nil, err
-	}
+func (g GitlabProvider) GetBranchFile(projectID int64, branch, path string) ([]byte, error) {
+	return g.getFile(projectID, branch, path)
+}
 
-	gitlabFile, _, err := g.client.RepositoryFiles.GetFile(projectID, path, &gitlab.GetFileOptions{Ref: &project.DefaultBranch})
+func (g GitlabProvider) getFile(projectID int64, branch, path string) ([]byte, error) {
+	gitlabFile, _, err := g.client.RepositoryFiles.GetFile(projectID, path, &gitlab.GetFileOptions{Ref: &branch})
 	if err != nil {
 		return nil, err
 	}
@@ -267,6 +268,19 @@ func (g *GitlabProvider) GetFile(projectID int64, path string) ([]byte, error) {
 	}
 
 	return content, nil
+}
+
+func (g GitlabProvider) SearchCode(projectID int64, branch, query string) []handlers.Search {
+	result := []handlers.Search{}
+	for blob := range g.listSearch(projectID, searchCodeSize, query, branch) {
+		result = append(result, handlers.Search{Path: blob.Path, Line: blob.Startline})
+		// searchCode results is limited, because it can consume a lot of memory
+		if len(result) >= maxSearch {
+			break
+		}
+	}
+
+	return result
 }
 
 func (g *GitlabProvider) GetMRInfo(projectID, mergeID int64, configPath string) (*handlers.MrInfo, error) {
@@ -290,7 +304,12 @@ func (g *GitlabProvider) GetMRInfo(projectID, mergeID int64, configPath string) 
 		info.Reviewers = append(info.Reviewers, r.Username)
 	}
 
-	b, err := g.GetFile(projectID, configPath)
+	project, _, err := g.client.Projects.GetProject(projectID, &gitlab.GetProjectOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	b, err := g.getFile(projectID, project.DefaultBranch, configPath)
 	if err != nil {
 		logger.Debug("i am using default config to validate a request")
 		info.ConfigContent = ""
@@ -540,7 +559,12 @@ func (g GitlabProvider) getChangedFiles(projectID, mergeID int64) ([]string, err
 func (g GitlabProvider) codeOwners(projectID, mergeID int64) (map[string]struct{}, error) {
 	candidates := map[string]struct{}{}
 
-	b, err := g.GetFile(projectID, "CODEOWNERS")
+	project, _, err := g.client.Projects.GetProject(projectID, &gitlab.GetProjectOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	b, err := g.getFile(projectID, project.DefaultBranch, "CODEOWNERS")
 	if err != nil {
 		if errors.Is(err, gitlab.ErrNotFound) {
 			return nil, nil
@@ -686,17 +710,30 @@ func (g GitlabProvider) CreateThreadInLine(projectID, mergeID int64, thread hand
 		return errors.New("no mr information")
 	}
 
+	if thread.NewLine == 0 && thread.OldLine == 0 {
+		return errors.New("no lines included")
+	}
+
+	newPath := thread.NewPath
+	if newPath == "" {
+		newPath = thread.OldPath
+	}
+
+	oldPath := thread.OldPath
+	if oldPath == "" {
+		oldPath = thread.NewPath
+	}
+
 	position := &gitlab.PositionOptions{
 		BaseSHA:      &g.mr.DiffRefs.BaseSha,
 		HeadSHA:      &g.mr.DiffRefs.HeadSha,
-		StartSHA:     &g.mr.DiffRefs.StartSha,
 		PositionType: new("text"),
-		NewPath:      &thread.NewPath,
-		OldPath:      &thread.OldPath,
+		NewPath:      &newPath,
+		OldPath:      &oldPath,
 	}
 
-	if thread.NewLine == 0 && thread.OldLine == 0 {
-		return errors.New("no lines included")
+	if g.mr.DiffRefs.StartSha != "" {
+		position.StartSHA = &g.mr.DiffRefs.StartSha
 	}
 
 	if thread.NewLine != 0 {
@@ -707,14 +744,25 @@ func (g GitlabProvider) CreateThreadInLine(projectID, mergeID int64, thread hand
 		position.OldLine = &thread.OldLine
 	}
 
-	_, _, err := g.client.Discussions.CreateMergeRequestDiscussion(
-		projectID, mergeID,
-		&gitlab.CreateMergeRequestDiscussionOptions{
-			Body:     new(thread.Body),
-			Position: position,
-		},
+	opts := &gitlab.CreateMergeRequestDiscussionOptions{
+		Body:     new(thread.Body),
+		Position: position,
+	}
+
+	bodyData, _ := json.Marshal(opts)
+	logger.Debug("CreateThreadInLine body", "json", string(bodyData))
+
+	_, res, err := g.client.Discussions.CreateMergeRequestDiscussion(
+		projectID, mergeID, opts,
 	)
 	if err != nil {
+		logger.Debug("CreateThreadInLine request", "projectID", projectID, "mergeID", mergeID,
+			"baseSha", g.mr.DiffRefs.BaseSha, "headSha", g.mr.DiffRefs.HeadSha, "startSha", g.mr.DiffRefs.StartSha,
+			"newPath", newPath, "oldPath", oldPath, "newLine", thread.NewLine, "oldLine", thread.OldLine,
+			"error", err)
+		if res != nil {
+			logger.Debug("CreateThreadInLine response", "status", res.StatusCode)
+		}
 		return err
 	}
 
