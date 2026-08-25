@@ -3,6 +3,7 @@ package gitlab
 import (
 	"bytes"
 	b64 "encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"iter"
@@ -732,7 +733,7 @@ func (g GitlabProvider) CreateThreadInLine(projectID, mergeID int64, thread hand
 		OldPath:      &oldPath,
 	}
 
-	if g.mr.DiffRefs.StartSha != "" && oldPath != devNull {
+	if g.mr.DiffRefs.StartSha != "" {
 		position.StartSHA = &g.mr.DiffRefs.StartSha
 	}
 
@@ -744,12 +745,16 @@ func (g GitlabProvider) CreateThreadInLine(projectID, mergeID int64, thread hand
 		position.OldLine = &thread.OldLine
 	}
 
+	opts := &gitlab.CreateMergeRequestDiscussionOptions{
+		Body:     new(thread.Body),
+		Position: position,
+	}
+
+	bodyData, _ := json.Marshal(opts)
+	logger.Debug("CreateThreadInLine body", "json", string(bodyData))
+
 	_, res, err := g.client.Discussions.CreateMergeRequestDiscussion(
-		projectID, mergeID,
-		&gitlab.CreateMergeRequestDiscussionOptions{
-			Body:     new(thread.Body),
-			Position: position,
-		},
+		projectID, mergeID, opts,
 	)
 	if err != nil {
 		logger.Debug("CreateThreadInLine request", "projectID", projectID, "mergeID", mergeID,
