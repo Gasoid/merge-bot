@@ -727,10 +727,13 @@ func (g GitlabProvider) CreateThreadInLine(projectID, mergeID int64, thread hand
 	position := &gitlab.PositionOptions{
 		BaseSHA:      &g.mr.DiffRefs.BaseSha,
 		HeadSHA:      &g.mr.DiffRefs.HeadSha,
-		StartSHA:     &g.mr.DiffRefs.StartSha,
 		PositionType: new("text"),
 		NewPath:      &newPath,
 		OldPath:      &oldPath,
+	}
+
+	if g.mr.DiffRefs.StartSha != "" {
+		position.StartSHA = &g.mr.DiffRefs.StartSha
 	}
 
 	if thread.NewLine != 0 {
@@ -741,7 +744,7 @@ func (g GitlabProvider) CreateThreadInLine(projectID, mergeID int64, thread hand
 		position.OldLine = &thread.OldLine
 	}
 
-	_, _, err := g.client.Discussions.CreateMergeRequestDiscussion(
+	_, res, err := g.client.Discussions.CreateMergeRequestDiscussion(
 		projectID, mergeID,
 		&gitlab.CreateMergeRequestDiscussionOptions{
 			Body:     new(thread.Body),
@@ -749,6 +752,13 @@ func (g GitlabProvider) CreateThreadInLine(projectID, mergeID int64, thread hand
 		},
 	)
 	if err != nil {
+		logger.Debug("CreateThreadInLine request", "projectID", projectID, "mergeID", mergeID,
+			"baseSha", g.mr.DiffRefs.BaseSha, "headSha", g.mr.DiffRefs.HeadSha, "startSha", g.mr.DiffRefs.StartSha,
+			"newPath", newPath, "oldPath", oldPath, "newLine", thread.NewLine, "oldLine", thread.OldLine,
+			"error", err)
+		if res != nil {
+			logger.Debug("CreateThreadInLine response", "status", res.StatusCode)
+		}
 		return err
 	}
 
