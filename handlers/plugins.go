@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"strings"
 
@@ -125,8 +126,31 @@ func (r Request) RunWithContext(call PluginCall, vars map[string][]string) error
 			r.info.ID,
 			t); err != nil {
 			logger.Info("CreateThreadInLine returns error", "err", err, "thread", t)
+
+			if err := r.LeaveComment(threadFallback(t)); err != nil {
+				return err
+			}
 		}
 	}
 
 	return nil
+}
+
+func threadFallback(t Thread) string {
+	path := t.NewPath
+	if path == "" {
+		path = t.OldPath
+	}
+
+	line := t.NewLine
+	if line == 0 {
+		line = t.OldLine
+	}
+
+	location := path
+	if line != 0 {
+		location = fmt.Sprintf("%s:%d", path, line)
+	}
+
+	return fmt.Sprintf("> [!note]\n> **%s**\n\n%s", location, t.Body)
 }

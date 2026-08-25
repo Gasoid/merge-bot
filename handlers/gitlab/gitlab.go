@@ -39,6 +39,7 @@ const (
 	findMRSize     = 10
 	maxSearch      = 100
 	searchCodeSize = 10
+	devNull        = "/dev/null"
 )
 
 type GitlabProvider struct {
@@ -709,17 +710,27 @@ func (g GitlabProvider) CreateThreadInLine(projectID, mergeID int64, thread hand
 		return errors.New("no mr information")
 	}
 
+	if thread.NewLine == 0 && thread.OldLine == 0 {
+		return errors.New("no lines included")
+	}
+
+	newPath := thread.NewPath
+	if newPath == "" {
+		newPath = devNull
+	}
+
+	oldPath := thread.OldPath
+	if oldPath == "" {
+		oldPath = devNull
+	}
+
 	position := &gitlab.PositionOptions{
 		BaseSHA:      &g.mr.DiffRefs.BaseSha,
 		HeadSHA:      &g.mr.DiffRefs.HeadSha,
 		StartSHA:     &g.mr.DiffRefs.StartSha,
 		PositionType: new("text"),
-		NewPath:      &thread.NewPath,
-		OldPath:      &thread.OldPath,
-	}
-
-	if thread.NewLine == 0 && thread.OldLine == 0 {
-		return errors.New("no lines included")
+		NewPath:      &newPath,
+		OldPath:      &oldPath,
 	}
 
 	if thread.NewLine != 0 {
