@@ -40,7 +40,6 @@ const (
 	findMRSize     = 10
 	maxSearch      = 100
 	searchCodeSize = 10
-	devNull        = "/dev/null"
 )
 
 type GitlabProvider struct {
@@ -717,12 +716,12 @@ func (g GitlabProvider) CreateThreadInLine(projectID, mergeID int64, thread hand
 
 	newPath := thread.NewPath
 	if newPath == "" {
-		newPath = devNull
+		newPath = thread.OldPath
 	}
 
 	oldPath := thread.OldPath
 	if oldPath == "" {
-		oldPath = devNull
+		oldPath = thread.NewPath
 	}
 
 	position := &gitlab.PositionOptions{
