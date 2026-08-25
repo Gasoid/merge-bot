@@ -732,7 +732,7 @@ func (g GitlabProvider) CreateThreadInLine(projectID, mergeID int64, thread hand
 		OldPath:      &oldPath,
 	}
 
-	if g.mr.DiffRefs.StartSha != "" {
+	if g.mr.DiffRefs.StartSha != "" && oldPath != devNull {
 		position.StartSHA = &g.mr.DiffRefs.StartSha
 	}
 
