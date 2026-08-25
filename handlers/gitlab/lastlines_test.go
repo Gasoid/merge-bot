@@ -20,6 +20,7 @@ func TestReadLastLines(t *testing.T) {
 		{"no trailing newline", "1\n2\n3", 3, "1\n2\n3"},
 		{"n zero", "1\n2\n3\n", 0, ""},
 		{"long line", strings.Repeat("x", 2048) + "\n" + "tail\n", 1, "tail"},
+		{"crlf", "1\r\n2\r\n3\r\n", 3, "1\n2\n3"},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
