@@ -91,17 +91,21 @@ type fetchWebContentResult struct {
 	Content []byte `json:"content"`
 }
 
-func exitWithError(p *extism.CurrentPlugin, stack []uint64, msg string, args ...any) {
+const (
+	maxFetchContentSize int64 = 5 * 1024 * 1024 // 5MB
+)
+
+func returnError(p *extism.CurrentPlugin, stack []uint64, msg string, args ...any) {
 	logger.Info(msg, args...)
 	data, err := json.Marshal(baseResult{Error: msg})
 	if err != nil {
-		logger.Info("exitWithError can't marshal data", "error", err)
+		logger.Info("returnError can't marshal data", "error", err)
 		return
 	}
 
 	stack[0], err = p.WriteBytes(data)
 	if err != nil {
-		logger.Info("exitWithError can't write data", "error", err)
+		logger.Info("returnError can't write data", "error", err)
 		return
 	}
 }
@@ -130,36 +134,38 @@ var (
 			)
 
 			if v := ctx.Value(commandCtxKey); v == nil {
-				exitWithError(p, stack, "getGitFile can't get command from context")
+				returnError(p, stack, "getGitFile can't get command from context")
 				return
 			} else {
 				if command, ok = v.(*handlers.Request); !ok {
-					exitWithError(p, stack, "getGitFile can't get command from context")
+					returnError(p, stack, "getGitFile can't get command from context")
 					return
 				}
 			}
 
 			paramsBytes, err := p.ReadBytes(stack[0])
 			if err != nil {
-				exitWithError(p, stack, "getGitFile can't read paramsBytes", "error", err)
+				returnError(p, stack, "getGitFile can't read paramsBytes", "error", err)
 				return
 			}
 
 			params := getGitFileParams{}
 
 			if err := json.Unmarshal(paramsBytes, &params); err != nil {
-				exitWithError(p, stack, "getGitFile can't unmarshal params", "error", err)
+				returnError(p, stack, "getGitFile can't unmarshal params", "error", err)
 				return
 			}
 
 			if !params.isValid() {
-				exitWithError(p, stack, "params of getGitFile are invalid")
+				returnError(p, stack, "params of getGitFile are invalid")
 				return
 			}
 
+			logger.Debug("getGitFile called from plugin", "filePath", params.FilePath, "branch", params.Branch)
+
 			data, err := command.GetFile(params.Branch, params.FilePath)
 			if err != nil {
-				exitWithError(p, stack, "getGitFile can't receive file", "error", err, "filePath", params.FilePath)
+				returnError(p, stack, "getGitFile can't receive file", "error", err, "filePath", params.FilePath)
 				return
 			}
 
@@ -178,32 +184,34 @@ var (
 			)
 
 			if v := ctx.Value(commandCtxKey); v == nil {
-				exitWithError(p, stack, "searchCode can't get command from context")
+				returnError(p, stack, "searchCode can't get command from context")
 				return
 			} else {
 				if command, ok = v.(*handlers.Request); !ok {
-					exitWithError(p, stack, "searchCode can't get command from context")
+					returnError(p, stack, "searchCode can't get command from context")
 					return
 				}
 			}
 
 			paramsBytes, err := p.ReadBytes(stack[0])
 			if err != nil {
-				exitWithError(p, stack, "searchCode can't read paramsBytes", "error", err)
+				returnError(p, stack, "searchCode can't read paramsBytes", "error", err)
 				return
 			}
 
 			params := searchCodeParams{}
 
 			if err := json.Unmarshal(paramsBytes, &params); err != nil {
-				exitWithError(p, stack, "searchCode can't unmarshal params", "error", err)
+				returnError(p, stack, "searchCode can't unmarshal params", "error", err)
 				return
 			}
 
 			if !params.isValid() {
-				exitWithError(p, stack, "params of searchCode are invalid")
+				returnError(p, stack, "params of searchCode are invalid")
 				return
 			}
+
+			logger.Debug("searchCode called from plugin", "query", params.Query, "branch", params.Branch)
 
 			results := command.SearchCode(params.Branch, params.Query)
 			returnData(p, stack, &searchCodeResult{Results: results})
@@ -244,25 +252,27 @@ var (
 		func(ctx context.Context, p *extism.CurrentPlugin, stack []uint64) {
 			paramsBytes, err := p.ReadBytes(stack[0])
 			if err != nil {
-				exitWithError(p, stack, "fetchWebContent can't read paramsBytes", "error", err)
+				returnError(p, stack, "fetchWebContent can't read paramsBytes", "error", err)
 				return
 			}
 
 			params := fetchWebContentParams{}
 
 			if err := json.Unmarshal(paramsBytes, &params); err != nil {
-				exitWithError(p, stack, "fetchWebContent can't unmarshal params", "error", err)
+				returnError(p, stack, "fetchWebContent can't unmarshal params", "error", err)
 				return
 			}
 
 			if !params.isValid() {
-				exitWithError(p, stack, "params of fetchWebContent are invalid")
+				returnError(p, stack, "params of fetchWebContent are invalid")
 				return
 			}
 
+			logger.Debug("fetchWebContent called from plugin", "url", params.Url)
+
 			req, err := http.NewRequestWithContext(ctx, http.MethodGet, params.Url, nil)
 			if err != nil {
-				exitWithError(p, stack, "fetchWebContent can't build request", "err", err, "url", params.Url)
+				returnError(p, stack, "fetchWebContent can't build request", "err", err, "url", params.Url)
 				return
 			}
 
@@ -275,20 +285,22 @@ var (
 
 			res, err := client.Do(req)
 			if err != nil {
-				exitWithError(p, stack, "fetchWebContent can't get url", "err", err, "url", params.Url)
+				returnError(p, stack, "fetchWebContent can't get url", "err", err, "url", params.Url)
 				return
 			}
 
 			defer res.Body.Close()
 
+			limitReader := http.MaxBytesReader(nil, res.Body, maxFetchContentSize)
+
 			if res.StatusCode != http.StatusOK {
-				exitWithError(p, stack, "fetchWebContent got bad status", "status", res.StatusCode, "url", params.Url)
+				returnError(p, stack, "fetchWebContent got bad status", "status", res.StatusCode, "url", params.Url)
 				return
 			}
 
-			content, err := html2md.ConvertReader(res.Body)
+			content, err := html2md.ConvertReader(limitReader)
 			if err != nil {
-				exitWithError(p, stack, "fetchWebContent can't convert to md", "err", err, "url", params.Url)
+				returnError(p, stack, "fetchWebContent can't convert to md", "err", err, "url", params.Url)
 				return
 			}
 
