@@ -137,14 +137,12 @@ func (r Request) RunWithContext(call PluginCall, vars map[string][]string) error
 }
 
 func threadFallback(t Thread) string {
-	path := t.NewPath
+	path, line := t.NewPath, t.NewLine
+	if line == 0 && t.OldLine != 0 {
+		path, line = t.OldPath, t.OldLine
+	}
 	if path == "" {
 		path = t.OldPath
-	}
-
-	line := t.NewLine
-	if line == 0 {
-		line = t.OldLine
 	}
 
 	location := path
