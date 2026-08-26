@@ -249,11 +249,7 @@ func (g GitlabProvider) RetrieveLogsOfFailedJobs(projectID int64) ([]handlers.Jo
 	options := &gitlab.ListJobsOptions{Scope: &[]gitlab.BuildStateValue{gitlab.Failed}}
 	jobLogs := make([]handlers.JobLog, 0)
 
-	for j, err := range g.listPipelineJobs(projectID, g.mr.HeadPipeline.ID, jobsPerPage, options) {
-		if err != nil {
-			return nil, err
-		}
-
+	for j := range g.listPipelineJobs(projectID, g.mr.HeadPipeline.ID, jobsPerPage, options) {
 		reader, _, err := g.client.Jobs.GetTraceFile(projectID, j.ID)
 		if err != nil {
 			return nil, err
@@ -339,12 +335,7 @@ func (g GitlabProvider) getFile(projectID int64, branch, path string) ([]byte, e
 
 func (g GitlabProvider) SearchCode(projectID int64, branch, query string) []handlers.Search {
 	result := []handlers.Search{}
-	for blob, err := range g.listSearch(projectID, searchCodeSize, query, branch) {
-		if err != nil {
-			logger.Error("searchCode list error", "err", err)
-			continue
-		}
-
+	for blob := range g.listSearch(projectID, searchCodeSize, query, branch) {
 		result = append(result, handlers.Search{Path: blob.Path, Line: blob.Startline})
 		// searchCode results is limited, because it can consume a lot of memory
 		if len(result) >= maxSearch {
@@ -432,12 +423,7 @@ func (g GitlabProvider) GetVar(projectID int64, varName string) (string, error) 
 func (g GitlabProvider) ListBranches(projectID, size int64, protected bool) iter.Seq[handlers.StaleBranch] {
 
 	return func(yield func(handlers.StaleBranch) bool) {
-		for b, err := range g.listBranches(projectID, size) {
-			if err != nil {
-				logger.Error("ListBranches", "err", err)
-				continue
-			}
-
+		for b := range g.listBranches(projectID, size) {
 			if b.Default {
 				continue
 			}
@@ -483,12 +469,7 @@ func (g GitlabProvider) ListMergeRequests(projectID, size int64, protected bool)
 		})
 
 	return func(yield func(handlers.MR) bool) {
-		for mr, err := range listMr {
-			if err != nil {
-				logger.Error("ListMergeRequests", "err", err)
-				continue
-			}
-
+		for mr := range listMr {
 			b, _, err := g.client.Branches.GetBranch(projectID, mr.SourceBranch)
 			if err != nil {
 				logger.Error("GetBranch fails", "err", err)
@@ -523,11 +504,7 @@ func (g GitlabProvider) FindMergeRequests(projectID int64, targetBranch, label s
 			TargetBranch: &targetBranch,
 		})
 
-	for mr, err := range listMr {
-		if err != nil {
-			return nil, err
-		}
-
+	for mr := range listMr {
 		mrs = append(mrs, handlers.MR{
 			ID:          mr.IID,
 			Labels:      mr.Labels,
@@ -722,13 +699,9 @@ func (g GitlabProvider) GetContributors(projectID, mergeID int64) ([]handlers.Ca
 		now := time.Now()
 		months3back := now.Add(-1 * time.Hour * 24 * 30 * 3)
 
-		for mr, err := range g.listMergeRequests(projectID, batch, &gitlab.ListProjectMergeRequestsOptions{
+		for mr := range g.listMergeRequests(projectID, batch, &gitlab.ListProjectMergeRequestsOptions{
 			UpdatedAfter: &months3back,
 		}) {
-			if err != nil {
-				return nil, err
-			}
-
 			userIDs = append(userIDs, mr.Author.ID)
 			// for _, r := range mr.Reviewers {
 			// 	counts[r.Username]++
@@ -758,12 +731,9 @@ func (g GitlabProvider) GetContributors(projectID, mergeID int64) ([]handlers.Ca
 		return nil, err
 	}
 
-	for m, err := range g.listAllProjectMembers(projectID, batch, &gitlab.ListProjectMembersOptions{
+	for m := range g.listAllProjectMembers(projectID, batch, &gitlab.ListProjectMembersOptions{
 		UserIDs: &userIDs,
 	}) {
-		if err != nil {
-			return nil, err
-		}
 
 		_, isCodeOwner := codeowners[m.Username]
 
