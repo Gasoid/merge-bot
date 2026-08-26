@@ -252,13 +252,14 @@ func (g GitlabProvider) RetrieveLogsOfFailedJobs(projectID int64) ([]handlers.Jo
 	for j := range g.listPipelineJobs(projectID, g.mr.HeadPipeline.ID, jobsPerPage, options) {
 		reader, _, err := g.client.Jobs.GetTraceFile(projectID, j.ID)
 		if err != nil {
-			return nil, err
+			logger.Error("GetTraceFile can't get logs", "err", err)
+			continue
 		}
 
-		// read last 200 lines
 		data, err := readLastLines(reader, failedJobLogLines)
 		if err != nil {
-			return nil, err
+			logger.Error("readLastLines can't read logs", "err", err)
+			continue
 		}
 
 		jobLogs = append(jobLogs, handlers.JobLog{Name: j.Name, ID: j.ID, Log: data, Stage: j.Stage})
