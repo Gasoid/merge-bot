@@ -466,3 +466,14 @@ type Search struct {
 func (r Request) SearchCode(branch, query string) []Search {
 	return r.provider.SearchCode(r.info.ProjectID, branch, query)
 }
+
+type JobLog struct {
+	Log   []byte `json:"log"`
+	ID    int64  `json:"job_id"`
+	Name  string `json:"job_name"`
+	Stage string `json:"stage"`
+}
+
+func (r Request) RetrieveLogsOfFailedJobs() ([]JobLog, error) {
+	return r.provider.RetrieveLogsOfFailedJobs(r.info.ProjectID)
+}

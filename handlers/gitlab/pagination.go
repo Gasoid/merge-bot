@@ -70,3 +70,13 @@ func (g GitlabProvider) listSearch(projectID, size int64, query, branch string) 
 		return g.client.Search.BlobsByProject(projectID, query, options)
 	}, size)
 }
+
+func (g GitlabProvider) listPipelineJobs(projectID, pipelineID, size int64, options *gitlab.ListJobsOptions) iter.Seq[*gitlab.Job] {
+	return paginate(func(page, perPage int64) ([]*gitlab.Job, *gitlab.Response, error) {
+		if options == nil {
+			options = &gitlab.ListJobsOptions{}
+		}
+		options.ListOptions = gitlab.ListOptions{Page: page, PerPage: perPage}
+		return g.client.Jobs.ListPipelineJobs(projectID, pipelineID, options)
+	}, size)
+}

@@ -1,11 +1,13 @@
 package gitlab
 
 import (
+	"bufio"
 	"bytes"
 	b64 "encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"iter"
 	"net/http"
 	"slices"
@@ -36,10 +38,12 @@ var (
 )
 
 const (
-	tokenUsername  = "oauth2"
-	findMRSize     = 10
-	maxSearch      = 100
-	searchCodeSize = 10
+	tokenUsername     = "oauth2"
+	findMRSize        = 10
+	maxSearch         = 100
+	searchCodeSize    = 10
+	jobsPerPage       = 100
+	failedJobLogLines = 200
 )
 
 type GitlabProvider struct {
@@ -235,6 +239,66 @@ func (g *GitlabProvider) GetFailedPipelines() (int64, error) {
 	}
 
 	return 0, nil
+}
+
+func (g GitlabProvider) RetrieveLogsOfFailedJobs(projectID int64) ([]handlers.JobLog, error) {
+	if g.mr.HeadPipeline == nil {
+		return nil, nil
+	}
+
+	options := &gitlab.ListJobsOptions{Scope: &[]gitlab.BuildStateValue{gitlab.Failed}}
+	jobLogs := make([]handlers.JobLog, 0)
+
+	for j := range g.listPipelineJobs(projectID, g.mr.HeadPipeline.ID, jobsPerPage, options) {
+		reader, _, err := g.client.Jobs.GetTraceFile(projectID, j.ID)
+		if err != nil {
+			logger.Error("GetTraceFile can't get logs", "err", err)
+			continue
+		}
+
+		data, err := readLastLines(reader, failedJobLogLines)
+		if err != nil {
+			logger.Error("readLastLines can't read logs", "err", err)
+			continue
+		}
+
+		jobLogs = append(jobLogs, handlers.JobLog{Name: j.Name, ID: j.ID, Log: data, Stage: j.Stage})
+	}
+	return jobLogs, nil
+}
+
+func readLastLines(r io.Reader, n int) ([]byte, error) {
+	if n <= 0 {
+		return nil, nil
+	}
+
+	br := bufio.NewReader(r)
+	lines := make([][]byte, 0, n)
+
+	for {
+		line, err := br.ReadBytes('\n')
+		if len(line) > 0 {
+			line = bytes.TrimSuffix(line, []byte("\n"))
+			line = bytes.TrimSuffix(line, []byte("\r"))
+			line = append([]byte(nil), line...)
+			if len(lines) == n {
+				copy(lines, lines[1:])
+				lines = lines[:n-1]
+			}
+
+			lines = append(lines, line)
+		}
+
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+
+			return nil, err
+		}
+	}
+
+	return bytes.Join(lines, []byte("\n")), nil
 }
 
 func (g *GitlabProvider) IsValid(projectID, mergeID int64) (bool, error) {

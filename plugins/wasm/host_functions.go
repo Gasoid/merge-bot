@@ -63,6 +63,11 @@ type searchCodeResult struct {
 	Results []handlers.Search `json:"results"`
 }
 
+type getCIFailedJobsResult struct {
+	baseResult
+	Jobs []handlers.JobLog `json:"jobs"`
+}
+
 type fetchWebContentParams struct {
 	Url string `json:"url"`
 }
@@ -215,6 +220,38 @@ var (
 
 			results := command.SearchCode(params.Branch, params.Query)
 			returnData(p, stack, &searchCodeResult{Results: results})
+		},
+		[]extism.ValueType{extism.ValueTypePTR},
+		[]extism.ValueType{extism.ValueTypePTR},
+	)
+
+	getCIFailedJobs = extism.NewHostFunctionWithStack(
+		"get_ci_failed_jobs",
+		func(ctx context.Context, p *extism.CurrentPlugin, stack []uint64) {
+			var (
+				command *handlers.Request
+				ok      bool
+			)
+
+			if v := ctx.Value(commandCtxKey); v == nil {
+				returnError(p, stack, "getCIFailedJobs can't get command from context")
+				return
+			} else {
+				if command, ok = v.(*handlers.Request); !ok {
+					returnError(p, stack, "getCIFailedJobs can't get command from context")
+					return
+				}
+			}
+
+			logger.Debug("getCIFailedJobs called from plugin")
+
+			jobLogs, err := command.RetrieveLogsOfFailedJobs()
+			if err != nil {
+				returnError(p, stack, "getCIFailedJobs can't receive job logs", "error", err)
+				return
+			}
+
+			returnData(p, stack, &getCIFailedJobsResult{Jobs: jobLogs})
 		},
 		[]extism.ValueType{extism.ValueTypePTR},
 		[]extism.ValueType{extism.ValueTypePTR},

@@ -168,6 +168,7 @@ type Project interface {
 	IsHealthy() bool
 	GetContributors(projectID, mergeID int64) ([]Candidate, error)
 	SearchCode(projectID int64, branch, query string) []Search
+	RetrieveLogsOfFailedJobs(projectID int64) ([]JobLog, error)
 }
 
 type RequestProvider interface {
