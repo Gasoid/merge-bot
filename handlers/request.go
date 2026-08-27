@@ -474,6 +474,10 @@ type JobLog struct {
 	Stage string `json:"stage"`
 }
 
-func (r Request) RetrieveLogsOfFailedJobs() ([]JobLog, error) {
-	return r.provider.RetrieveLogsOfFailedJobs(r.info.ProjectID)
+func (r Request) RetrieveJobLog(jobID int64) (*JobLog, error) {
+	return r.provider.RetrieveJobLog(r.info.ProjectID, jobID)
+}
+
+func (r Request) GetCIInfo() (*CIInfo, error) {
+	return r.provider.GetCIInfo(r.info.ProjectID)
 }

@@ -70,7 +70,7 @@ func BuildWasmPlugin(manifestFile []byte, vars map[string][]string) (plugins.Han
 		EnableWasi: true,
 	}
 
-	compiledPlugin, err := extism.NewCompiledPlugin(ctx, extismManifest, config, []extism.HostFunction{getGitFile, searchCode, fetchWebContent, getCIFailedJobs})
+	compiledPlugin, err := extism.NewCompiledPlugin(ctx, extismManifest, config, []extism.HostFunction{getGitFile, searchCode, fetchWebContent, getCIJobLog})
 	if err != nil {
 		return nil, err
 	}
