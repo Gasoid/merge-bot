@@ -319,7 +319,7 @@ func (g GitlabProvider) GetCIInfo(projectID int64) (*handlers.CIInfo, error) {
 
 func (g GitlabProvider) RetrieveJobLog(projectID, jobID int64) (*handlers.JobLog, error) {
 	if g.mr.HeadPipeline == nil {
-		return nil, errors.New("Headpipeline is nil")
+		return nil, errors.New("headpipeline is nil")
 	}
 
 	job, _, err := g.client.Jobs.GetJob(projectID, jobID)
@@ -328,7 +328,7 @@ func (g GitlabProvider) RetrieveJobLog(projectID, jobID int64) (*handlers.JobLog
 	}
 
 	if job.Pipeline.ID != g.mr.HeadPipeline.ID {
-		return nil, fmt.Errorf("Pipeline ID doesn't match with provided job %d", jobID)
+		return nil, fmt.Errorf("pipeline ID doesn't match with provided job %d", jobID)
 	}
 
 	reader, _, err := g.client.Jobs.GetTraceFile(projectID, jobID)
