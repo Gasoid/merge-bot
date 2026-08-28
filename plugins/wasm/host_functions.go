@@ -63,9 +63,17 @@ type searchCodeResult struct {
 	Results []handlers.Search `json:"results"`
 }
 
-type getCIFailedJobsResult struct {
+type getCIJobLogParams struct {
+	JobID int64 `json:"job_id"`
+}
+
+func (g getCIJobLogParams) isValid() bool {
+	return g.JobID > 0
+}
+
+type getCIJobLogResult struct {
 	baseResult
-	Jobs []handlers.JobLog `json:"jobs"`
+	Job *handlers.JobLog `json:"job"`
 }
 
 type fetchWebContentParams struct {
@@ -225,8 +233,8 @@ var (
 		[]extism.ValueType{extism.ValueTypePTR},
 	)
 
-	getCIFailedJobs = extism.NewHostFunctionWithStack(
-		"get_ci_failed_jobs",
+	getCIJobLog = extism.NewHostFunctionWithStack(
+		"get_ci_job_log",
 		func(ctx context.Context, p *extism.CurrentPlugin, stack []uint64) {
 			var (
 				command *handlers.Request
@@ -234,24 +242,42 @@ var (
 			)
 
 			if v := ctx.Value(commandCtxKey); v == nil {
-				returnError(p, stack, "getCIFailedJobs can't get command from context")
+				returnError(p, stack, "getCIJobLog can't get command from context")
 				return
 			} else {
 				if command, ok = v.(*handlers.Request); !ok {
-					returnError(p, stack, "getCIFailedJobs can't get command from context")
+					returnError(p, stack, "getCIJobLog can't get command from context")
 					return
 				}
 			}
 
-			logger.Debug("getCIFailedJobs called from plugin")
-
-			jobLogs, err := command.RetrieveLogsOfFailedJobs()
+			paramsBytes, err := p.ReadBytes(stack[0])
 			if err != nil {
-				returnError(p, stack, "getCIFailedJobs can't receive job logs", "error", err)
+				returnError(p, stack, "getCIJobLog can't read paramsBytes", "error", err)
 				return
 			}
 
-			returnData(p, stack, &getCIFailedJobsResult{Jobs: jobLogs})
+			params := getCIJobLogParams{}
+
+			if err := json.Unmarshal(paramsBytes, &params); err != nil {
+				returnError(p, stack, "getCIJobLog can't unmarshal params", "error", err)
+				return
+			}
+
+			if !params.isValid() {
+				returnError(p, stack, "params of getCIJobLog are invalid")
+				return
+			}
+
+			logger.Debug("getCIJobLog called from plugin")
+
+			jobLog, err := command.RetrieveJobLog(params.JobID)
+			if err != nil {
+				returnError(p, stack, "getCIJobLog can't receive job logs", "error", err)
+				return
+			}
+
+			returnData(p, stack, &getCIJobLogResult{Job: jobLog})
 		},
 		[]extism.ValueType{extism.ValueTypePTR},
 		[]extism.ValueType{extism.ValueTypePTR},

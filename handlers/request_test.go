@@ -124,7 +124,11 @@ func (p testProvider) SearchCode(projectID int64, branch, query string) []Search
 	return nil
 }
 
-func (p testProvider) RetrieveLogsOfFailedJobs(projectID int64) ([]JobLog, error) {
+func (p testProvider) RetrieveJobLog(projectID, jobID int64) (*JobLog, error) {
+	return nil, nil
+}
+
+func (p testProvider) GetCIInfo(projectID int64) (*CIInfo, error) {
 	return nil, nil
 }
 

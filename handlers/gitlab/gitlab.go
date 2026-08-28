@@ -44,6 +44,9 @@ const (
 	searchCodeSize    = 10
 	jobsPerPage       = 100
 	failedJobLogLines = 200
+	maxFailedTests    = 20
+	maxTestOutputSize = 512
+	maxFailedJobs     = 10
 )
 
 type GitlabProvider struct {
@@ -233,7 +236,7 @@ func (g *GitlabProvider) GetApprovals(projectID, mergeID int64) (map[string]stru
 	return approvals, nil
 }
 
-func (g *GitlabProvider) GetFailedPipelines() (int64, error) {
+func (g *GitlabProvider) getFailedPipelines() (int64, error) {
 	if g.mr.HeadPipeline != nil && g.mr.HeadPipeline.Status != string(gitlab.DeploymentStatusSuccess) {
 		return 1, nil
 	}
@@ -241,30 +244,110 @@ func (g *GitlabProvider) GetFailedPipelines() (int64, error) {
 	return 0, nil
 }
 
-func (g GitlabProvider) RetrieveLogsOfFailedJobs(projectID int64) ([]handlers.JobLog, error) {
+func (g GitlabProvider) GetCIInfo(projectID int64) (*handlers.CIInfo, error) {
 	if g.mr.HeadPipeline == nil {
 		return nil, nil
 	}
 
 	options := &gitlab.ListJobsOptions{Scope: &[]gitlab.BuildStateValue{gitlab.Failed}}
-	jobLogs := make([]handlers.JobLog, 0)
+	jobs := make([]handlers.JobRef, 0)
 
+	i := 0
 	for j := range g.listPipelineJobs(projectID, g.mr.HeadPipeline.ID, jobsPerPage, options) {
-		reader, _, err := g.client.Jobs.GetTraceFile(projectID, j.ID)
-		if err != nil {
-			logger.Error("GetTraceFile can't get logs", "err", err)
-			continue
+		if i >= maxFailedJobs {
+			break
 		}
 
-		data, err := readLastLines(reader, failedJobLogLines)
-		if err != nil {
-			logger.Error("readLastLines can't read logs", "err", err)
-			continue
-		}
-
-		jobLogs = append(jobLogs, handlers.JobLog{Name: j.Name, ID: j.ID, Log: data, Stage: j.Stage})
+		jobs = append(jobs, handlers.JobRef{Name: j.Name, ID: j.ID, Stage: j.Stage, AllowFailure: j.AllowFailure})
+		i++
 	}
-	return jobLogs, nil
+
+	ciInfo := handlers.CIInfo{
+		PipelineStatus: g.mr.HeadPipeline.Status,
+		FailedJobs:     jobs,
+	}
+
+	report, _, err := g.client.Pipelines.GetPipelineTestReport(projectID, g.mr.HeadPipeline.ID)
+	if err != nil {
+		logger.Info("GetPipelineTestReport returns err, but i am tolerating it", "error", err)
+		return &ciInfo, nil
+	}
+
+	tests := make([]handlers.TestRef, 0, maxFailedTests)
+	if report.FailedCount > 0 || report.ErrorCount > 0 {
+		i := 0
+		for _, s := range report.TestSuites {
+			if s.FailedCount == 0 && s.ErrorCount == 0 {
+				continue
+			}
+
+			for _, t := range s.TestCases {
+				if i >= maxFailedTests {
+					break
+				}
+
+				if t.Status != "failed" && t.Status != "error" {
+					continue
+				}
+
+				output := t.StackTrace
+
+				if output == "" && t.SystemOutput != nil {
+					output, _ = t.SystemOutput.(string)
+				}
+
+				if len(output) > maxTestOutputSize {
+					output = output[:maxTestOutputSize]
+				}
+
+				tests = append(tests, handlers.TestRef{
+					Suite:     s.Name,
+					Name:      t.Name,
+					Output:    output,
+					File:      t.File,
+					ClassName: t.Classname,
+				})
+				i++
+			}
+		}
+	}
+
+	ciInfo.FailedTests = tests
+
+	return &ciInfo, nil
+}
+
+func (g GitlabProvider) RetrieveJobLog(projectID, jobID int64) (*handlers.JobLog, error) {
+	if g.mr.HeadPipeline == nil {
+		return nil, errors.New("headpipeline is nil")
+	}
+
+	job, _, err := g.client.Jobs.GetJob(projectID, jobID)
+	if err != nil {
+		return nil, fmt.Errorf("GetJob can't get job: %w", err)
+	}
+
+	if job.Pipeline.ID != g.mr.HeadPipeline.ID {
+		return nil, fmt.Errorf("pipeline ID doesn't match with provided job %d", jobID)
+	}
+
+	reader, _, err := g.client.Jobs.GetTraceFile(projectID, jobID)
+	if err != nil {
+		return nil, fmt.Errorf("GetTraceFile can't get logs: %w", err)
+	}
+
+	data, err := readLastLines(reader, failedJobLogLines)
+	if err != nil {
+		return nil, fmt.Errorf("readLastLines can't read logs: %w", err)
+	}
+
+	jobLog := handlers.JobLog{
+		Log:   data,
+		Name:  job.Name,
+		ID:    job.ID,
+		Stage: job.Stage,
+	}
+	return &jobLog, nil
 }
 
 func readLastLines(r io.Reader, n int) ([]byte, error) {
@@ -388,14 +471,14 @@ func (g *GitlabProvider) GetMRInfo(projectID, mergeID int64, configPath string) 
 		return nil, err
 	}
 
-	info.FailedPipelines, err = g.GetFailedPipelines()
+	info.FailedPipelines, err = g.getFailedPipelines()
 	if err != nil {
 		logger.Debug("GetFailedPipelines returns error, but i am tolerating this issue", "error", err)
 		info.FailedPipelines = 1
 	}
 
 	if g.mr.HeadPipeline != nil {
-		report, _, err := g.client.Pipelines.GetPipelineTestReport(projectID, g.mr.HeadPipeline.IID)
+		report, _, err := g.client.Pipelines.GetPipelineTestReport(projectID, g.mr.HeadPipeline.ID)
 		if err != nil {
 			logger.Debug("GetPipelineTestReport returns error, but i am tolerating this issue", "error", err)
 			info.FailedTests = 1

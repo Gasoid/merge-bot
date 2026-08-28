@@ -18,16 +18,36 @@ const (
 
 type PluginCall func([]byte) ([]byte, error)
 
+type JobRef struct {
+	Name         string `json:"name"`
+	Stage        string `json:"stage"`
+	ID           int64  `json:"id"`
+	AllowFailure bool   `json:"allow_failure"`
+}
+
+type CIInfo struct {
+	PipelineStatus string    `json:"pipeline_status"`
+	FailedJobs     []JobRef  `json:"failed_jobs,omitempty"`
+	FailedTests    []TestRef `json:"failed_tests,omitempty"`
+}
+
+type TestRef struct {
+	Name      string `json:"name"`
+	Suite     string `json:"test_suite"`
+	Output    string `json:"output,omitempty"`
+	File      string `json:"file,omitempty"`
+	ClassName string `json:"classname,omitempty"`
+}
+
 type PluginInput struct {
 	Title        string            `json:"title"`
 	Description  string            `json:"description"`
 	Author       string            `json:"author"`
-	ProjectID    int64             `json:"project_id"`
 	Branch       string            `json:"branch"`
 	TargetBranch string            `json:"target_branch"`
-	ID           int64             `json:"mr_id"`
 	Diffs        []byte            `json:"diffs"`
 	Vars         map[string]string `json:"vars"`
+	CIInfo       *CIInfo           `json:"ci_info,omitempty"`
 }
 
 type Thread struct {
@@ -86,16 +106,20 @@ func (r Request) RunWithContext(call PluginCall, vars map[string][]string) error
 		}
 	}
 
+	ciInfo, err := r.GetCIInfo()
+	if err != nil {
+		logger.Info("GetCIInfo returned error", "error", err)
+	}
+
 	input := PluginInput{
 		Title:        r.info.Title,
 		Description:  r.info.Description,
 		Author:       r.info.Author,
 		Diffs:        rawDiffs,
 		Vars:         pluginVars,
-		ProjectID:    r.info.ProjectID,
-		ID:           r.info.ID,
 		Branch:       r.info.SourceBranch,
 		TargetBranch: r.info.TargetBranch,
+		CIInfo:       ciInfo,
 	}
 
 	data, err := json.Marshal(input)
