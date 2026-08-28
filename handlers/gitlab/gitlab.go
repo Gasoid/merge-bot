@@ -236,7 +236,7 @@ func (g *GitlabProvider) GetApprovals(projectID, mergeID int64) (map[string]stru
 	return approvals, nil
 }
 
-func (g *GitlabProvider) GetFailedPipelines() (int64, error) {
+func (g *GitlabProvider) getFailedPipelines() (int64, error) {
 	if g.mr.HeadPipeline != nil && g.mr.HeadPipeline.Status != string(gitlab.DeploymentStatusSuccess) {
 		return 1, nil
 	}
@@ -471,7 +471,7 @@ func (g *GitlabProvider) GetMRInfo(projectID, mergeID int64, configPath string) 
 		return nil, err
 	}
 
-	info.FailedPipelines, err = g.GetFailedPipelines()
+	info.FailedPipelines, err = g.getFailedPipelines()
 	if err != nil {
 		logger.Debug("GetFailedPipelines returns error, but i am tolerating this issue", "error", err)
 		info.FailedPipelines = 1
