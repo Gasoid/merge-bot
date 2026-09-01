@@ -80,3 +80,13 @@ func (g GitlabProvider) listPipelineJobs(projectID, pipelineID, size int64, opti
 		return g.client.Jobs.ListPipelineJobs(projectID, pipelineID, options)
 	}, size)
 }
+
+func (g GitlabProvider) listMergeRequestDiffs(projectID, mergeID, size int64, options *gitlab.ListMergeRequestDiffsOptions) iter.Seq[*gitlab.MergeRequestDiff] {
+	return paginate(func(page, perPage int64) ([]*gitlab.MergeRequestDiff, *gitlab.Response, error) {
+		if options == nil {
+			options = &gitlab.ListMergeRequestDiffsOptions{}
+		}
+		options.ListOptions = gitlab.ListOptions{Page: page, PerPage: perPage}
+		return g.client.MergeRequests.ListMergeRequestDiffs(projectID, mergeID, options)
+	}, size)
+}

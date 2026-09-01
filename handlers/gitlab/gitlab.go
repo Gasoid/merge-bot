@@ -681,7 +681,11 @@ func (g GitlabProvider) GetRawDiffs(projectID, mergeID int64) ([]byte, error) {
 
 func (g GitlabProvider) Approve(projectID, mergeID int64, commitID string) error {
 	logger.Debug("Approve mr", "commit", commitID)
-	_, _, err := g.client.MergeRequestApprovals.ApproveMergeRequest(projectID, mergeID, &gitlab.ApproveMergeRequestOptions{SHA: new(commitID)})
+	_, resp, err := g.client.MergeRequestApprovals.ApproveMergeRequest(projectID, mergeID, &gitlab.ApproveMergeRequestOptions{SHA: new(commitID)})
+	if resp.StatusCode == http.StatusUnauthorized {
+		return nil
+	}
+
 	return err
 }
 
@@ -698,13 +702,10 @@ func (g GitlabProvider) GetChangedFiles(projectID, mergeID int64) ([]string, err
 }
 
 func (g GitlabProvider) getChangedFiles(projectID, mergeID int64) ([]string, error) {
-	result, _, err := g.client.MergeRequests.ListMergeRequestDiffs(projectID, mergeID, &gitlab.ListMergeRequestDiffsOptions{})
-	if err != nil {
-		return nil, err
-	}
+	const batch int64 = 100
+	changedFiles := make([]string, 0, batch)
 
-	changedFiles := make([]string, 0, len(result))
-	for _, l := range result {
+	for l := range g.listMergeRequestDiffs(projectID, mergeID, batch, nil) {
 		if l.NewPath == l.OldPath {
 			changedFiles = append(changedFiles, l.NewPath)
 			continue
