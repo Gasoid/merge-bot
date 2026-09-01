@@ -141,7 +141,7 @@ func handle(onEvent string, funcHandlers ...func(*handlers.Request, string) erro
 	defer handlerMu.Unlock()
 
 	if _, ok := handlerFuncs[onEvent]; ok && strings.HasPrefix(onEvent, "!") {
-		logger.Info("onEvent has been already registered", "onEvent", onEvent)
+		logger.Info("command has been already registered", "command", onEvent)
 		return
 	}
 
