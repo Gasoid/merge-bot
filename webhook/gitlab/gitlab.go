@@ -114,6 +114,10 @@ func (g *GitlabProvider) IsReviewersChanged() bool {
 }
 
 func (g *GitlabProvider) GetCurrentReviewers() []int64 {
+	if g.mrEvent == nil {
+		return nil
+	}
+
 	reviewers := make([]int64, 0, len(g.mrEvent.Changes.Reviewers.Current))
 	for _, r := range g.mrEvent.Changes.Reviewers.Current {
 		reviewers = append(reviewers, r.ID)
@@ -122,6 +126,10 @@ func (g *GitlabProvider) GetCurrentReviewers() []int64 {
 }
 
 func (g *GitlabProvider) GetPreviousReviewers() []int64 {
+	if g.mrEvent == nil {
+		return nil
+	}
+
 	reviewers := make([]int64, 0, len(g.mrEvent.Changes.Reviewers.Previous))
 	for _, r := range g.mrEvent.Changes.Reviewers.Previous {
 		reviewers = append(reviewers, r.ID)
