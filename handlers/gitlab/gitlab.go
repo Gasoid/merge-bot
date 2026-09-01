@@ -680,6 +680,7 @@ func (g GitlabProvider) GetRawDiffs(projectID, mergeID int64) ([]byte, error) {
 }
 
 func (g GitlabProvider) Approve(projectID, mergeID int64, commitID string) error {
+	logger.Debug("Approve mr", "commit", commitID)
 	_, _, err := g.client.MergeRequestApprovals.ApproveMergeRequest(projectID, mergeID, &gitlab.ApproveMergeRequestOptions{SHA: new(commitID)})
 	return err
 }
