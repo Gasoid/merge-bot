@@ -152,6 +152,18 @@ func (p testProvider) GetContributors(projectID, mergeID int64) ([]Candidate, er
 	return nil, p.err
 }
 
+func (p testProvider) GetUserID() int64 {
+	return 0
+}
+
+func (p testProvider) GetUserName() string {
+	return "gitlab-user"
+}
+
+func (p testProvider) Approve(projectID, mergeID int64, commitID string) error {
+	return nil
+}
+
 func Test_Merge(t *testing.T) {
 	type args struct {
 		pr *Request

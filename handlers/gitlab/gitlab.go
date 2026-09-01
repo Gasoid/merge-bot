@@ -50,9 +50,10 @@ const (
 )
 
 type GitlabProvider struct {
-	client        *gitlab.Client
-	mr            *gitlab.MergeRequest
-	currentUserID int64
+	client          *gitlab.Client
+	mr              *gitlab.MergeRequest
+	currentUserID   int64
+	currentUserName string
 }
 
 func (g GitlabProvider) loadMR(projectID, mergeID int64) (*gitlab.MergeRequest, error) {
@@ -676,6 +677,23 @@ func (g GitlabProvider) GetRawDiffs(projectID, mergeID int64) ([]byte, error) {
 	}
 
 	return result, nil
+}
+
+func (g GitlabProvider) Approve(projectID, mergeID int64, commitID string) error {
+	_, _, err := g.client.MergeRequestApprovals.ApproveMergeRequest(projectID, mergeID, &gitlab.ApproveMergeRequestOptions{SHA: new(commitID)})
+	return err
+}
+
+func (g GitlabProvider) GetUserID() int64 {
+	return g.currentUserID
+}
+
+func (g GitlabProvider) GetUserName() string {
+	return g.currentUserName
+}
+
+func (g GitlabProvider) GetChangedFiles(projectID, mergeID int64) ([]string, error) {
+	return g.getChangedFiles(projectID, mergeID)
 }
 
 func (g GitlabProvider) getChangedFiles(projectID, mergeID int64) ([]string, error) {

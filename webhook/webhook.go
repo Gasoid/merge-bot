@@ -10,7 +10,6 @@ const (
 	OnNewMR     = "\anewMREvent"
 	OnMerge     = "\amergeEvent"
 	OnUpdate    = "\aupdateEvent"
-	OnCommit    = "\acommitEvent"
 	spaceSymbol = " "
 )
 
@@ -44,6 +43,9 @@ type Provider interface {
 	ParseRequest(request *http.Request) error
 	GetSecret() string
 	GetNoteID() int64
+	GetCurrentReviewers() []int64
+	GetPreviousReviewers() []int64
+	GetCommitID() string
 }
 
 type Webhook struct {
@@ -92,6 +94,22 @@ func (w *Webhook) ParseRequest(request *http.Request) error {
 	}
 
 	return nil
+}
+
+func (w *Webhook) IsReviewersChanged() bool {
+	return len(w.provider.GetCurrentReviewers()) > 0 || len(w.provider.GetPreviousReviewers()) > 0
+}
+
+func (w *Webhook) GetCurrentReviewers() []int64 {
+	return w.provider.GetCurrentReviewers()
+}
+
+func (w *Webhook) GetPreviousReviewers() []int64 {
+	return w.provider.GetPreviousReviewers()
+}
+
+func (w *Webhook) GetCommitID() string {
+	return w.provider.GetCommitID()
 }
 
 func New(providerName string) (*Webhook, error) {

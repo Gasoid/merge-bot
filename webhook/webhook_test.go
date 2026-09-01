@@ -49,6 +49,18 @@ func (p *testProvider) GetSecret() string {
 	return p.secret
 }
 
+func (p *testProvider) GetPreviousReviewers() []int64 {
+	return nil
+}
+
+func (p *testProvider) GetCurrentReviewers() []int64 {
+	return nil
+}
+
+func (p *testProvider) GetCommitID() string {
+	return ""
+}
+
 func newTestProvider() Provider {
 	// if p.err != nil {
 	// 	return nil

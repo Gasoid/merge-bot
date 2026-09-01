@@ -155,6 +155,10 @@ greetings:
 
 auto_master_merge: false  # Auto-update branch from target branch
 
+auto_approve:
+  enabled: false  # Automatically approve MRs
+  patterns: []  # List of wildcard patterns to match MR files for auto-approval
+
 review_roulette:
   enabled: false  # Randomly assign reviewers
   use_codeowners: true
@@ -197,6 +201,12 @@ greetings:
     Use `!check` to validate and `!merge` when ready!
 
 auto_master_merge: true
+
+auto_approve:
+  enabled: true
+  patterns:
+    - "docs/**"
+    - "README.md"
 
 review_roulette:
   enabled: true 
