@@ -13,6 +13,7 @@ import (
 	"github.com/gasoid/merge-bot/v3/logger"
 	"github.com/gasoid/merge-bot/v3/metrics"
 
+	"github.com/gobwas/glob"
 	"gopkg.in/yaml.v3"
 )
 
@@ -31,10 +32,18 @@ var (
 	botNicks         = []string{"bot", "jira", "gitlab", "github"}
 )
 
+type Changes struct {
+	ReviewersChanged  bool
+	CurrentReviewers  []int64
+	PreviousReviewers []int64
+	CommitID          string
+}
+
 type Request struct {
 	provider RequestProvider
 	info     *MrInfo
 	config   *Config
+	Changes  Changes
 }
 
 func (r *Request) LoadInfoAndConfig(projectId, id int64) error {
@@ -108,6 +117,10 @@ func (r *Request) ParseConfig(content string) (*Config, error) {
 			UseCodeowners:    true,
 			ReviewerNumber:   2,
 			ExcludeUsernames: []string{},
+		},
+		AutoApprove: AutoApprove{
+			Enabled:  false,
+			Patterns: []string{},
 		},
 		StaleBranchesDeletion: struct {
 			Enabled         bool     `yaml:"enabled"`
@@ -480,4 +493,47 @@ func (r Request) RetrieveJobLog(jobID int64) (*JobLog, error) {
 
 func (r Request) GetCIInfo() (*CIInfo, error) {
 	return r.provider.GetCIInfo(r.info.ProjectID)
+}
+
+func (r Request) AutoApprove() error {
+	if !r.config.AutoApprove.Enabled {
+		return nil
+	}
+
+	if !slices.Contains(r.Changes.CurrentReviewers, r.provider.GetUserID()) {
+		return nil
+	}
+
+	if _, ok := r.info.Approvals[r.provider.GetUserName()]; ok {
+		return nil
+	}
+
+	changedFiles, err := r.provider.GetChangedFiles(r.info.ProjectID, r.info.ID)
+	if err != nil {
+		return err
+	}
+
+	if len(changedFiles) == 0 || r.Changes.CommitID == "" {
+		return nil
+	}
+
+	for _, p := range r.config.AutoApprove.Patterns {
+		g := glob.MustCompile(p)
+
+		for i := 0; i < len(changedFiles); i++ {
+			f := changedFiles[0]
+			changedFiles = changedFiles[1:]
+
+			if !g.Match(f) {
+				changedFiles = append(changedFiles, f)
+			}
+		}
+
+	}
+
+	if len(changedFiles) > 0 {
+		return nil
+	}
+
+	return r.provider.Approve(r.info.ProjectID, r.info.ID, r.Changes.CommitID)
 }

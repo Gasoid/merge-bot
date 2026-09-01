@@ -47,6 +47,18 @@ func (p *integrationTestProvider) ParseRequest(request *http.Request) error {
 	return nil
 }
 
+func (p *integrationTestProvider) GetPreviousReviewers() []int64 {
+	return nil
+}
+
+func (p *integrationTestProvider) GetCurrentReviewers() []int64 {
+	return nil
+}
+
+func (p *integrationTestProvider) GetCommitID() string {
+	return ""
+}
+
 func newIntegrationTestProvider() webhook.Provider {
 	return &integrationTestProvider{
 		projectID: 123,
@@ -63,7 +75,7 @@ func TestIntegrationWebhookFlow(t *testing.T) {
 
 	// Save original handlers
 	handlerMu.Lock()
-	originalHandlers := make(map[string]func(*handlers.Request, string) error)
+	originalHandlers := make(map[string][]EventHandler)
 	for k, v := range handlerFuncs {
 		originalHandlers[k] = v
 	}

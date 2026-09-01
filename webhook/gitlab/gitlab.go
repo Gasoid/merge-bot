@@ -30,6 +30,8 @@ type GitlabProvider struct {
 	projectId int64
 	id        int64
 	secret    string
+	mrEvent   *gitlab.MergeEvent
+	commit    string
 }
 
 func New() webhook.Provider {
@@ -78,14 +80,11 @@ func (g *GitlabProvider) ParseRequest(request *http.Request) error {
 	if mr, ok = event.(*gitlab.MergeEvent); ok {
 		g.projectId = mr.Project.ID
 		g.id = mr.ObjectAttributes.IID
-
-		if mr.ObjectAttributes.OldRev != "" {
-			g.action = pushAction
-		} else {
-			g.action = mr.ObjectAttributes.Action
-		}
-
 		g.updatedAt = mr.ObjectAttributes.UpdatedAt
+		g.action = mr.ObjectAttributes.Action
+		g.mrEvent = mr
+		g.commit = mr.ObjectAttributes.LastCommit.ID
+		return nil
 	}
 
 	return nil
@@ -101,8 +100,6 @@ func (g *GitlabProvider) GetCmd() string {
 		return webhook.OnNewMR
 	case updateAction:
 		return webhook.OnUpdate
-	case pushAction:
-		return webhook.OnCommit
 	}
 
 	logger.Debug("getCmd", "note", g.note)
@@ -110,6 +107,39 @@ func (g *GitlabProvider) GetCmd() string {
 		return g.note
 	}
 	return ""
+}
+
+func (g *GitlabProvider) IsReviewersChanged() bool {
+	return g.mrEvent != nil && (len(g.mrEvent.Changes.Reviewers.Current) > 0 || len(g.mrEvent.Changes.Reviewers.Previous) > 0)
+}
+
+func (g *GitlabProvider) GetCurrentReviewers() []int64 {
+	if g.mrEvent == nil {
+		return nil
+	}
+
+	reviewers := make([]int64, 0, len(g.mrEvent.Changes.Reviewers.Current))
+	for _, r := range g.mrEvent.Changes.Reviewers.Current {
+		reviewers = append(reviewers, r.ID)
+	}
+	return reviewers
+}
+
+func (g *GitlabProvider) GetPreviousReviewers() []int64 {
+	if g.mrEvent == nil {
+		return nil
+	}
+
+	reviewers := make([]int64, 0, len(g.mrEvent.Changes.Reviewers.Previous))
+	for _, r := range g.mrEvent.Changes.Reviewers.Previous {
+		reviewers = append(reviewers, r.ID)
+	}
+
+	return reviewers
+}
+
+func (g *GitlabProvider) GetCommitID() string {
+	return g.commit
 }
 
 func (g *GitlabProvider) GetID() int64 {

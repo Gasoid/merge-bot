@@ -19,10 +19,9 @@ func init() {
 	handle("!update", UpdateBranchCmd)
 	handle("!rerun", RerunPipelineCmd)
 	handle("!spin", ReviewRouletteCmd)
-	handle(webhook.OnNewMR, NewMREvent)
-	handle(webhook.OnMerge, MergeEvent)
-	handle(webhook.OnUpdate, UpdateEvent)
-	handle(webhook.OnCommit, PushEvent)
+	handle(webhook.OnNewMR, AssignReviewers, Greetings, AutoApprove)
+	handle(webhook.OnMerge, AutoUpdateBranches)
+	handle(webhook.OnUpdate, CheckDiscussion, AutoApprove)
 }
 
 const success = "You can merge, LGTM :D"
@@ -129,11 +128,14 @@ func ReviewRouletteCmd(command *handlers.Request, args string) error {
 	return nil
 }
 
-func NewMREvent(command *handlers.Request, args string) error {
+func Greetings(command *handlers.Request, args string) error {
 	if err := command.Greetings(); err != nil {
 		return fmt.Errorf("command.Greetings returns err: %w", err)
 	}
+	return nil
+}
 
+func AssignReviewers(command *handlers.Request, args string) error {
 	if err := command.AutoAssignReviewers(); err != nil {
 		if errors.Is(err, handlers.ReviewersAssignedError) {
 			return nil
@@ -145,7 +147,7 @@ func NewMREvent(command *handlers.Request, args string) error {
 	return nil
 }
 
-func MergeEvent(command *handlers.Request, args string) error {
+func AutoUpdateBranches(command *handlers.Request, args string) error {
 	if err := command.UpdateBranches(); err != nil {
 		return fmt.Errorf("command.UpdateBranchesWithLabel returns err: %w", err)
 	}
@@ -153,7 +155,7 @@ func MergeEvent(command *handlers.Request, args string) error {
 	return nil
 }
 
-func UpdateEvent(command *handlers.Request, args string) error {
+func CheckDiscussion(command *handlers.Request, args string) error {
 	ok, _, err := command.IsValid()
 	if err != nil {
 		return fmt.Errorf("command.IsValid returns err: %w", err)
@@ -172,8 +174,12 @@ func UpdateEvent(command *handlers.Request, args string) error {
 	return nil
 }
 
-func PushEvent(command *handlers.Request, args string) error {
-	return nil
+func AutoApprove(command *handlers.Request, args string) error {
+	if !command.Changes.ReviewersChanged {
+		return nil
+	}
+
+	return command.AutoApprove()
 }
 
 func RerunPipelineCmd(command *handlers.Request, args string) error {

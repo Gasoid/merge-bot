@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 	"path"
+	"strings"
 	"sync"
 
 	"github.com/gasoid/merge-bot/v3/config"
@@ -61,8 +62,10 @@ func start() {
 	e.Logger.Fatal(e.Start(":8080"))
 }
 
+type EventHandler func(*handlers.Request, string) error
+
 var (
-	handlerFuncs = map[string]func(*handlers.Request, string) error{}
+	handlerFuncs = map[string][]EventHandler{}
 	handlerMu    sync.RWMutex
 )
 
@@ -87,12 +90,19 @@ func Handler(c echo.Context) error {
 	handlerMu.RLock()
 	defer handlerMu.RUnlock()
 
-	if f, ok := handlerFuncs[hook.Event]; ok {
+	if fList, ok := handlerFuncs[hook.Event]; ok {
 		go func() {
 			command, err := handlers.New(providerName)
 			if err != nil {
 				logger.Error("can't initialize provider", "provider", providerName, "event", hook.Event, "err", err)
 				return
+			}
+
+			command.Changes = handlers.Changes{
+				ReviewersChanged:  hook.IsReviewersChanged(),
+				CurrentReviewers:  hook.GetCurrentReviewers(),
+				PreviousReviewers: hook.GetPreviousReviewers(),
+				CommitID:          hook.GetCommitID(),
 			}
 
 			if err := command.LoadInfoAndConfig(hook.GetProjectID(), hook.GetID()); err != nil {
@@ -113,33 +123,39 @@ func Handler(c echo.Context) error {
 				}
 			}
 
-			if err := f(command, hook.Args); err != nil {
-				logger.Error("handlerFunc returns err", "provider", providerName, "event", hook.Event, "err", err)
-				return
+			for _, f := range fList {
+				if err := f(command, hook.Args); err != nil {
+					logger.Error("handlerFunc returns err", "provider", providerName, "event", hook.Event, "err", err)
+					return
+				}
 			}
+
 		}()
 	}
 
 	return nil
 }
 
-func handle(onEvent string, funcHandler func(*handlers.Request, string) error) {
+func handle(onEvent string, funcHandlers ...func(*handlers.Request, string) error) {
 	handlerMu.Lock()
 	defer handlerMu.Unlock()
 
-	if _, ok := handlerFuncs[onEvent]; ok {
-		logger.Info("onEvent has been already registered", "onEvent", onEvent)
+	if _, ok := handlerFuncs[onEvent]; ok && strings.HasPrefix(onEvent, "!") {
+		logger.Info("command has been already registered", "command", onEvent)
 		return
 	}
 
-	handlerFuncs[onEvent] = func(command *handlers.Request, args string) error {
+	for _, funcHandler := range funcHandlers {
+		h := func(command *handlers.Request, args string) error {
+			return metrics.Handler(
+				onEvent,
+				func() error {
+					return funcHandler(command, args)
+				},
+			)
+		}
 
-		return metrics.Handler(
-			onEvent,
-			func() error {
-				return funcHandler(command, args)
-			},
-		)
+		handlerFuncs[onEvent] = append(handlerFuncs[onEvent], h)
 	}
 }
 

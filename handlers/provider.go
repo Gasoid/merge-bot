@@ -158,6 +158,8 @@ type MergeRequest interface {
 	AssignLabel(projectID, mergeID int64, name, color string) error
 	GetRawDiffs(projectID, mergeID int64) ([]byte, error)
 	AssignReviewers(projectID, mergeID int64, users []string) error
+	GetChangedFiles(projectID, mergeID int64) ([]string, error)
+	Approve(projectID, mergeID int64, commitID string) error
 }
 
 type Project interface {
@@ -170,6 +172,8 @@ type Project interface {
 	SearchCode(projectID int64, branch, query string) []Search
 	RetrieveJobLog(projectID, jobID int64) (*JobLog, error)
 	GetCIInfo(projectID int64) (*CIInfo, error)
+	GetUserID() int64
+	GetUserName() string
 }
 
 type RequestProvider interface {
@@ -197,6 +201,11 @@ type AssignReviewers struct {
 	ExcludeUsernames []string `yaml:"exclude_usernames"`
 }
 
+type AutoApprove struct {
+	Enabled  bool     `yaml:"enabled"`
+	Patterns []string `yaml:"patterns"`
+}
+
 type Config struct {
 	Rules Rules `yaml:"rules"`
 
@@ -208,6 +217,7 @@ type Config struct {
 
 	AutoMasterMerge bool            `yaml:"auto_master_merge"`
 	AssignReviewers AssignReviewers `yaml:"review_roulette"`
+	AutoApprove     AutoApprove     `yaml:"auto_approve"`
 
 	StaleBranchesDeletion struct {
 		Enabled         bool     `yaml:"enabled"`

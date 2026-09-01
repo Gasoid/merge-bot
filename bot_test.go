@@ -60,6 +60,18 @@ func (p *testWebhookProvider) ParseRequest(request *http.Request) error {
 	return p.err
 }
 
+func (p *testWebhookProvider) GetPreviousReviewers() []int64 {
+	return nil
+}
+
+func (p *testWebhookProvider) GetCurrentReviewers() []int64 {
+	return nil
+}
+
+func (p *testWebhookProvider) GetCommitID() string {
+	return ""
+}
+
 func newTestProvider() webhook.Provider {
 	return &testWebhookProvider{
 		id:        456,
