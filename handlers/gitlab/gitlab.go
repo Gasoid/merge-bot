@@ -254,7 +254,12 @@ func (g GitlabProvider) GetCIInfo(projectID int64) (*handlers.CIInfo, error) {
 	jobs := make([]handlers.JobRef, 0)
 
 	i := 0
-	for j := range g.listPipelineJobs(projectID, g.mr.HeadPipeline.ID, jobsPerPage, options) {
+	for j, err := range g.listPipelineJobs(projectID, g.mr.HeadPipeline.ID, jobsPerPage, options) {
+		if err != nil {
+			logger.Error("listPipelineJobs", "err", err)
+			continue
+		}
+
 		if i >= maxFailedJobs {
 			break
 		}
@@ -420,7 +425,12 @@ func (g GitlabProvider) getFile(projectID int64, branch, path string) ([]byte, e
 
 func (g GitlabProvider) SearchCode(projectID int64, branch, query string) []handlers.Search {
 	result := []handlers.Search{}
-	for blob := range g.listSearch(projectID, searchCodeSize, query, branch) {
+	for blob, err := range g.listSearch(projectID, searchCodeSize, query, branch) {
+		if err != nil {
+			logger.Error("listSearch", "err", err)
+			continue
+		}
+
 		result = append(result, handlers.Search{Path: blob.Path, Line: blob.Startline})
 		// searchCode results is limited, because it can consume a lot of memory
 		if len(result) >= maxSearch {
@@ -508,7 +518,12 @@ func (g GitlabProvider) GetVar(projectID int64, varName string) (string, error) 
 func (g GitlabProvider) ListBranches(projectID, size int64, protected bool) iter.Seq[handlers.StaleBranch] {
 
 	return func(yield func(handlers.StaleBranch) bool) {
-		for b := range g.listBranches(projectID, size) {
+		for b, err := range g.listBranches(projectID, size) {
+			if err != nil {
+				logger.Error("listBranches", "err", err)
+				continue
+			}
+
 			if b.Default {
 				continue
 			}
@@ -546,15 +561,17 @@ func (g *GitlabProvider) DeleteBranch(projectID int64, name string) error {
 }
 
 func (g GitlabProvider) ListMergeRequests(projectID, size int64, protected bool) iter.Seq[handlers.MR] {
-	listMr := g.listMergeRequests(projectID, size,
-		&gitlab.ListProjectMergeRequestsOptions{
-			State:   new("opened"),
-			OrderBy: new("updated_at"),
-			Sort:    new("asc"),
-		})
-
 	return func(yield func(handlers.MR) bool) {
-		for mr := range listMr {
+		for mr, err := range g.listMergeRequests(projectID, size,
+			&gitlab.ListProjectMergeRequestsOptions{
+				State:   new("opened"),
+				OrderBy: new("updated_at"),
+				Sort:    new("asc"),
+			}) {
+			if err != nil {
+				logger.Error("listMergeRequests fails", "err", err)
+				continue
+			}
 			b, _, err := g.client.Branches.GetBranch(projectID, mr.SourceBranch)
 			if err != nil {
 				logger.Error("GetBranch fails", "err", err)
@@ -705,7 +722,11 @@ func (g GitlabProvider) getChangedFiles(projectID, mergeID int64) ([]string, err
 	const batch int64 = 100
 	changedFiles := make([]string, 0, batch)
 
-	for l := range g.listMergeRequestDiffs(projectID, mergeID, batch, nil) {
+	for l, err := range g.listMergeRequestDiffs(projectID, mergeID, batch, nil) {
+		if err != nil {
+			return nil, err
+		}
+
 		if l.NewPath == l.OldPath {
 			changedFiles = append(changedFiles, l.NewPath)
 			continue
@@ -803,9 +824,13 @@ func (g GitlabProvider) GetContributors(projectID, mergeID int64) ([]handlers.Ca
 		now := time.Now()
 		months3back := now.Add(-1 * time.Hour * 24 * 30 * 3)
 
-		for mr := range g.listMergeRequests(projectID, batch, &gitlab.ListProjectMergeRequestsOptions{
+		for mr, err := range g.listMergeRequests(projectID, batch, &gitlab.ListProjectMergeRequestsOptions{
 			UpdatedAfter: &months3back,
 		}) {
+			if err != nil {
+				logger.Error("listMergeRequests can't retrieve merge requests", "error", err)
+				break
+			}
 			userIDs = append(userIDs, mr.Author.ID)
 			// for _, r := range mr.Reviewers {
 			// 	counts[r.Username]++
@@ -835,9 +860,14 @@ func (g GitlabProvider) GetContributors(projectID, mergeID int64) ([]handlers.Ca
 		return nil, err
 	}
 
-	for m := range g.listAllProjectMembers(projectID, batch, &gitlab.ListProjectMembersOptions{
+	for m, err := range g.listAllProjectMembers(projectID, batch, &gitlab.ListProjectMembersOptions{
 		UserIDs: &userIDs,
 	}) {
+
+		if err != nil {
+			logger.Error("listAllProjectMembers", "err", err)
+			continue
+		}
 
 		_, isCodeOwner := codeowners[m.Username]
 
