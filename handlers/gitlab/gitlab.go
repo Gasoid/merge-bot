@@ -682,7 +682,7 @@ func (g GitlabProvider) GetRawDiffs(projectID, mergeID int64) ([]byte, error) {
 func (g GitlabProvider) Approve(projectID, mergeID int64, commitID string) error {
 	logger.Debug("Approve mr", "commit", commitID)
 	_, resp, err := g.client.MergeRequestApprovals.ApproveMergeRequest(projectID, mergeID, &gitlab.ApproveMergeRequestOptions{SHA: new(commitID)})
-	if resp.StatusCode == http.StatusUnauthorized {
+	if resp != nil && resp.StatusCode == http.StatusUnauthorized {
 		return nil
 	}
 
@@ -981,6 +981,7 @@ func New() handlers.RequestProvider {
 	}
 
 	p.currentUserID = user.ID
+	p.currentUserName = user.Username
 	return &p
 }
 
