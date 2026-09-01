@@ -19,9 +19,9 @@ func init() {
 	handle("!update", UpdateBranchCmd)
 	handle("!rerun", RerunPipelineCmd)
 	handle("!spin", ReviewRouletteCmd)
-	handle(webhook.OnNewMR, AssignReviewers, Greetings)
+	handle(webhook.OnNewMR, AssignReviewers, Greetings, AutoApprove)
 	handle(webhook.OnMerge, AutoUpdateBranches)
-	handle(webhook.OnUpdate, CheckDiscussion)
+	handle(webhook.OnUpdate, CheckDiscussion, AutoApprove)
 }
 
 const success = "You can merge, LGTM :D"
