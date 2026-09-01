@@ -561,17 +561,19 @@ func (g *GitlabProvider) DeleteBranch(projectID int64, name string) error {
 }
 
 func (g GitlabProvider) ListMergeRequests(projectID, size int64, protected bool) iter.Seq[handlers.MR] {
+	opt := &gitlab.ListProjectMergeRequestsOptions{
+		State:   new("opened"),
+		OrderBy: new("updated_at"),
+		Sort:    new("asc"),
+	}
+
 	return func(yield func(handlers.MR) bool) {
-		for mr, err := range g.listMergeRequests(projectID, size,
-			&gitlab.ListProjectMergeRequestsOptions{
-				State:   new("opened"),
-				OrderBy: new("updated_at"),
-				Sort:    new("asc"),
-			}) {
+		for mr, err := range g.listMergeRequests(projectID, size, opt) {
 			if err != nil {
 				logger.Error("listMergeRequests fails", "err", err)
 				continue
 			}
+
 			b, _, err := g.client.Branches.GetBranch(projectID, mr.SourceBranch)
 			if err != nil {
 				logger.Error("GetBranch fails", "err", err)
