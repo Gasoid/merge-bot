@@ -9,6 +9,12 @@ import (
 func loadPlugins() {
 	for plugin := range plugins.Load() {
 		logger.Info("plugin loaded", "plugin name", plugin.Name)
-		handle(plugin.Command, plugin.Handler)
+		if plugin.Command != "" {
+			handle(plugin.Command, plugin.Handler)
+		}
+
+		for _, e := range plugin.Events {
+			handle(e, plugin.Handler)
+		}
 	}
 }
