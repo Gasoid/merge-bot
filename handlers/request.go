@@ -509,6 +509,10 @@ func (r Request) AutoApprove() error {
 		return err
 	}
 
+	if len(changedFiles) == 0 || r.Changes.CommitID == "" {
+		return nil
+	}
+
 	for _, p := range r.config.AutoApprove.Patterns {
 		g := glob.MustCompile(p)
 
