@@ -504,6 +504,10 @@ func (r Request) AutoApprove() error {
 		return nil
 	}
 
+	if _, ok := r.info.Approvals[r.provider.GetUserName()]; ok {
+		return nil
+	}
+
 	changedFiles, err := r.provider.GetChangedFiles(r.info.ProjectID, r.info.ID)
 	if err != nil {
 		return err
