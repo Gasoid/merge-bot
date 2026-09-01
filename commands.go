@@ -179,8 +179,7 @@ func AutoApprove(command *handlers.Request, args string) error {
 		return nil
 	}
 
-	//command.
-	return nil
+	return command.AutoApprove()
 }
 
 func RerunPipelineCmd(command *handlers.Request, args string) error {
