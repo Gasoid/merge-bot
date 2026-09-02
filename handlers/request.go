@@ -518,17 +518,15 @@ func (r Request) AutoApprove() error {
 	}
 
 	for _, p := range r.config.AutoApprove.Patterns {
-		g := glob.MustCompile(p)
-
-		for i := 0; i < len(changedFiles); i++ {
-			f := changedFiles[0]
-			changedFiles = changedFiles[1:]
-
-			if !g.Match(f) {
-				changedFiles = append(changedFiles, f)
-			}
+		g, err := glob.Compile(p)
+		if err != nil {
+			logger.Info("pattern is malformed", "err", err, "pattern", p)
+			continue
 		}
 
+		for i := 0; i < len(changedFiles); i++ {
+			changedFiles = slices.DeleteFunc(changedFiles, g.Match)
+		}
 	}
 
 	if len(changedFiles) > 0 {

@@ -90,6 +90,10 @@ func Handler(c echo.Context) error {
 	handlerMu.RLock()
 	defer handlerMu.RUnlock()
 
+	if len(hook.Event) == 0 {
+		return nil
+	}
+
 	if fList, ok := handlerFuncs[hook.Event]; ok {
 		go func() {
 			command, err := handlers.New(providerName)
