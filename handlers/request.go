@@ -524,9 +524,7 @@ func (r Request) AutoApprove() error {
 			continue
 		}
 
-		for i := 0; i < len(changedFiles); i++ {
-			changedFiles = slices.DeleteFunc(changedFiles, g.Match)
-		}
+		changedFiles = slices.DeleteFunc(changedFiles, g.Match)
 	}
 
 	if len(changedFiles) > 0 {
