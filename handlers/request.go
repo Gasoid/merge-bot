@@ -110,7 +110,7 @@ func (r *Request) ParseConfig(content string) (*Config, error) {
 		}{
 			Enabled:    false,
 			Resolvable: false,
-			Template:   "Requirements:\n - Min approvals: {{ .MinApprovals }}\n - Title regex: {{ .TitleRegex }}\n\nOnce you're done, send **!merge** command and I will merge it!",
+			Template:   "## 🤖 MergeBot commands\n\n  - !update merges new changes from destination branch (master)\n  - !rerun re-runs pipeline on branch with vars from pipeline, e.g. !rerun #12323 (#12323 is pipeline id)\n  - !spin assignes random reviewers, default is 2, e.g. `!spin 3` chooses 3 reviewers\n  >{{ .Cookie }}",
 		},
 		AutoMasterMerge: false,
 		AssignReviewers: AssignReviewers{
@@ -161,14 +161,25 @@ func (r Request) UnresolveDiscussion() error {
 	return r.provider.UnresolveDiscussion(r.info.ProjectID, r.info.ID)
 }
 
+type greetingsTempl struct {
+	Rules
+	Cookie string
+}
+
 func (r Request) getGreetingsText() (string, error) {
 	tmpl, err := template.New("greetings").Parse(r.config.Greetings.Template)
 	if err != nil {
 		return "", err
 	}
 
+	cookie, err := getCookie()
+	if err != nil {
+		logger.Info("getCookie failed: %v", err)
+	}
+
+	args := greetingsTempl{Rules: r.config.Rules, Cookie: cookie}
 	buf := &bytes.Buffer{}
-	if err = tmpl.Execute(buf, r.config.Rules); err != nil {
+	if err = tmpl.Execute(buf, args); err != nil {
 		return "", err
 	}
 

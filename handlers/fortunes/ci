@@ -1,0 +1,8 @@
+They told me to automate my workflow, so I wrote a CI/CD pipeline that automatically rejects my own commits.
+%
+To err is human, but to truly take down production requires a misconfigured ArgoCD sync loop.
+%
+My deployment strategy is closing my eyes, merging to main, and hoping the monitoring alerts are muted.
+%
+Continuous Integration just means I continuously integrate new bugs into the master branch.
+%
