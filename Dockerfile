@@ -7,7 +7,7 @@ ADD go.mod /code/
 ADD go.sum /code/
 RUN go mod download
 ADD ./ /code/
-RUN gofortune strfile handlers/fortunes/*
+RUN ls handlers/fortunes/* | xargs -n1 gofortune strfile
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-X 'main.Version=$MERGE_BOT_VERSION' -X 'main.BuildTime=$(date)' -X 'github.com/gasoid/merge-bot/v3/logger.sentryDsn=$SENTRY_DSN'" -a -o /tmp/bot .
 
 FROM alpine:3.21
