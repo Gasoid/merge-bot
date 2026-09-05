@@ -174,7 +174,7 @@ func (r Request) getGreetingsText() (string, error) {
 
 	cookie, err := getCookie()
 	if err != nil {
-		logger.Info("getCookie failed: %v", err)
+		logger.Info("getCookie failed", "err", err)
 	}
 
 	args := greetingsTempl{Rules: r.config.Rules, Cookie: cookie}
