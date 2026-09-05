@@ -2,9 +2,13 @@ package handlers
 
 import (
 	"embed"
+	"errors"
 	"fmt"
-	"path"
+	"os"
+	"path/filepath"
+	"sync"
 
+	"github.com/gasoid/merge-bot/v3/logger"
 	"github.com/vromero/gofortune/pkg/fortune"
 )
 
@@ -17,21 +21,29 @@ var (
 	fortuneFS embed.FS
 )
 
-func getCookie() (string, error) {
-	dir, err := fortuneFS.ReadDir(fortunesDir)
+func extractEmbeddedFortunes() string {
+	tmpDir, err := os.MkdirTemp("", fortunesDir+"-*")
 	if err != nil {
-		return "", fmt.Errorf("can't read dir with fortunes: %w", err)
+		logger.Info("MkdirTemp failed", "err", err)
+		return ""
 	}
 
-	paths := make([]fortune.ProbabilityPath, 0, len(dir))
-
-	for _, entry := range dir {
-		if entry.Type().IsDir() {
-			continue
-		}
-
-		paths = append(paths, fortune.ProbabilityPath{Path: path.Join(fortunesDir, entry.Name())})
+	entries, _ := fortuneFS.ReadDir(fortunesDir)
+	for _, e := range entries {
+		data, _ := fortuneFS.ReadFile(filepath.Join(fortunesDir, e.Name()))
+		os.WriteFile(filepath.Join(tmpDir, e.Name()), data, 0644)
 	}
+	return tmpDir
+}
+
+func getCookie() (string, error) {
+	once := sync.OnceValue(extractEmbeddedFortunes)
+	tmpDir := once()
+	if tmpDir == "" {
+		return "", errors.New("extractEmbeddedFortunes didn't extract files")
+	}
+
+	paths := []fortune.ProbabilityPath{{Path: tmpDir}}
 
 	tree, err := fortune.LoadPaths(paths, 0, ^uint32(0))
 	if err != nil {
