@@ -45,22 +45,24 @@ func getCookie() (string, error) {
 		return "", errors.New("extractEmbeddedFortunes didn't extract files")
 	}
 
-	dir, err := os.ReadDir(tmpDir)
-	if err != nil {
-		return "", fmt.Errorf("can't ReadDir: %w", err)
-	}
+	// dir, err := os.ReadDir(tmpDir)
+	// if err != nil {
+	// 	return "", fmt.Errorf("can't ReadDir: %w", err)
+	// }
 
-	paths := make([]fortune.ProbabilityPath, 0, len(dir))
+	// paths := make([]fortune.ProbabilityPath, 0, len(dir))
 
-	for _, entry := range dir {
-		if entry.Type().IsDir() {
-			continue
-		}
+	// for _, entry := range dir {
+	// 	if entry.Type().IsDir() {
+	// 		continue
+	// 	}
 
-		paths = append(paths, fortune.ProbabilityPath{Path: filepath.Join(tmpDir, entry.Name())})
-	}
+	// 	paths = append(paths, fortune.ProbabilityPath{Path: filepath.Join(tmpDir, entry.Name())})
+	// }
 
-	tree, err := fortune.LoadPaths(paths, 0, ^uint32(0))
+	paths := []fortune.ProbabilityPath{{Path: tmpDir}}
+
+	tree, err := fortune.LoadPaths(paths, ^uint32(0), 0)
 	if err != nil {
 		return "", fmt.Errorf("can't LoadPaths: %w", err)
 	}
