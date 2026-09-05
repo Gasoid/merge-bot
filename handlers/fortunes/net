@@ -1,0 +1,12 @@
+I love C#. It lets me throw a NullReferenceException with enterprise-level elegance.
+%
+I used async/await everywhere in my .NET app. Now I can wait for my deadlocks asynchronously.
+%
+Configured connection pooling in .NET. Now my app can exhaust the database limits much faster.
+%
+LINQ is amazing. It allows me to write a beautiful one-liner that takes 45 minutes to execute in SQL.
+%
+I just wanted to write a simple console app, so I started by downloading a 4GB Visual Studio update.
+%
+Garbage Collection in .NET is great until you realize it can't collect the garbage in your codebase.
+%

@@ -1,0 +1,20 @@
+I told Kubernetes my desired state was 'happiness'. It responded with CrashLoopBackOff.
+%
+Kubernetes: Because turning a server off and on again just wasn't web-scale enough.
+%
+I have 5 years of Kubernetes experience. That means I’ve successfully deployed an app three times.
+%
+OOMKilled: The cloud-native way of telling you that your memory leak is now a distributed problem.
+%
+YAML is my favorite programming language, said absolutely no Kubernetes engineer ever.
+%
+Why have just one broken Kubernetes cluster when Rancher lets you manage ten broken clusters from a single beautiful dashboard?
+%
+Rancher promised to treat my servers like cattle. Now I'm just running a high-stress veterinary clinic for sick nodes.
+%
+I installed Rancher to simplify Kubernetes. Now I need to debug my Kubernetes to figure out why Rancher can't connect to my other Kubernetes.
+%
+Rancher: Because sometimes you want to take down production by clicking a mouse instead of typing a kubectl command.
+%
+It’s not a real Rancher upgrade until you spend three hours staring at a 'Provisioning' state that never ends.
+%
