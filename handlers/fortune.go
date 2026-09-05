@@ -19,6 +19,7 @@ const (
 var (
 	//go:embed fortunes/*
 	fortuneFS embed.FS
+	once      = sync.OnceValue(extractEmbeddedFortunes)
 )
 
 func extractEmbeddedFortunes() string {
@@ -39,7 +40,6 @@ func extractEmbeddedFortunes() string {
 }
 
 func getCookie() (string, error) {
-	once := sync.OnceValue(extractEmbeddedFortunes)
 	tmpDir := once()
 	if tmpDir == "" {
 		return "", errors.New("extractEmbeddedFortunes didn't extract files")
@@ -51,6 +51,8 @@ func getCookie() (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("can't LoadPaths: %w", err)
 	}
+
+	logger.Debug("tree", "numFiles", tree.NumFiles, "numEntries", tree.NumEntries)
 
 	fortune.SetProbabilities(&tree, false)
 
