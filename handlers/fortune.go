@@ -31,7 +31,9 @@ func extractEmbeddedFortunes() string {
 	entries, _ := fortuneFS.ReadDir(fortunesDir)
 	for _, e := range entries {
 		data, _ := fortuneFS.ReadFile(filepath.Join(fortunesDir, e.Name()))
-		os.WriteFile(filepath.Join(tmpDir, e.Name()), data, 0644)
+		if err := os.WriteFile(filepath.Join(tmpDir, e.Name()), data, 0644); err != nil {
+			logger.Info("WriteFile couldn't write fortune", "err", err)
+		}
 	}
 	return tmpDir
 }
