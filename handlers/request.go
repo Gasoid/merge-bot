@@ -3,7 +3,7 @@ package handlers
 import (
 	"bytes"
 	"fmt"
-	"html/template"
+	"text/template"
 	"math/rand"
 	"slices"
 	"sort"
