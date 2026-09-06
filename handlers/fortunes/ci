@@ -6,3 +6,11 @@ My deployment strategy is closing my eyes, merging to main, and hoping the monit
 %
 Continuous Integration just means I continuously integrate new bugs into the master branch.
 %
+CI/CD stands for Constantly Interrupted / Continuously Debugging
+%
+My pipeline is green, my mental state is not
+%
+I automated my deployments so I could have more time to watch them fail
+%
+The build passed on the third retry, just like my New Year's resolutions
+%

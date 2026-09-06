@@ -2,7 +2,7 @@ I told Kubernetes my desired state was 'happiness'. It responded with CrashLoopB
 %
 Kubernetes: Because turning a server off and on again just wasn't web-scale enough.
 %
-I have 5 years of Kubernetes experience. That means I’ve successfully deployed an app three times.
+I have 5 years of Kubernetes experience. That means I've successfully deployed an app three times.
 %
 OOMKilled: The cloud-native way of telling you that your memory leak is now a distributed problem.
 %
@@ -16,5 +16,19 @@ I installed Rancher to simplify Kubernetes. Now I need to debug my Kubernetes to
 %
 Rancher: Because sometimes you want to take down production by clicking a mouse instead of typing a kubectl command.
 %
-It’s not a real Rancher upgrade until you spend three hours staring at a 'Provisioning' state that never ends.
+It's not a real Rancher upgrade until you spend three hours staring at a 'Provisioning' state that never ends.
+%
+Kubernetes taught me that even pods need therapy after eviction
+%
+YAML: the only language where indentation decides your career
+%
+My cluster is highly available, unlike my sleep schedule
+%
+kubectl apply -f prayers.yaml
+%
+Rancher promised me easy Kubernetes management, so naturally I'm still here at midnight
+%
+I called it a rancher because I spend my days herding pods that won't behave
+%
+Rancher UI: because clicking through menus is cheaper than therapy
 %

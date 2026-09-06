@@ -110,7 +110,7 @@ func (r *Request) ParseConfig(content string) (*Config, error) {
 		}{
 			Enabled:    false,
 			Resolvable: false,
-			Template:   "## 🤖 MergeBot commands\n\n  - !update merges new changes from destination branch (master)\n  - !rerun re-runs pipeline on branch with vars from pipeline, e.g. !rerun #12323 (#12323 is pipeline id)\n  - !spin assignes random reviewers, default is 2, e.g. `!spin 3` chooses 3 reviewers\n  >{{ .Cookie }}",
+			Template:   "## 🤖 MergeBot commands\n\n  - !update merges new changes from destination branch (master)\n  - !rerun re-runs pipeline on branch with vars from pipeline, e.g. !rerun #12323 (#12323 is pipeline id)\n  - !spin assignes random reviewers, default is 2, e.g. `!spin 3` chooses 3 reviewers\n  ```\n{{ .Cookie }}\n```",
 		},
 		AutoMasterMerge: false,
 		AssignReviewers: AssignReviewers{

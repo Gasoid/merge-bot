@@ -260,7 +260,7 @@ func TestRequest_Greetings(t *testing.T) {
 			args:              args{projectID: 1, id: 1},
 			wantErr:           false,
 			wantCommentCalled: true,
-			expectedComment:   "## 🤖 MergeBot commands\n\n  - !update merges new changes from destination branch (master)\n  - !rerun re-runs pipeline on branch with vars from pipeline, e.g. !rerun #12323 (#12323 is pipeline id)\n  - !spin assignes random reviewers, default is 2, e.g. `!spin 3` chooses 3 reviewers\n  >",
+			expectedComment:   "## 🤖 MergeBot commands\n\n  - !update merges new changes from destination branch (master)\n  - !rerun re-runs pipeline on branch with vars from pipeline, e.g. !rerun #12323 (#12323 is pipeline id)\n  - !spin assignes random reviewers, default is 2, e.g. `!spin 3` chooses 3 reviewers\n  ```\n\n```",
 		},
 		{
 			name: "greetings enabled with custom template - should leave comment",
