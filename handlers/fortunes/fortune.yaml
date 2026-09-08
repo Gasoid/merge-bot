@@ -1,0 +1,76 @@
+fortunes:
+  - OpenAI said I could be anything, so I became the 'LGTM, but...' guy on a 2,000-line PR.
+  - I love code reviews. It's the only place where I get to confidently tell my colleagues they're wrong using Markdown.
+  - Containerizing my code review tools, because looking at your raw source code directly hurts my eyes.
+  - Code review is just a support group for people who don't know how to write regular expressions.
+  - "Code review: where my pull request goes to be gently, publicly humiliated"
+  - LGTM is the "I'll pray for you" of software engineering
+  - I left one comment on your PR, and now we don't speak
+  - Approving code I didn't read is my cardio
+  - I finally figured out how to use that one Azure service, so Microsoft immediately renamed it and moved the dashboard.
+  - My favorite monthly horror story is the Azure billing statement.
+  - Deployed to Azure. Now waiting 45 minutes for Active Directory to propagate my existential dread.
+  - "Azure documentation: where the text was updated yesterday, but the screenshots are from 2016."
+  - They told me to automate my workflow, so I wrote a CI/CD pipeline that automatically rejects my own commits.
+  - To err is human, but to truly take down production requires a misconfigured ArgoCD sync loop.
+  - My deployment strategy is closing my eyes, merging to main, and hoping the monitoring alerts are muted.
+  - Continuous Integration just means I continuously integrate new bugs into the master branch.
+  - CI/CD stands for Constantly Interrupted / Continuously Debugging
+  - My pipeline is green, my mental state is not
+  - I automated my deployments so I could have more time to watch them fail
+  - The build passed on the third retry, just like my New Year's resolutions
+  - "I'm thinking of writing a DevOps book. Chapter 1: How to blame the network. Chapter 2: It was DNS all along."
+  - DevOps is just a fancy word for 'I have root access and I'm guessing'.
+  - "DevOps: where you spend 40 hours automating a 5-minute task, and then the tool gets deprecated."
+  - Cloud-native means nobody knows where the application actually lives anymore.
+  - I don't always test in production, but when I do, it's Friday at 5pm
+  - Our downtime SLA is aspirational
+  - I asked the database for consistency, it asked me for eventual consistency instead
+  - "NoSQL: because who needs answers, only eventual ones"
+  - My database has ACID properties, my life does not
+  - I ran a migration on Friday, now I run for cover
+  - "DevOps: where 'it works on my machine' becomes 'it works in nobody's machine'"
+  - I automated myself out of a job, and it was the most productive day of my career
+  - We don't have incidents, we have "learning opportunities" at 3 AM
+  - Infrastructure as Code means my mistakes are now version-controlled forever
+  - I monitor everything except my own well-being
+  - Our on-call rotation taught me more about anxiety than any therapist could
+  - I don't always git push --force, but when I do, I make sure the whole team is on vacation.
+  - git commit -m 'fixed stuff' is the software engineering equivalent of sweeping dirt under the rug.
+  - My git commit history is just a timeline of my descending mental health.
+  - "git-blame: The only tool that points out it was actually you who wrote that terrible code 6 months ago."
+  - git commit -m "fixed everything" is my most honest lie
+  - git blame is just therapy with extra steps
+  - I don't always force push, but when I do, nobody notices until Monday
+  - "Merge conflicts: the only place where my code and my coworker's code fight to the death"
+  - I rebased my life choices and lost half the commits
+  - GitHub is for showing off your green contribution squares. GitLab is for hiding your spaghetti code in private CI runners.
+  - I built a custom bot for the GitLab API because I enjoy pain. And YAML.
+  - "GitHub Actions: 'We'll run your code!' GitLab CI: 'We'll run your code, but first, learn our proprietary YAML dialect'."
+  - I told Kubernetes my desired state was 'happiness'. It responded with CrashLoopBackOff.
+  - "Kubernetes: Because turning a server off and on again just wasn't web-scale enough."
+  - I have 5 years of Kubernetes experience. That means I've successfully deployed an app three times.
+  - "OOMKilled: The cloud-native way of telling you that your memory leak is now a distributed problem."
+  - YAML is my favorite programming language, said absolutely no Kubernetes engineer ever.
+  - Why have just one broken Kubernetes cluster when Rancher lets you manage ten broken clusters from a single beautiful dashboard?
+  - Rancher promised to treat my servers like cattle. Now I'm just running a high-stress veterinary clinic for sick nodes.
+  - I installed Rancher to simplify Kubernetes. Now I need to debug my Kubernetes to figure out why Rancher can't connect to my other Kubernetes.
+  - "Rancher: Because sometimes you want to take down production by clicking a mouse instead of typing a kubectl command."
+  - It's not a real Rancher upgrade until you spend three hours staring at a 'Provisioning' state that never ends.
+  - Kubernetes taught me that even pods need therapy after eviction
+  - "YAML: the only language where indentation decides your career"
+  - My cluster is highly available, unlike my sleep schedule
+  - kubectl apply -f prayers.yaml
+  - Rancher promised me easy Kubernetes management, so naturally I'm still here at midnight
+  - I called it a rancher because I spend my days herding pods that won't behave
+  - "Rancher UI: because clicking through menus is cheaper than therapy"
+  - I love C#. It lets me throw a NullReferenceException with enterprise-level elegance.
+  - I used async/await everywhere in my .NET app. Now I can wait for my deadlocks asynchronously.
+  - Configured connection pooling in .NET. Now my app can exhaust the database limits much faster.
+  - LINQ is amazing. It allows me to write a beautiful one-liner that takes 45 minutes to execute in SQL.
+  - I just wanted to write a simple console app, so I started by downloading a 4GB Visual Studio update.
+  - Garbage Collection in .NET is great until you realize it can't collect the garbage in your codebase.
+  - C# taught me that everything is an object, including my regrets
+  - ".NET Core: proof that Microsoft can reinvent anything, including my weekend plans"
+  - I await async all day and somehow still nothing gets done
+  - My exceptions are handled, my emotions are not
