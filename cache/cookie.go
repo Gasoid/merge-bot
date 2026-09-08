@@ -36,7 +36,11 @@ func SetCookies(fortunes []int64) error {
 		return err
 	}
 
-	return cookie.ExtendTTL(cookies, cookiesTTL)
+	if err := cookie.ExtendTTL(cookies, cookiesTTL); err != nil {
+		return err
+	}
+
+	return ResetCookie()
 }
 
 func GetCookie() (int64, error) {
