@@ -51,10 +51,10 @@ func (e *CacheError) Error() string {
 func Init() error {
 	if redisUrl == "" {
 		contributors = &MemCache{}
-		cookie = &MemCache{}
+		cookie = contributors
 	} else {
 		contributors = &RedisCache{}
-		cookie = &RedisCache{}
+		cookie = contributors
 	}
 	return contributors.Connect()
 }

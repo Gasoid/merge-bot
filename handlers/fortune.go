@@ -55,23 +55,28 @@ func (f *fortune) get() string {
 }
 
 func extractEmbeddedFortunes() *fortune {
+	phrases := new(fortune{Fortunes: []string{}})
+
 	data, err := fortuneFS.ReadFile(fortuneFile)
 	if err != nil {
 		logger.Info("can't ReadFile", "err", err)
-		return nil
+		return phrases
 	}
-
-	phrases := fortune{Fortunes: []string{}}
 
 	if err := yaml.Unmarshal(data, phrases); err != nil {
 		logger.Info("can't Unmarshal fortune.yaml", "err", err)
 		return nil
 	}
 
+	if len(phrases.Fortunes) == 0 {
+		logger.Info("no fortunes")
+		return phrases
+	}
+
 	shuffleBag, err := cache.GetCookies()
 	if err != nil {
 		logger.Info("can't GetCookies", "err", err)
-		return nil
+		return phrases
 	}
 
 	if len(shuffleBag) != len(phrases.Fortunes) {
@@ -86,11 +91,11 @@ func extractEmbeddedFortunes() *fortune {
 
 		if err := cache.SetCookies(cookies); err != nil {
 			logger.Info("can't SetCookies", "err", err)
-			return nil
+			return phrases
 		}
 	}
 
-	return &phrases
+	return phrases
 }
 
 func getCookie() (string, error) {

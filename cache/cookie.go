@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"errors"
 	"time"
 
 	"github.com/gasoid/merge-bot/v3/logger"
@@ -13,6 +14,10 @@ const (
 )
 
 func GetCookies() ([]int64, error) {
+	if cookie == nil {
+		return nil, errors.New("cache is not initialized")
+	}
+
 	val, err := cookie.JsonGet(cookies)
 	if err != nil {
 		return nil, err
@@ -22,6 +27,10 @@ func GetCookies() ([]int64, error) {
 }
 
 func SetCookies(fortunes []int64) error {
+	if cookie == nil {
+		return errors.New("cache is not initialized")
+	}
+
 	logger.Debug("save fortunes", "size", len(fortunes))
 	if err := cookie.JsonSet(cookies, fortunes); err != nil {
 		return err
@@ -31,9 +40,17 @@ func SetCookies(fortunes []int64) error {
 }
 
 func GetCookie() (int64, error) {
+	if cookie == nil {
+		return -1, errors.New("cache is not initialized")
+	}
+
 	return cookie.Incr(cookieIndex)
 }
 
 func ResetCookie() error {
+	if cookie == nil {
+		return errors.New("cache is not initialized")
+	}
+
 	return cookie.Set(cookieIndex, int64(0), cookiesTTL)
 }
