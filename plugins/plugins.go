@@ -39,6 +39,7 @@ type Var struct {
 type PluginManifest struct {
 	Name    string      `yaml:"name"`
 	Command string      `yaml:"command"`
+	Events  []string    `yaml:"events"`
 	Runtime string      `yaml:"runtime"`
 	Handler HandlerFunc `yaml:"-"`
 	Vars    []Var       `yaml:"vars"`
@@ -128,6 +129,15 @@ func Load() iter.Seq[PluginManifest] {
 			if err := yaml.Unmarshal(manifestFile, &manifest); err != nil {
 				logger.Error("plugins.Load yaml Unmarshal failed", "err", err)
 				continue
+			}
+
+			if len(manifest.Events) == 0 && (len(manifest.Command) < 2 || !strings.HasPrefix(manifest.Command, "!")) {
+				logger.Error("plugins.Load command is empty", "pluginUrl", pluginUrl)
+				continue
+			}
+
+			for i := range len(manifest.Events) {
+				manifest.Events[i] = "\a" + manifest.Events[i]
 			}
 
 			enginesMu.RLock()
