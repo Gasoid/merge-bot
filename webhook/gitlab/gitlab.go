@@ -14,7 +14,7 @@ const (
 	mergeAction  = "merge"
 	openAction   = "open"
 	updateAction = "update"
-	pushAction   = "push"
+	closeAction  = "close"
 )
 
 func init() {
@@ -100,6 +100,8 @@ func (g *GitlabProvider) GetCmd() string {
 		return webhook.OnNewMR
 	case updateAction:
 		return webhook.OnUpdate
+	case closeAction:
+		return webhook.OnClose
 	}
 
 	logger.Debug("getCmd", "note", g.note)

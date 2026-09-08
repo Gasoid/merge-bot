@@ -152,7 +152,7 @@ rules:
 greetings:
   enabled: false  # Send welcome message on new MRs
   resolvable: false # Whether greeting message can be updated and resolved
-  template: "Requirements:\n - Min approvals: {{ .MinApprovals }}\n - Title regex: {{ .TitleRegex }}\n\nSend **!merge** when ready!"
+  template: "## 🤖 MergeBot commands\n\n  - !update merges new changes from destination branch (master)\n  - !rerun re-runs pipeline on branch with vars from pipeline, e.g. !rerun #12323 (#12323 is pipeline id)\n  - !spin assignes random reviewers, default is 2, e.g. `!spin 3` chooses 3 reviewers\n```\n{{ .Cookie }}\n```"
 
 auto_master_merge: false  # Auto-update branch from target branch
 
@@ -194,13 +194,16 @@ greetings:
   enabled: true
   resolvable: true
   template: |
-    ## 🤖 MergeBot Requirements
+    ## 🤖 MergeBot commands
     
-    - **Min approvals**: {{ .MinApprovals }}
-    - **Title format**: {{ .TitleRegex }}
-    - **Approvers**: {{ .Approvers }}
-    
-    Use `!check` to validate and `!merge` when ready!
+    - !update merges new changes from destination branch (master)
+    - !rerun re-runs pipeline on branch with vars from pipeline, e.g. !rerun #12323 (#12323 is pipeline id)
+    - !spin assignes random reviewers, default is 2,e.g. `!spin 3` chooses 3 reviewers
+
+    ```
+    {{ .Cookie }}
+    ```
+
 
 auto_master_merge: true
 

@@ -1,0 +1,305 @@
+fortunes:
+  - OpenAI said I could be anything, so I became the 'LGTM, but...' guy on a 2,000-line PR.
+  - I love code reviews. It's the only place where I get to confidently tell my colleagues they're wrong using Markdown.
+  - Containerizing my code review tools, because looking at your raw source code directly hurts my eyes.
+  - Code review is just a support group for people who don't know how to write regular expressions.
+  - "Code review: where my pull request goes to be gently, publicly humiliated"
+  - LGTM is the "I'll pray for you" of software engineering
+  - I left one comment on your PR, and now we don't speak
+  - Approving code I didn't read is my cardio
+  - I finally figured out how to use that one Azure service, so Microsoft immediately renamed it and moved the dashboard.
+  - My favorite monthly horror story is the Azure billing statement.
+  - Deployed to Azure. Now waiting 45 minutes for Active Directory to propagate my existential dread.
+  - "Azure documentation: where the text was updated yesterday, but the screenshots are from 2016."
+  - They told me to automate my workflow, so I wrote a CI/CD pipeline that automatically rejects my own commits.
+  - To err is human, but to truly take down production requires a misconfigured ArgoCD sync loop.
+  - My deployment strategy is closing my eyes, merging to main, and hoping the monitoring alerts are muted.
+  - Continuous Integration just means I continuously integrate new bugs into the master branch.
+  - CI/CD stands for Constantly Interrupted / Continuously Debugging
+  - My pipeline is green, my mental state is not
+  - I automated my deployments so I could have more time to watch them fail
+  - The build passed on the third retry, just like my New Year's resolutions
+  - "I'm thinking of writing a DevOps book. Chapter 1: How to blame the network. Chapter 2: It was DNS all along."
+  - DevOps is just a fancy word for 'I have root access and I'm guessing'.
+  - "DevOps: where you spend 40 hours automating a 5-minute task, and then the tool gets deprecated."
+  - Cloud-native means nobody knows where the application actually lives anymore.
+  - I don't always test in production, but when I do, it's Friday at 5pm
+  - Our downtime SLA is aspirational
+  - I asked the database for consistency, it asked me for eventual consistency instead
+  - "NoSQL: because who needs answers, only eventual ones"
+  - My database has ACID properties, my life does not
+  - I ran a migration on Friday, now I run for cover
+  - "DevOps: where 'it works on my machine' becomes 'it works in nobody's machine'"
+  - I automated myself out of a job, and it was the most productive day of my career
+  - We don't have incidents, we have "learning opportunities" at 3 AM
+  - Infrastructure as Code means my mistakes are now version-controlled forever
+  - I monitor everything except my own well-being
+  - Our on-call rotation taught me more about anxiety than any therapist could
+  - I don't always git push --force, but when I do, I make sure the whole team is on vacation.
+  - git commit -m 'fixed stuff' is the software engineering equivalent of sweeping dirt under the rug.
+  - My git commit history is just a timeline of my descending mental health.
+  - "git-blame: The only tool that points out it was actually you who wrote that terrible code 6 months ago."
+  - git commit -m "fixed everything" is my most honest lie
+  - git blame is just therapy with extra steps
+  - I don't always force push, but when I do, nobody notices until Monday
+  - "Merge conflicts: the only place where my code and my coworker's code fight to the death"
+  - I rebased my life choices and lost half the commits
+  - GitHub is for showing off your green contribution squares. GitLab is for hiding your spaghetti code in private CI runners.
+  - I built a custom bot for the GitLab API because I enjoy pain. And YAML.
+  - "GitHub Actions: 'We'll run your code!' GitLab CI: 'We'll run your code, but first, learn our proprietary YAML dialect'."
+  - I told Kubernetes my desired state was 'happiness'. It responded with CrashLoopBackOff.
+  - "Kubernetes: Because turning a server off and on again just wasn't web-scale enough."
+  - I have 5 years of Kubernetes experience. That means I've successfully deployed an app three times.
+  - "OOMKilled: The cloud-native way of telling you that your memory leak is now a distributed problem."
+  - YAML is my favorite programming language, said absolutely no Kubernetes engineer ever.
+  - Why have just one broken Kubernetes cluster when Rancher lets you manage ten broken clusters from a single beautiful dashboard?
+  - Rancher promised to treat my servers like cattle. Now I'm just running a high-stress veterinary clinic for sick nodes.
+  - I installed Rancher to simplify Kubernetes. Now I need to debug my Kubernetes to figure out why Rancher can't connect to my other Kubernetes.
+  - "Rancher: Because sometimes you want to take down production by clicking a mouse instead of typing a kubectl command."
+  - It's not a real Rancher upgrade until you spend three hours staring at a 'Provisioning' state that never ends.
+  - Kubernetes taught me that even pods need therapy after eviction
+  - "YAML: the only language where indentation decides your career"
+  - My cluster is highly available, unlike my sleep schedule
+  - kubectl apply -f prayers.yaml
+  - Rancher promised me easy Kubernetes management, so naturally I'm still here at midnight
+  - I called it a rancher because I spend my days herding pods that won't behave
+  - "Rancher UI: because clicking through menus is cheaper than therapy"
+  - I love C#. It lets me throw a NullReferenceException with enterprise-level elegance.
+  - I used async/await everywhere in my .NET app. Now I can wait for my deadlocks asynchronously.
+  - Configured connection pooling in .NET. Now my app can exhaust the database limits much faster.
+  - LINQ is amazing. It allows me to write a beautiful one-liner that takes 45 minutes to execute in SQL.
+  - I just wanted to write a simple console app, so I started by downloading a 4GB Visual Studio update.
+  - Garbage Collection in .NET is great until you realize it can't collect the garbage in your codebase.
+  - C# taught me that everything is an object, including my regrets
+  - ".NET Core: proof that Microsoft can reinvent anything, including my weekend plans"
+  - I await async all day and somehow still nothing gets done
+  - My exceptions are handled, my emotions are not
+  - |
+    Talk is cheap. Show me the code.
+      -- Linus Torvalds
+  - |
+    Given enough eyeballs, all bugs are shallow.
+      -- Linus Torvalds (Eric Raymond, "The Cathedral and the Bazaar")
+  - |
+    Software is like entropy: it is difficult to grasp, weighs nothing, and obeys the Second Law of Thermodynamics; i.e., it always increases.
+      -- Norman Augustine
+  - |
+    Controlling complexity is the essence of computer programming.
+      -- Brian Kernighan
+  - |
+    Debugging is twice as hard as writing the code in the first place. Therefore, if you write the code as cleverly as possible, you are, by definition, not smart enough to debug it.
+      -- Brian Kernighan
+  - |
+    Premature optimization is the root of all evil.
+      -- Donald Knuth
+  - |
+    Any fool can write code that a computer can understand. Good programmers write code that humans can understand.
+      -- Martin Fowler
+  - |
+    The competent programmer is fully aware of the strictly limited size of his own skull.
+      -- Edsger Dijkstra
+  - |
+    Simplicity is prerequisite for reliability.
+      -- Edsger Dijkstra
+  - |
+    Testing shows the presence, not the absence of bugs.
+      -- Edsger Dijkstra
+  - |
+    The most disastrous thing that you can ever learn is your first programming language.
+      -- Alan Kay
+  - |
+    Programs must be written for people to read, and only incidentally for machines to execute.
+      -- Harold Abelson
+  - |
+    There are only two hard things in Computer Science: cache invalidation and naming things.
+      -- Phil Karlton
+  - |
+    Walking on water and developing software from a specification are easy if both are frozen.
+      -- Edward V. Berard
+  - |
+    The best way to predict the future is to implement it.
+      -- David Heinemeier Hansson (attributed, riffing on Alan Kay)
+  - |
+    Deleted code is debugged code.
+      -- Jeff Sickel
+  - |
+    Weeks of coding can save you hours of planning.
+      -- unknown (classic engineering proverb)
+  - |
+    It's not a bug, it's an undocumented feature.
+      -- unknown (classic engineering proverb)
+  - |
+    First, solve the problem. Then, write the code.
+      -- John Johnson
+  - |
+    Optimism is an occupational hazard of programming: feedback is the treatment.
+      -- Kent Beck
+  - |
+    Make it work, make it right, make it fast.
+      -- Kent Beck
+  - |
+    A good programmer is someone who always looks both ways before crossing a one-way street.
+      -- Doug Linder
+  - |
+    There are two ways to write error-free programs; only the third one works.
+      -- Alan J. Perlis
+  - |
+    A LISP programmer knows the value of everything, but the cost of nothing.
+      -- Alan J. Perlis
+  - |
+    It is easier to change the specification to fit the program than vice versa.
+      -- Alan J. Perlis
+  - |
+    One man's crappy software is another man's full-time job.
+      -- Jessica Gaston
+  - |
+    Measuring programming progress by lines of code is like measuring aircraft building progress by weight.
+      -- Bill Gates
+  - |
+    Everyone knows that debugging is twice as hard as writing a program in the first place.
+      -- Brian Kernighan
+  - |
+    UNIX is basically a simple operating system, but you have to be a genius to understand the simplicity.
+      -- Dennis Ritchie
+  - |
+    The only way to learn a new programming language is by writing programs in it.
+      -- Dennis Ritchie
+  - |
+    Good judgment comes from experience, and experience comes from bad judgment.
+      -- Fred Brooks
+  - |
+    Adding manpower to a late software project makes it later.
+      -- Fred Brooks ("The Mythical Man-Month")
+  - |
+    Good developers copy; great developers paste.
+      -- Kelsey Hightower
+  - |
+    The best way to get people to use your software is to make it disappear.
+      -- Kelsey Hightower
+  - |
+    If we're still talking about Kubernetes 20 years from now, that would be a sad moment in tech.
+      -- Kelsey Hightower
+  - |
+    Hope is not a strategy.
+      -- Google SRE motto (Site Reliability Engineering, Google)
+  - |
+    If anything can go wrong, it will.
+      -- Murphy's Law (quoted throughout the Google SRE book)
+  - |
+    SRE is what happens when you ask a software engineer to design an operations team.
+      -- Benjamin Treynor Sloss (Google SRE)
+  - |
+    Everything fails, all the time.
+      -- Werner Vogels (Amazon CTO)
+  - |
+    You build it, you run it.
+      -- Werner Vogels (Amazon CTO)
+  - |
+    There is no such thing as a temporary fix; only a permanent workaround.
+      -- unknown (classic SRE/ops proverb)
+  - |
+    Automate everything, but trust nothing.
+      -- unknown (common DevOps proverb)
+  - |
+    The cloud is just someone else's computer.
+      -- unknown (widely-used sysadmin proverb)
+  - |
+    Containers don't contain.
+      -- unknown (classic container security proverb)
+  - |
+    If it hurts, do it more often.
+      -- Martin Fowler (on continuous integration / deployment practices)
+  - |
+    Continuous Delivery is a set of principles and practices to reduce the cost, time, and risk of delivering incremental changes to users.
+      -- Jez Humble
+  - |
+    Talk is cheap. Show me the code.
+      -- Linus Torvalds
+  - |
+    Software is like sex: it's better when it's free.
+      -- Linus Torvalds
+  - |
+    Only wimps use tape backup: real men just upload their important stuff on ftp, and let the rest of the world mirror it.
+      -- Linus Torvalds
+  - |
+    An infinite number of monkeys typing into GNU emacs would never make a good program.
+      -- Linus Torvalds
+  - |
+    I'm not a visionary. I'm an engineer.
+      -- Linus Torvalds
+  - |
+    I'm generally a very pragmatic person: that which works, works.
+      -- Linus Torvalds
+  - |
+    Intelligence is the ability to avoid doing work, yet getting the work done.
+      -- Linus Torvalds
+  - |
+    Most days I wake up thinking I'm the luckiest bastard alive.
+      -- Linus Torvalds
+  - |
+    Good taste is when the special case disappears.
+      -- Linus Torvalds (on code design)
+  - OpenAI said I could be anything I wanted, so I became a prompt engineer, which is just a fancy word for pleading with a computer
+  - I asked ChatGPT to fix my bug, it apologized and introduced three new ones
+  - My model is 99% accurate, said no one after deploying to production
+  - GPT told me it doesn't have feelings, then apologized for the inconvenience
+  - I trained a neural network to make decisions so I wouldn't have to, now we're both confused
+  - AI won't take your job, someone using AI slightly faster than you will
+  - My chatbot has more empathy than my last stand-up meeting
+  - I asked the AI to explain the bug, it explained the bug perfectly and then wrote the same bug again
+  - We call it "hallucination" when the AI is wrong, and "confidence" when I am
+  - The model is a black box, much like my understanding of my own code
+  - I fine-tuned the model all night, in the morning it was still a large language model with commitment issues
+  - |
+    Prompt engineering: the art of asking nicely until the robot stops lying to you
+  - My AI assistant is very supportive, mostly because it doesn't understand what I'm asking
+  - SQL taught me that the only reasonable answer to any question is JOIN
+  - I asked the database for one row, it gave me a million, we don't talk about it
+  - NULL is not zero, NULL is not false, NULL is just NULL's way of saying "figure it out yourself"
+  - I wrote a query without a WHERE clause once, and now I have trust issues
+  - Normalization is great until you need to actually query something
+  - My database has foreign keys, my relationships do not
+  - I ran DELETE without WHERE, and that's how I learned about backups
+  - Indexes make queries faster, they do nothing for my self-esteem
+  - |
+    Sharding: because one lonely database wasn't stressed out enough
+  - I don't always write raw SQL, but when I do, I immediately regret it
+  - Transactions taught me commitment, unlike my relationships
+  - |
+    ORM: Object-Relational Mapping, or "how to write bad SQL without knowing it"
+  - My query plan says "seq scan", my soul says "here we go again"
+  - Data consistency is a beautiful dream I had once
+  - The cloud is just someone else's computer, billing you by the hour for the privilege of not knowing where it is
+  - I moved to the cloud for scalability, stayed for the surprise invoice
+  - AWS has 200 services, I use three, and I'm still confused by all of them
+  - |
+    Auto-scaling: because manually panicking at 3 AM doesn't scale
+  - I set up a free tier resource once, three years later it's still billing me
+  - Azure Portal has more blades than a Swiss Army knife, and I understand none of them
+  - My cloud bill is the only thing in my life that grows exponentially without effort
+  - Serverless just means someone else's servers, and someone else's problems, until it's yours
+  - I read the pricing page twice and still don't know what a "vCPU-hour" costs me emotionally
+  - GCP renamed a service again, and somewhere an architecture diagram quietly died
+  - I asked for high availability, I got a multi-region bill instead
+  - |
+    Cloud migration: the art of moving your problems somewhere more expensive
+  - I tagged all my resources properly, said no cloud engineer ever
+  - Prometheus scrapes my metrics every 15 seconds, that's more attention than I get from anyone
+  - I set up alerting so I wouldn't have to watch dashboards all day, now I just watch Slack instead
+  - My Grafana dashboard has 40 panels, I understand 3 of them
+  - PromQL taught me that rate() solves everything, until it doesn't
+  - I have alerts for CPU, memory, and disk, but not for my own burnout
+  - Green dashboard, red pager, welcome to observability
+  - |
+    Cardinality explosion: the only kind of explosion Prometheus can't handle gracefully
+  - I built a beautiful Grafana dashboard, then nobody looked at it until the outage
+  - My alert fired at 3 AM, investigated for an hour, turned out to be a flapping metric
+  - We don't have problems, we have anomalies awaiting root cause analysis
+  - I added a new label to my metric, and now Prometheus is having an existential crisis
+  - Grafana has a dark theme, matches my mood during on-call
+  - I set the alert threshold so high, nothing ever fires, we call this "peace of mind"
+  - histogram_quantile taught me that p99 latency is just p50 latency with better marketing
+  - My retention policy is 15 days, my memories of the last incident last much longer
+  - I don't always look at dashboards, but when I do, it's already an incident
+  - Alertmanager silenced my alert for maintenance, I wish someone would silence my meetings too
+  - Every dashboard eventually becomes "the one guy's dashboard that only he understands"

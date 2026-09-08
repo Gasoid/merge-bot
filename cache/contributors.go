@@ -9,6 +9,7 @@ import (
 
 var (
 	contributors Cache
+	cookie       Cache
 )
 
 const (
