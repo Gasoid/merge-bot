@@ -26,6 +26,11 @@ type fortune struct {
 }
 
 func (f *fortune) get() string {
+	if len(f.Fortunes) == 0 {
+		logger.Info("no fortunes")
+		return ""
+	}
+
 	item, err := cache.GetCookie()
 	if err != nil {
 		logger.Info("can't GetCookie", "err", err)
