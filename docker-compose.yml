@@ -1,6 +1,8 @@
 services:
   redis:
     image: redis:8.8
+    volumes:
+      - redis-data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "PING"]
       interval: 1m30s
@@ -37,3 +39,4 @@ services:
 
 volumes:
   tls-cache:
+  redis-data:
