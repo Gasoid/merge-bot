@@ -185,7 +185,7 @@ func (m *MemCache) Incr(key string) (int64, error) {
 
 	data, ok := m.keys[key]
 	if !ok {
-		m.keys[key] = 0
+		m.keys[key] = int64(0)
 		return 0, nil
 	}
 

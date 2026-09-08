@@ -43,7 +43,7 @@ func (f *fortune) get() string {
 		return ""
 	}
 
-	if shuffleBag[item] < int64(len(f.Fortunes)) {
+	if item < int64(len(shuffleBag)) && shuffleBag[item] < int64(len(f.Fortunes)) {
 		return f.Fortunes[shuffleBag[item]]
 	}
 

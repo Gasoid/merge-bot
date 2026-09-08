@@ -44,6 +44,10 @@ func GetCookie() (int64, error) {
 		return -1, errors.New("cache is not initialized")
 	}
 
+	if err := cookie.ExtendTTL(cookieIndex, cookiesTTL); err != nil {
+		return -1, err
+	}
+
 	return cookie.Incr(cookieIndex)
 }
 
