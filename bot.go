@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"os"
 	"path"
 	"strings"
@@ -76,7 +77,11 @@ func Handler(c echo.Context) error {
 	providerName := c.Param("provider")
 	hook, err := webhook.New(providerName)
 	if err != nil {
-		logger.Error("webhook", "err", err)
+		if _, ok := errors.AsType[*webhook.Error](err); ok {
+			logger.Info("webhook", "err", err)
+		} else {
+			logger.Error("webhook", "err", err)
+		}
 		return err
 	}
 
