@@ -211,7 +211,7 @@ func (r *RedisCache) Incr(key string) (int64, error) {
 	if i, err := r.client.Incr(context.TODO(), key).Result(); err != nil {
 		return -1, &CacheError{Operation: "Incr", Err: err}
 	} else {
-		return i, nil
+		return i - 1, nil
 	}
 }
 
