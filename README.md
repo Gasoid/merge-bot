@@ -237,7 +237,7 @@ plugin_vars:
 > [!NOTE]
 > Available in 3.11.0+ Bot version
 
-Automatically approve merge requests based on file patterns. You can specify a list of wildcard patterns to match files in the merge request. If all files in the merge request match the specified patterns, the bot will automatically approve the merge request.
+Automatically approve merge requests after the bot is assigned as a reviewer. You can specify wildcard patterns for merge request files. The bot approves the merge request when every changed file matches at least one configured pattern.
 
 ### Review Roulette
 > [!NOTE]
