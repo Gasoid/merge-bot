@@ -60,5 +60,5 @@ func ResetCookie() error {
 		return errors.New("cache is not initialized")
 	}
 
-	return cookie.Set(cookieIndex, int64(0), cookiesTTL)
+	return cookie.Set(cookieIndex, int64(-1), cookiesTTL)
 }
