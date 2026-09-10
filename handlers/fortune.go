@@ -53,7 +53,7 @@ func (f *fortune) get() string {
 		return ""
 	}
 
-	return f.Fortunes[0]
+	return ""
 }
 
 func (f *fortune) createShuffleBag() error {
