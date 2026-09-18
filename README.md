@@ -264,8 +264,11 @@ Customize welcome messages for new merge requests using Go templates. Available 
 - `{{ .MinApprovals }}`
 - `{{ .TitleRegex }}`
 - `{{ .Approvers }}`
+- `{{ .Cookie }}`
 
 You can also enable the `resolvable` option to allow the bot to update and resolve the greeting message once all requirements are met. Merge Request will be blocked until requirements are met. (You need to enable "All threads must be resolved" in project settings for this feature to work.)
+
+.Cookie is fortune cookie message, you can use it to make your greeting more fun and friendly.
 
 ### Labels
 
