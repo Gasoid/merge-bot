@@ -3,6 +3,15 @@ You can extend the functionality of the Merge-Bot by creating and using plugins.
 
 Please read extism documentation to learn how to create WASM plugins: https://extism.org/docs/getting-started/wasm-plugins
 
+## Available Plugins
+
+This repository contains the following plugins:
+
+-   **[OpenAI Reviewer](https://github.com/Gasoid/merge-bot-plugins/blob/main/plugins/openai-reviewer/README.md)**: A plugin that uses the OpenAI API to review merge requests.
+-   **[Gemini Reviewer](https://github.com/Gasoid/merge-bot-plugins/blob/main/plugins/gemini-reviewer/README.md)**: A plugin that uses the Google Gemini API to review merge requests.
+-   **[Claude Reviewer](https://github.com/Gasoid/merge-bot-plugins/blob/main/plugins/claude-reviewer/README.md)**: A plugin that uses the Anthropic Claude API to review merge requests.
+
+For more information about each plugin, please refer to their respective `README.md` files.
 
 ## Plugin manifest for WASM
 
