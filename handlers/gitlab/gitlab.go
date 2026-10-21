@@ -598,6 +598,7 @@ func (g GitlabProvider) ListMergeRequests(projectID, size int64, protected bool)
 	}
 }
 
+//nolint:errcheck
 func (g GitlabProvider) FindMergeRequests(projectID int64, targetBranch, label string) ([]handlers.MR, error) {
 	mrs := make([]handlers.MR, 0)
 
