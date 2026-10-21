@@ -1,4 +1,4 @@
-FROM golang:1.27.1-bookworm AS builder
+FROM golang:1.27.3-bookworm AS builder
 ARG MERGE_BOT_VERSION=dev
 ARG SENTRY_DSN
 WORKDIR /code
@@ -8,7 +8,7 @@ RUN go mod download
 ADD ./ /code/
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-X 'main.Version=$MERGE_BOT_VERSION' -X 'main.BuildTime=$(date)' -X 'github.com/gasoid/merge-bot/v3/logger.sentryDsn=$SENTRY_DSN'" -a -o /tmp/bot .
 
-FROM alpine:3.21
+FROM alpine:3.24
 EXPOSE 8080 443
 WORKDIR /root/
 RUN apk --no-cache --update add bash curl less jq openssl git
