@@ -3,6 +3,42 @@ You can extend the functionality of the Merge-Bot by creating and using plugins.
 
 Please read extism documentation to learn how to create WASM plugins: https://extism.org/docs/getting-started/wasm-plugins
 
+## Available Plugins
+
+This repository contains the following plugins:
+
+-   **[OpenAI Reviewer](https://github.com/Gasoid/merge-bot-plugins/blob/main/plugins/openai-reviewer/README.md)**: A plugin that uses the OpenAI API to review merge requests.
+-   **[Gemini Reviewer](https://github.com/Gasoid/merge-bot-plugins/blob/main/plugins/gemini-reviewer/README.md)**: A plugin that uses the Google Gemini API to review merge requests.
+-   **[Claude Reviewer](https://github.com/Gasoid/merge-bot-plugins/blob/main/plugins/claude-reviewer/README.md)**: A plugin that uses the Anthropic Claude API to review merge requests.
+
+For more information about each plugin, please refer to their respective `README.md` files.
+
+## Installation
+
+To use a plugin, you need to configure your Merge-Bot instance by setting the `PLUGINS` environment variable. This variable should point to the plugin's YAML configuration file.
+
+For example, to install the **OpenAI Reviewer** plugin, you would set the following environment variables:
+
+```bash
+export PLUGINS="https://github.com/Gasoid/merge-bot-plugins/releases/download/v0.1.0/openai-reviewer.yaml"
+export REVIEWER_API_KEY="your_openai_api_key"
+```
+
+**Gemini Reviewer** plugin installation example:
+
+```bash
+export PLUGINS="https://github.com/Gasoid/merge-bot-plugins/releases/download/v0.1.0/gemini-reviewer.yaml"
+export GEMINI_REVIEWER_API_KEY="your_gemini_api_key"
+```
+
+**Claude Reviewer** plugin installation example:
+
+```bash
+export PLUGINS="https://github.com/Gasoid/merge-bot-plugins/releases/download/v0.1.0/claude-reviewer.yaml"
+export CLAUDE_REVIEWER_API_KEY="your_claude_api_key"
+```
+
+Please note that each plugin has its own set of required environment variables for configuration (like API keys). For detailed installation and configuration instructions, please refer to the `README.md` file of the specific plugin you want to use.
 
 ## Plugin manifest for WASM
 

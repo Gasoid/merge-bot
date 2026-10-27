@@ -24,6 +24,8 @@ type CacheBase interface {
 	ExtendTTL(key string, ttl time.Duration) error
 	Connect() error
 	IsHealthy() bool
+	Incr(key string) (int64, error)
+	Set(key string, val any, ttl time.Duration) error
 }
 
 type Cache interface {
@@ -49,8 +51,10 @@ func (e *CacheError) Error() string {
 func Init() error {
 	if redisUrl == "" {
 		contributors = &MemCache{}
+		cookie = contributors
 	} else {
 		contributors = &RedisCache{}
+		cookie = contributors
 	}
 	return contributors.Connect()
 }

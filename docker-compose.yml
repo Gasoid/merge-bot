@@ -1,6 +1,8 @@
 services:
   redis:
     image: redis:8.8
+    volumes:
+      - redis-data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "PING"]
       interval: 1m30s
@@ -13,7 +15,7 @@ services:
     # dockerhub registry
     depends_on:
       - redis
-    image: gasoid/merge-bot:3.10.2
+    image: gasoid/merge-bot:3.11.0
     restart: always
     volumes:
       - tls-cache:/tmp/tls/.cache
@@ -37,3 +39,4 @@ services:
 
 volumes:
   tls-cache:
+  redis-data:

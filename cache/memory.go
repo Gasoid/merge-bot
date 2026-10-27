@@ -179,6 +179,30 @@ func (m *MemCache) IsHealthy() bool {
 	return true
 }
 
+func (m *MemCache) Incr(key string) (int64, error) {
+	m.memcacheLock.Lock()
+	defer m.memcacheLock.Unlock()
+
+	data, ok := m.keys[key]
+	if !ok {
+		m.keys[key] = int64(0)
+		return 0, nil
+	}
+
+	val, ok := data.(int64)
+	if !ok {
+		return -1, fmt.Errorf("%w: expected int for key %s", ErrWrongType, key)
+	}
+
+	val++
+	m.keys[key] = val
+	return val, nil
+}
+
+func (m *MemCache) Set(key string, val any, _ time.Duration) error {
+	return m.set(key, val)
+}
+
 var (
 	_ Cache = (*MemCache)(nil)
 )

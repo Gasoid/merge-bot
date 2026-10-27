@@ -207,6 +207,22 @@ func (r *RedisCache) IsHealthy() bool {
 	return true
 }
 
+func (r *RedisCache) Incr(key string) (int64, error) {
+	if i, err := r.client.Incr(context.TODO(), key).Result(); err != nil {
+		return -1, &CacheError{Operation: "Incr", Err: err}
+	} else {
+		return i, nil
+	}
+}
+
+func (r *RedisCache) Set(key string, val any, ttl time.Duration) error {
+	if _, err := r.client.Set(context.TODO(), key, val, ttl).Result(); err != nil {
+		return &CacheError{Operation: "Set", Err: err}
+	}
+
+	return nil
+}
+
 var (
 	_ Cache = (*RedisCache)(nil)
 )

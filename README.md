@@ -142,6 +142,7 @@ Create `.mrbot.yaml` in your repository root on the default branch:
 # all settings are optional, defaults are shown below
 
 rules:
+  enabled: true
   approvers: []  # Specific users who must approve (empty = any approver)
   min_approvals: 1  # Minimum number of approvals required
   allow_empty_description: true  # Allow empty MR descriptions
@@ -151,7 +152,7 @@ rules:
 greetings:
   enabled: false  # Send welcome message on new MRs
   resolvable: false # Whether greeting message can be updated and resolved
-  template: "Requirements:\n - Min approvals: {{ .MinApprovals }}\n - Title regex: {{ .TitleRegex }}\n\nSend **!merge** when ready!"
+  template: "## 🤖 MergeBot commands\n\n  - !update merges new changes from destination branch (master)\n  - !rerun re-runs pipeline on branch with vars from pipeline, e.g. !rerun #12323 (#12323 is pipeline id)\n  - !spin assignes random reviewers, default is 2, e.g. `!spin 3` chooses 3 reviewers\n```\n{{ .Cookie }}\n```"
 
 auto_master_merge: false  # Auto-update branch from target branch
 
@@ -180,6 +181,7 @@ plugin_vars: {}  # Custom variables for plugins
 
 ```yaml
 rules:
+  enabled: true
   approvers:
     - alice
     - bob
@@ -192,13 +194,16 @@ greetings:
   enabled: true
   resolvable: true
   template: |
-    ## 🤖 MergeBot Requirements
+    ## 🤖 MergeBot commands
     
-    - **Min approvals**: {{ .MinApprovals }}
-    - **Title format**: {{ .TitleRegex }}
-    - **Approvers**: {{ .Approvers }}
-    
-    Use `!check` to validate and `!merge` when ready!
+    - !update merges new changes from destination branch (master)
+    - !rerun re-runs pipeline on branch with vars from pipeline, e.g. !rerun #12323 (#12323 is pipeline id)
+    - !spin assignes random reviewers, default is 2,e.g. `!spin 3` chooses 3 reviewers
+
+    ```
+    {{ .Cookie }}
+    ```
+
 
 auto_master_merge: true
 
@@ -228,6 +233,21 @@ plugin_vars:
 
 ## Features
 
+### Auto-Approve
+> [!NOTE]
+> Available in 3.11.0+ Bot version
+
+Automatically approve merge requests after the bot is assigned as a reviewer. You can specify wildcard patterns for merge request files. The bot approves the merge request when every changed file matches at least one configured pattern.
+
+### Review Roulette
+> [!NOTE]
+> Available in 3.10.0+ Bot version
+
+Enable random reviewer assignment for new merge requests. You can specify the number of reviewers to assign and whether to use CODEOWNERS for selection. Exclude specific usernames from being assigned as reviewers. Also you can use `!spin` command to assign new random reviewers to the merge request.
+
+If user has status: ooo, vacation, travel and parental leave in GitLab, they will be excluded from review roulette.
+Also emoji status is supported, if user has emoji status: 🏖️, 🔴, ⛔, 🌴 they will be excluded from review roulette as well.
+
 ### Plugin support
 > [!NOTE]
 > Available in 3.8.0+ Bot version
@@ -244,17 +264,11 @@ Customize welcome messages for new merge requests using Go templates. Available 
 - `{{ .MinApprovals }}`
 - `{{ .TitleRegex }}`
 - `{{ .Approvers }}`
+- `{{ .Cookie }}`
 
 You can also enable the `resolvable` option to allow the bot to update and resolve the greeting message once all requirements are met. Merge Request will be blocked until requirements are met. (You need to enable "All threads must be resolved" in project settings for this feature to work.)
 
-### Review Roulette
-> [!NOTE]
-> Available in 3.10.0+ Bot version
-
-Enable random reviewer assignment for new merge requests. You can specify the number of reviewers to assign and whether to use CODEOWNERS for selection. Exclude specific usernames from being assigned as reviewers. Also you can use `!spin` command to assign new random reviewers to the merge request.
-
-If user has status: ooo, vacation, travel and parental leave in GitLab, they will be excluded from review roulette.
-Also emoji status is supported, if user has emoji status: 🏖️, 🔴, ⛔, 🌴 they will be excluded from review roulette as well.
+.Cookie is fortune cookie message, you can use it to make your greeting more fun and friendly.
 
 ### Labels
 
